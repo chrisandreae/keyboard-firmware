@@ -60,7 +60,6 @@ typedef enum _state {
 	STATE_PROGRAMMING_DST, // second key
 	STATE_MACRO_RECORD,
 	STATE_MACRO_PLAY,
-	STATE_EEWRITE    // writing to eeprom - ignore interaction until done
 } state;
 
 // Keycodes go through three transformations.
@@ -79,6 +78,7 @@ typedef struct _key_state {
 #define DEBOUNCE_MASK 0x07 // care about last 3 physical reports
 
 void updateLEDs(void);
+void blinkLEDs(void);
 
 void KeyState_Init(void);
 void KeyState_Update(void);
@@ -88,6 +88,10 @@ bool KeyState_CheckKeys(uint8_t count, ...);
 void KeyState_GetKeys(logical_keycode* keys);
 
 void Eeprom_ResetDefaults(void);
+void Eeprom_ResetFully(void);
+uint8_t Eeprom_DeleteLayout(uint8_t num);
+uint8_t Eeprom_SaveLayout(uint8_t num);
+uint8_t Eeprom_LoadLayout(uint8_t num);
 
 void EVENT_USB_Device_Connect(void);
 void EVENT_USB_Device_Disconnect(void);

@@ -67,11 +67,19 @@ void KeyState_ToggleKeypad(void);
 uint8_t eeprom_safety_byte EEMEM;
 
 // Eeprom sentinel value - if this is not set at startup, re-initialize the eeprom.
-#define EEPROM_SENTINEL 41
+#define EEPROM_SENTINEL 42
 uint8_t eeprom_sentinel_byte EEMEM;
 
 // Key configuration is stored in eeprom. If the sentinel is not valid, initialize from the defaults.
 hid_keycode logical_to_hid_map[NUM_LOGICAL_KEYS] EEMEM;
+
+// We support saving up to 10 key mappings as their difference from the default.
+#define NUM_KEY_MAPPING_INDICES 10
+struct { uint8_t start; uint8_t end; } saved_key_mapping_indices[10] EEMEM;
+
+// Key mappings are saved as a list of (logical_keycode, hid_keycode) pairs.
+#define SAVED_KEY_MAPPINGS_BUFFER_SIZE 128
+struct { logical_keycode l_key; hid_keycode h_key; } saved_key_mappings[SAVED_KEY_MAPPINGS_BUFFER_SIZE] EEMEM;
 
 // State of active keys. Keep track of all pressed or debouncing keys.
 #define KEYSTATE_COUNT 14
@@ -98,7 +106,9 @@ USB_ClassInfo_HID_Device_t Keyboard_HID_Interface =
 	};
 
 // Buffer for printing.
-static char* print_buffer;
+const char MSG_NO_MACRO[] PROGMEM = "no macro support yet";
+const prog_char* print_buffer;
+
 
 static state current_state = STATE_NORMAL;
 
@@ -109,6 +119,12 @@ static state next_state;
 #ifdef KEYPAD_LAYER
 static uint8_t keypad_mode;
 #endif
+
+
+// State engine handlers
+void handle_state_normal(void);
+void handle_state_programming(void);
+
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
@@ -122,7 +138,6 @@ int main(void)
 
 	uint8_t update = 1;
 
-	hid_keycode program_src_hkey = 0;
 	for (;;) {
 		// update key state once per 2ms slice
 		uint8_t slice = (uptimems & 0x1);
@@ -135,31 +150,18 @@ int main(void)
 			update = 1;
 		}
 
+		// in all non-wait states we want to handle the keypad layer button
+#ifdef KEYPAD_LAYER
+		if(current_state != STATE_WAITING && KeyState_CheckKey(LOGICAL_KEY_KEYPAD)){
+			KeyState_ToggleKeypad();
+			next_state = current_state;
+			current_state = STATE_WAITING;
+		}
+#endif
+
 		switch(current_state){
 		case STATE_NORMAL:
-			// check for special keyboard (pre-mapping) key combinations for state transitions
-
-			if(KeyState_CheckKeys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F11)){
-				print_buffer = "no macro support yet";
-				current_state = STATE_PRINTING;
-				next_state = STATE_NORMAL;
-			}
-			else if(KeyState_CheckKeys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F12)){
-				current_state = STATE_WAITING;
-				next_state = STATE_PROGRAMMING_SRC;
-			}
-			else if(KeyState_CheckKeys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F7)){
-				Eeprom_ResetDefaults();
-				current_state = STATE_WAITING;
-				next_state = STATE_NORMAL;
-			}
-#ifdef KEYPAD_LAYER
-			else if(KeyState_CheckKey(LOGICAL_KEY_KEYPAD)){
-				KeyState_ToggleKeypad();
-				current_state = STATE_WAITING;
-				next_state = STATE_NORMAL;
-			}
-#endif
+			handle_state_normal();
 			break;
 		case STATE_WAITING:
 			if(key_press_count == 0){
@@ -168,79 +170,19 @@ int main(void)
 			}
 			break;
 		case STATE_PRINTING:
-			if(*print_buffer == '\0'){
+			if(pgm_read_byte_near(print_buffer) == '\0'){
 				current_state = STATE_WAITING;
 				/* next_state = 0; */
 			}
 			break;
 		case STATE_PROGRAMMING_SRC:
-			// if there is a key press, record it as the programming source key
-			// then transition to programming b via print
-			// consider flashing LEDs, a la Kinesis.
-			if(KeyState_CheckKeys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F12)){
-				current_state = STATE_WAITING;
-				next_state = STATE_NORMAL;
-			}
-#ifdef KEYPAD_LAYER
-			else if(KeyState_CheckKey(LOGICAL_KEY_KEYPAD)){
-				KeyState_ToggleKeypad();
-				current_state = STATE_WAITING;
-				next_state = STATE_PROGRAMMING_SRC;
-			}
-#endif
-			else if(key_press_count == 1){
-				logical_keycode src_lkey;
-				KeyState_GetKeys(&src_lkey); // Will only write one key, as key_press_count == 1
-
-				program_src_hkey = pgm_read_byte_near(&logical_to_hid_map_default[src_lkey]);
-				
-				// can't reprogram a "special" key type (i.e program, keypad), but NO_KEY is ok.
-				if(program_src_hkey >= SPECIAL_HID_KEYS_START && program_src_hkey != NO_KEY){
-					break;
-				}
-
-				next_state = STATE_PROGRAMMING_DST;
-				current_state = STATE_WAITING;
-			}
-
+			handle_state_programming();
 			break;
 		case STATE_PROGRAMMING_DST:
-			// if key press, do it then print the result
-			if(KeyState_CheckKeys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F12)){
-				current_state = STATE_WAITING;
-				next_state = STATE_NORMAL;
-			}
-#ifdef KEYPAD_LAYER
-			else if(KeyState_CheckKey(LOGICAL_KEY_KEYPAD)){
-				KeyState_ToggleKeypad();
-				current_state = STATE_WAITING;
-				next_state = STATE_PROGRAMMING_DST;
-			}
-#endif
-			else if(key_press_count == 1){
-				logical_keycode dst_lkey;
-				KeyState_GetKeys(&dst_lkey); // Will only write one key, as key_press_count == 1
-
-				// can't reprogram a "special" key type (i.e program, keypad), except for NO_KEY
-				// (i.e disable a key)
-				hid_keycode dst_key_default = pgm_read_byte_near(&logical_to_hid_map_default[dst_lkey]);
-				if(dst_key_default >= SPECIAL_HID_KEYS_START && dst_key_default != NO_KEY){
-					break;
-				}
-				
-				// ok, copy the default for the key index program_src_idx to index key_idx.
-				eeprom_update_byte(&logical_to_hid_map[dst_lkey], program_src_hkey);
-
-				current_state = STATE_WAITING;
-				next_state = STATE_PROGRAMMING_SRC;
-			}
+			handle_state_programming();
 			break;
 		case STATE_MACRO_RECORD:
 		case STATE_MACRO_PLAY:
-			break;
-		case STATE_EEWRITE:
-			if(eeprom_is_ready())
-				current_state = next_state;
 			break;
 		}
 
@@ -248,6 +190,128 @@ int main(void)
 		USB_USBTask();
 	}
 }
+
+void handle_state_normal(void){
+	// check for special keyboard (pre-mapping) key combinations for state transitions
+
+	if(key_press_count >= 2 && KeyState_CheckKey(LOGICAL_KEY_PROGRAM)){
+		
+		switch(key_press_count){
+		case 2:
+			{
+				logical_keycode keys[2];
+				KeyState_GetKeys(keys);
+				logical_keycode other = (keys[0] == LOGICAL_KEY_PROGRAM) ? keys[1] : keys[0];
+				switch(other){
+				case LOGICAL_KEY_F11:
+					print_buffer = MSG_NO_MACRO;
+					current_state = STATE_PRINTING;
+					next_state = STATE_NORMAL;
+					break;
+				case LOGICAL_KEY_F12:
+				case LOGICAL_KEY_HYPHEN:
+					current_state = STATE_WAITING;
+					next_state = STATE_PROGRAMMING_SRC;
+					break;
+				case LOGICAL_KEY_F7:
+					Eeprom_ResetDefaults();
+					current_state = STATE_WAITING;
+					next_state = STATE_NORMAL;
+					break;
+				default:
+					break;
+				}
+			}
+			break;
+		case 3:
+			// full reset
+			if(KeyState_CheckKeys(2, LOGICAL_KEY_F7, LOGICAL_KEY_LSHIFT)){
+				Eeprom_ResetFully();
+				current_state = STATE_WAITING;
+				next_state = STATE_NORMAL;
+			}
+			else{
+				// save/load/delete state : PGM + {S/L/D} + {0-9}
+				logical_keycode keys[3];
+				KeyState_GetKeys(keys);
+				logical_keycode type = NO_KEY; // S/L/D
+				logical_keycode pos = NO_KEY;  //0-9
+				for(int i = 0; i < 3; ++i){
+					logical_keycode ki = keys[i];
+					if(ki == LOGICAL_KEY_S || ki == LOGICAL_KEY_L || ki == LOGICAL_KEY_D){
+						type = ki;
+					}
+					else if(ki >= LOGICAL_KEY_1 && ki <= LOGICAL_KEY_0){
+						pos = ki;
+					}
+				}
+				if(type == NO_KEY || pos == NO_KEY) break;
+				int index = pos - LOGICAL_KEY_1;
+				int r;
+				if(type == LOGICAL_KEY_S) {
+					r = Eeprom_SaveLayout(index);
+				} else if(type == LOGICAL_KEY_L) {
+					r = Eeprom_LoadLayout(index);
+				} else {
+					r = Eeprom_DeleteLayout(index);
+				}
+				if(r){
+					// show success by blinking LEDs
+					blinkLEDs();
+					current_state = STATE_WAITING;
+					next_state = STATE_NORMAL;
+				}
+				else{
+					// failure - we have put an error msg in print_buffer
+					current_state = STATE_PRINTING;
+					next_state = STATE_NORMAL;
+				}
+			}
+			break;
+		default:
+			break;
+		}
+
+	}
+
+}
+
+void handle_state_programming(void){
+	static hid_keycode program_src_hkey = 0;
+
+	if(KeyState_CheckKeys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F12) || 
+	  KeyState_CheckKeys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_HYPHEN)){
+		current_state = STATE_WAITING;
+		next_state = STATE_NORMAL;
+	}
+
+	if(key_press_count != 1){
+		return;
+	}
+
+	logical_keycode lkey;
+	KeyState_GetKeys(&lkey); // Will only write one key, as key_press_count == 1
+	
+	hid_keycode default_hkey = pgm_read_byte_near(&logical_to_hid_map_default[lkey]);
+	
+	// can't reprogram a "special" key type (i.e program, keypad), but NO_KEY is ok.
+	if(default_hkey >= SPECIAL_HID_KEYS_START && default_hkey != NO_KEY){
+		return;
+	}
+	
+	if(current_state == STATE_PROGRAMMING_SRC){
+		program_src_hkey = default_hkey;
+		next_state = STATE_PROGRAMMING_DST;
+		current_state = STATE_WAITING;
+	}
+	else{
+		// ok, copy the saved default hkey for the src lkey to the dst lkey.
+		eeprom_update_byte(&logical_to_hid_map[lkey], program_src_hkey);
+		current_state = STATE_WAITING;
+		next_state = STATE_PROGRAMMING_SRC;
+	}
+}
+
 
 
 /** 
@@ -363,9 +427,9 @@ bool KeyState_CheckKey(logical_keycode l_key){
 	return false;
 }
 
-// returns true if all argument keys are down, and no others
+// returns true if all argument keys are down
 bool KeyState_CheckKeys(uint8_t count, ...){
-	if(count != key_press_count) return false;
+	if(count > key_press_count) return false; // trivially know it's impossible
 
 	va_list argp;
 	bool success = true;
@@ -395,26 +459,173 @@ void KeyState_GetKeys(logical_keycode* l_keys){
 	}
 }
 
-void Eeprom_ResetDefaults(void){
-	for(int i = 0; i < NUM_LOGICAL_KEYS; ++i){
-		hid_keycode default_key = pgm_read_byte_near(&logical_to_hid_map_default[i]);
-		eeprom_update_byte(&logical_to_hid_map[i], default_key);
-	}
-	eeprom_update_byte(&eeprom_sentinel_byte, EEPROM_SENTINEL);
-	// flash LEDs to show that we had to reset
-	for(int i = 0; i < 10; ++i){
+
+// blink the LEDs for a while to show that we did some work successfully
+void blinkLEDs(void){
+	for(int i = 0; i < 5; ++i){
 		set_all_leds(LEDMASK_SCROLLLOCK | LEDMASK_CAPS);
 		_delay_ms(50);
 		set_all_leds(LEDMASK_SCROLLLOCK | LEDMASK_NUMLOCK);
 		_delay_ms(50);
 	}
+
 }
 
+// reset the current layout to the default layout
+void Eeprom_ResetDefaults(void){
+	for(int i = 0; i < NUM_LOGICAL_KEYS; ++i){
+		hid_keycode default_key = pgm_read_byte_near(&logical_to_hid_map_default[i]);
+		eeprom_update_byte(&logical_to_hid_map[i], default_key);
+	}
+	// flash LEDs to show that we had to reset
+	blinkLEDs();
+}
+
+// reset the keyboard, including saved layouts 
+void Eeprom_ResetFully(void){
+	eeprom_update_byte(&eeprom_sentinel_byte, EEPROM_SENTINEL);
+	for(int i = 0; i < NUM_KEY_MAPPING_INDICES; ++i){
+		eeprom_update_byte(&saved_key_mapping_indices[i].start, NO_KEY);
+	}
+	Eeprom_ResetDefaults();
+}
+
+static const char MSG_NO_LAYOUT[] PROGMEM = "No such layout";
+
+uint8_t Eeprom_DeleteLayout(uint8_t num){
+	if(num >= NUM_KEY_MAPPING_INDICES){
+		print_buffer = MSG_NO_LAYOUT;
+		return false;
+	}
+	uint8_t start = eeprom_read_byte(&saved_key_mapping_indices[num].start);
+	if(start == NO_KEY){
+		print_buffer = MSG_NO_LAYOUT;
+		return false;
+	}
+	uint8_t end = eeprom_read_byte(&saved_key_mapping_indices[num].end); // start and end are inclusive
+
+	uint8_t length = start - end + 1;
+
+	// clear this entry
+	eeprom_update_byte(&saved_key_mapping_indices[num].start, NO_KEY);
+
+	// now scan the other entries, subtracting length from each entry indexed after end
+	// update the end position so we can move down only necessary data.
+	uint8_t max_end = end;
+	for(int i = 0; i < NUM_KEY_MAPPING_INDICES; ++i){
+		uint8_t i_start = eeprom_read_byte(&saved_key_mapping_indices[i].start);
+		if(i_start != NO_KEY && i_start > end){
+			uint8_t i_end = eeprom_read_byte(&saved_key_mapping_indices[i].end);
+			if(i_end > max_end) max_end = i_end;
+
+			eeprom_update_byte(&saved_key_mapping_indices[i].start, i_start - length);
+			eeprom_update_byte(&saved_key_mapping_indices[i].end,   i_end - length);
+		}
+	}
+	
+	// and move down the data.
+	for(int i = end+1; i <= max_end; ++i){
+		uint8_t lk = eeprom_read_byte(&saved_key_mappings[i].l_key);
+		uint8_t hk = eeprom_read_byte(&saved_key_mappings[i].h_key);
+		eeprom_update_byte(&saved_key_mappings[i - length].l_key, lk);
+		eeprom_update_byte(&saved_key_mappings[i - length].h_key, hk);
+	}
+
+	return true;
+}
+
+
+
+uint8_t Eeprom_SaveLayout(uint8_t num){
+	if(num >= NUM_KEY_MAPPING_INDICES){
+		print_buffer = MSG_NO_LAYOUT;
+		return false;
+	}
+
+	// remove old layout
+	Eeprom_DeleteLayout(num);
+
+	// find last offset
+	uint8_t old_end = 0;
+	for(int i = 0; i < NUM_KEY_MAPPING_INDICES; ++i){
+		uint8_t i_start = eeprom_read_byte(&saved_key_mapping_indices[i].start);
+		if(i_start == NO_KEY) continue;
+		uint8_t i_end = eeprom_read_byte(&saved_key_mapping_indices[i].end);
+		if(i_end > old_end) old_end = i_end;
+	}
+
+	uint8_t start = old_end + 1;
+	uint8_t cursor = start;
+
+	for(logical_keycode l = 0; l < NUM_LOGICAL_KEYS; ++l){
+		hid_keycode h = eeprom_read_byte(&logical_to_hid_map[l]);
+		hid_keycode d = pgm_read_byte_near(&logical_to_hid_map_default[l]);
+		if(h != d){
+			if(cursor >= SAVED_KEY_MAPPINGS_BUFFER_SIZE - 1){
+				static const char msg[] PROGMEM = "Out of space, can't save layout.";
+				print_buffer = msg;
+				return false; // no space!
+			}
+			eeprom_update_byte(&saved_key_mappings[cursor].l_key, l);
+			eeprom_update_byte(&saved_key_mappings[cursor].h_key, h);
+			++cursor;
+		}
+	}
+	if(start != cursor){
+		eeprom_update_byte(&saved_key_mapping_indices[num].start, start);
+		eeprom_update_byte(&saved_key_mapping_indices[num].end,   cursor - 1);
+		return true;
+	}
+	else{
+		static const char msg[] PROGMEM = "No changes, not saved.";
+		print_buffer = msg;
+		return false;
+	}
+}
+
+uint8_t Eeprom_LoadLayout(uint8_t num){
+	if(num >= NUM_KEY_MAPPING_INDICES){
+		print_buffer = MSG_NO_LAYOUT;
+		return false;
+	}
+
+	uint8_t start = eeprom_read_byte(&saved_key_mapping_indices[num].start);
+	if(start == NO_KEY){
+		print_buffer = MSG_NO_LAYOUT;
+		return false;
+	}
+	uint8_t end = eeprom_read_byte(&saved_key_mapping_indices[num].end);
+
+	uint8_t offset = start;
+
+	logical_keycode next_key = eeprom_read_byte(&saved_key_mappings[offset].l_key);
+	logical_keycode next_val = eeprom_read_byte(&saved_key_mappings[offset].h_key);
+	++offset;
+
+	for(logical_keycode lkey = 0; lkey < NUM_LOGICAL_KEYS; ++lkey){
+		if(lkey != next_key){
+			// use default
+			hid_keycode def_val = pgm_read_byte_near(&logical_to_hid_map_default[lkey]);
+			eeprom_update_byte(&logical_to_hid_map[lkey], def_val);
+		}
+		else{
+			// use saved
+			eeprom_update_byte(&logical_to_hid_map[lkey], next_val);
+			if(offset <= end){
+				next_key = eeprom_read_byte(&saved_key_mappings[offset].l_key);
+				next_val = eeprom_read_byte(&saved_key_mappings[offset].h_key);
+				++offset;
+			}
+		}
+	}
+
+	return true;
+}
 
 void Eeprom_Init(void){
 	uint8_t sentinel = eeprom_read_byte(&eeprom_sentinel_byte);
 	if(sentinel != EEPROM_SENTINEL){
-		Eeprom_ResetDefaults();
+		Eeprom_ResetFully();
 	}
 }
 
@@ -691,7 +902,7 @@ void Fill_HIDReport_printing(USB_KeyboardReport_Data_t* ReportData){
 	if(prev->Modifier || prev->KeyCode[0])
 		return; // empty report
 	else{
-		char nextchar = *print_buffer++;
+		char nextchar = pgm_read_byte_near(print_buffer++);
 		uint8_t key, mod;
 		char_to_keys(nextchar, &key, &mod);
 		ReportData->Modifier = mod;
