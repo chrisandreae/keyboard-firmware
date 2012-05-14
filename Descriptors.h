@@ -49,17 +49,24 @@
 		typedef struct
 		{
 			USB_Descriptor_Configuration_Header_t Config;
-			USB_Descriptor_Interface_t            HID_Interface;
-			USB_HID_Descriptor_HID_t              HID_KeyboardHID;
-	        USB_Descriptor_Endpoint_t             HID_ReportINEndpoint;
+			USB_Descriptor_Interface_t            HID1_KeyboardInterface;
+			USB_HID_Descriptor_HID_t              HID1_KeyboardHID;
+	        USB_Descriptor_Endpoint_t             HID1_ReportINEndpoint;
+			USB_Descriptor_Interface_t            HID2_MouseInterface;
+			USB_HID_Descriptor_HID_t              HID2_MouseHID;
+	        USB_Descriptor_Endpoint_t             HID2_ReportINEndpoint;
 		} USB_Descriptor_Configuration_t;
 
 	/* Macros: */
 		/** Endpoint number of the Keyboard HID reporting IN endpoint. */
-		#define KEYBOARD_EPNUM               1
+		#define KEYBOARD_IN_EPNUM               1
+
+		/** Endpoint number of the Mouse HID reporting IN endpoint. */
+		#define MOUSE_IN_EPNUM            3
 
 		/** Size in bytes of the Keyboard HID reporting IN and OUT endpoints. */
-		#define KEYBOARD_EPSIZE              8
+		#define KEYBOARD_EPSIZE           8
+		#define MOUSE_EPSIZE              8
 
 	/* Function Prototypes: */
 		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,

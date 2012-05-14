@@ -226,9 +226,9 @@ const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM = {
 	HID_KEYBOARD_SC_A, 								   //  LOGICAL_KEY_KP_A,
 	HID_KEYBOARD_SC_B, 								   //  LOGICAL_KEY_KP_B,
 	HID_KEYBOARD_SC_C, 								   //  LOGICAL_KEY_KP_C,
-	HID_KEYBOARD_SC_D, 								   //  LOGICAL_KEY_KP_D,
-	HID_KEYBOARD_SC_E, 								   //  LOGICAL_KEY_KP_E,
-	HID_KEYBOARD_SC_F, 								   //  LOGICAL_KEY_KP_F,
+	SPECIAL_HID_KEY_MOUSE_BACK,						   //  LOGICAL_KEY_KP_D,           ***
+	SPECIAL_HID_KEY_MOUSE_FWD, 						   //  LOGICAL_KEY_KP_E,           ***
+	SPECIAL_HID_KEY_MOUSE_RIGHT,				       //  LOGICAL_KEY_KP_F,           ***
 	HID_KEYBOARD_SC_G, 								   //  LOGICAL_KEY_KP_G,
 	HID_KEYBOARD_SC_H, 								   //  LOGICAL_KEY_KP_H,
 	HID_KEYBOARD_SC_KEYPAD_8_AND_UP_ARROW, 	   		   //  LOGICAL_KEY_KP_I, 		   ***
@@ -240,12 +240,12 @@ const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM = {
 	HID_KEYBOARD_SC_KEYPAD_9_AND_PAGE_UP, 	   		   //  LOGICAL_KEY_KP_O, 		   ***
 	HID_KEYBOARD_SC_KEYPAD_MINUS, 				   	   //  LOGICAL_KEY_KP_P, 		   ***
 	HID_KEYBOARD_SC_Q, 								   //  LOGICAL_KEY_KP_Q,
-	HID_KEYBOARD_SC_R, 								   //  LOGICAL_KEY_KP_R,
-	HID_KEYBOARD_SC_S, 								   //  LOGICAL_KEY_KP_S,
+	HID_KEYBOARD_SC_R, 					               //  LOGICAL_KEY_KP_R,
+	SPECIAL_HID_KEY_MOUSE_LEFT, 				       //  LOGICAL_KEY_KP_S,           ***
 	HID_KEYBOARD_SC_T, 								   //  LOGICAL_KEY_KP_T,
 	HID_KEYBOARD_SC_KEYPAD_7_AND_HOME, 		   		   //  LOGICAL_KEY_KP_U, 		   ***
 	HID_KEYBOARD_SC_V, 								   //  LOGICAL_KEY_KP_V,
-	HID_KEYBOARD_SC_W, 								   //  LOGICAL_KEY_KP_W,
+	HID_KEYBOARD_SC_W, 					               //  LOGICAL_KEY_KP_W,
 	HID_KEYBOARD_SC_X, 								   //  LOGICAL_KEY_KP_X,
 	HID_KEYBOARD_SC_Y, 								   //  LOGICAL_KEY_KP_Y,
 	HID_KEYBOARD_SC_Z, 								   //  LOGICAL_KEY_KP_Z,
@@ -288,12 +288,12 @@ const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM = {
 	HID_KEYBOARD_SC_GRAVE_ACCENT_AND_TILDE, 		   //  LOGICAL_KEY_KP_BACKTICK,
 	HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE, 			   //  LOGICAL_KEY_KP_HYPHEN,
 	0x65, 							                   //  LOGICAL_KEY_KP_PAUSE, 	   ***   // this seems to be the windows context menu key. It's not in the LUFA header.
-	HID_KEYBOARD_SC_END, 					   	       //  LOGICAL_KEY_KP_END,
-	HID_KEYBOARD_SC_HOME, 						  	   //  LOGICAL_KEY_KP_HOME,
-	HID_KEYBOARD_SC_DELETE, 						   //  LOGICAL_KEY_KP_DELETE,
-	HID_KEYBOARD_SC_BACKSPACE, 					   	   //  LOGICAL_KEY_KP_BACKSPACE,
-	HID_KEYBOARD_SC_LEFT_ALT, 						   //  LOGICAL_KEY_KP_L_ALT,
-	HID_KEYBOARD_SC_LEFT_CONTROL, 					   //  LOGICAL_KEY_KP_L_CTRL,
+	SPECIAL_HID_KEY_MOUSE_BTN5, 					   //  LOGICAL_KEY_KP_END,         ***
+	SPECIAL_HID_KEY_MOUSE_BTN4,					  	   //  LOGICAL_KEY_KP_HOME,        ***
+	SPECIAL_HID_KEY_MOUSE_BTN2,						   //  LOGICAL_KEY_KP_DELETE,      ***
+	SPECIAL_HID_KEY_MOUSE_BTN1, 					   //  LOGICAL_KEY_KP_BACKSPACE,   ***
+	HID_KEYBOARD_SC_LEFT_ALT, 					       //  LOGICAL_KEY_KP_L_ALT
+	SPECIAL_HID_KEY_MOUSE_BTN3, 					   //  LOGICAL_KEY_KP_L_CTRL       ***
 	HID_KEYBOARD_SC_BACKSLASH_AND_PIPE, 			   //  LOGICAL_KEY_KP_BACKSLASH,
 	HID_KEYBOARD_SC_PAGE_DOWN, 						   //  LOGICAL_KEY_KP_PGDN,
 	HID_KEYBOARD_SC_PAGE_UP, 						   //  LOGICAL_KEY_KP_PGUP,
