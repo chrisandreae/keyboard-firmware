@@ -1,12 +1,16 @@
 /*
+  Kinesis Advantage keyboard firmware replacement
+  Copyright 2012 Chris Andreae (chris (at) andreae.gen.nz)
+
+  See Kinesis.h for keyboard hardware documentation.
+
+  This program includes library and sample code from:
 			 LUFA Library
 	 Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
 		   www.lufa-lib.org
-*/
 
-/*
   Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
@@ -27,12 +31,6 @@
   arising out of or in connection with the use or performance of
   this software.
 */
-
-/** \file
- *
- *  Main source file for the Keyboard demo. This file contains the main tasks of
- *  the demo and is responsible for the initial application hardware configuration.
- */
 
 #include "Keyboard.h"
 #include "avr/eeprom.h"

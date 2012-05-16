@@ -53,43 +53,43 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM KeyboardReport[] =
 
 USB_Descriptor_HIDReport_Datatype_t PROGMEM MouseReport[] =
 {
-	0x05, 0x01,          /* Usage Page (Generic Desktop)                    */
-	0x09, 0x02,          /* Usage (Mouse)                                   */
-	0xA1, 0x01,          /* Collection (Application)                        */
-	0x09, 0x01,          /*   Usage (Pointer)                               */
-	0xA1, 0x00,          /*   Collection (Physical)                         */
-	0x95, 0x05,          /*     Report Count (5)                            */
-	0x75, 0x01,          /*     Report Size (1)                             */
-	0x05, 0x09,          /*     Usage Page (Button)                         */
-	0x19, 0x01,          /*     Usage Minimum (Button 1)                    */
-	0x29, 0x05,          /*     Usage Maximum (Button 5)                    */
-	0x15, 0x00,          /*     Logical Minimum (0)                         */
-	0x25, 0x01,          /*     Logical Maximum (1)                         */
-	0x81, 0x02,          /*     Input (Data, Variable, Absolute)            */
-	0x95, 0x01,          /*     Report Count (1)                            */
-	0x75, 0x03,          /*     Report Size (3)                             */
-	0x81, 0x01,          /*     Input (Constant)                            */
-	0x75, 0x08,          /*     Report Size (8)                             */
-	0x95, 0x02,          /*     Report Count (2)                            */
-	0x05, 0x01,          /*     Usage Page (Generic Desktop Control)        */
-	0x09, 0x30,          /*     Usage X                                     */
-	0x09, 0x31,          /*     Usage Y                                     */
-	0x15, 0x81,          /*     Logical Minimum (-127)                      */
-	0x25, 0x7F,          /*     Logical Maximum (127)                       */
-	0x81, 0x06,          /*     Input (Data, Variable, Relative)            */
-	0xC0,                /*   End Collection                                */
-	0xC0,                /* End Collection                                  */
+	HID_RI_USAGE_PAGE(8, 0x01),                                           /* Usage Page (Generic Desktop)                    */
+	HID_RI_USAGE(8, 0x02),                                                /* Usage (Mouse)                                   */
+	HID_RI_COLLECTION(8, 0x1),                                            /* Collection (Application)                        */
+	HID_RI_USAGE(8, 0x01),                                                /*   Usage (Pointer)                               */
+	HID_RI_COLLECTION(8, 0x00),                                           /*   Collection (Physical)                         */
+	HID_RI_REPORT_COUNT(8, 0x05),                                         /*     Report Count (5)                            */
+	HID_RI_REPORT_SIZE(8, 0x01),                                          /*     Report Size (1)                             */
+	HID_RI_USAGE_PAGE(8, 0x09),                                           /*     Usage Page (Button)                         */
+	HID_RI_USAGE_MINIMUM(8, 0x01),                                        /*     Usage Minimum (Button 1)                    */
+	HID_RI_USAGE_MAXIMUM(8, 0x05),                                        /*     Usage Maximum (Button 5)                    */
+	HID_RI_LOGICAL_MINIMUM(8, 0x00),                                      /*     Logical Minimum (0)                         */
+	HID_RI_LOGICAL_MAXIMUM(8, 0x01),                                      /*     Logical Maximum (1)                         */
+	HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),  /*     Input (Data, Variable, Absolute)            */
+	HID_RI_REPORT_COUNT(8, 0x01),                                         /*     Report Count (1)                            */
+	HID_RI_REPORT_SIZE(8, 0x03),                                          /*     Report Size (3)                             */
+	HID_RI_INPUT(8, HID_IOF_CONSTANT),                                    /*     Input (Constant)                            */
+	HID_RI_REPORT_SIZE(8, 0x08),                                          /*     Report Size (8)                             */
+	HID_RI_REPORT_COUNT(8, 0x02),                                         /*     Report Count (2)                            */
+	HID_RI_USAGE_PAGE(8, 0x01),                                           /*     Usage Page (Generic Desktop Control)        */
+	HID_RI_USAGE(8, 0x30),                                                /*     Usage X                                     */
+	HID_RI_USAGE(8, 0x31),                                                /*     Usage Y                                     */
+	HID_RI_LOGICAL_MINIMUM(8, 0x81),                                      /*     Logical Minimum (-127)                      */
+	HID_RI_LOGICAL_MAXIMUM(8, 0x7F),                                      /*     Logical Maximum (127)                       */
+	HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),  /*     Input (Data, Variable, Relative)            */
+	HID_RI_END_COLLECTION(0),                                             /*   End Collection                                */
+	HID_RI_END_COLLECTION(0),                                             /* End Collection                                  */
 };
 
 /* mouse wheel looks like:
-                       // ------------------------------  Vertical wheel
-    0x09, 0x38,        //         USAGE (Wheel)
-    0x15, 0x81,        //         LOGICAL_MINIMUM (-127)
-    0x25, 0x7f,        //         LOGICAL_MAXIMUM (127)
-    0x35, 0x00,        //         PHYSICAL_MINIMUM (0)        - reset physical
-    0x45, 0x00,        //         PHYSICAL_MAXIMUM (0)
-    0x75, 0x08,        //         REPORT_SIZE (8)
-    0x81, 0x06,        //         INPUT (Data,Var,Rel)
+	                                                                      // ------------------------------  Vertical wheel
+	HID_RI_USAGE(8, 0x38),                                                //          USAGE (Wheel)
+	HID_RI_LOGICAL_MINIMUM(8, 0x81),                                      //          LOGICAL_MINIMUM (-127)
+	HID_RI_LOGICAL_MAXIMUM(8, 0x7F),                                      //          LOGICAL_MAXIMUM (127)
+	HID_RI_PHYSICAL_MINIMUM(8, 0),                                        //          PHYSICAL_MINIMUM (0)        - reset physical
+	HID_RI_PHYSICAL_MAXIMUM(8, 0),                                        //          PHYSICAL_MAXIMUM (0)
+	HID_RI_REPORT_SIZE(8, 0x08),                                          //          REPORT_SIZE (8)
+	HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),  //          INPUT (Data,Var,Rel)
 */
 
 /** Device descriptor structure. This descriptor, located in FLASH memory, describes the overall
