@@ -1,10 +1,23 @@
 /*
-  Kinesis Advantage keyboard firmware replacement
+  Kinesis ergonomic keyboard firmware replacement
+
   Copyright 2012 Chris Andreae (chris (at) andreae.gen.nz)
+
+  This file is offered under either of the GNU GPL v2 or MIT licences
+  below in order that it may be used with either of the V-USB or LUFA
+  USB libraries.
 
   See Kinesis.h for keyboard hardware documentation.
 
-  This program includes library and sample code from:
+  ==========================
+
+  If built for V-USB, this program includes library and sample code from:
+     V-USB, (C) Objective Development Software GmbH
+	 Licensed under the GNU GPL v2 (see GPL2.txt)
+
+  ==========================
+
+  If built for LUFA, this program includes library and sample code from:
 			 LUFA Library
 	 Copyright (C) Dean Camera, 2011.
 
@@ -32,93 +45,22 @@
   this software.
 */
 
+
 #include "Keyboard.h"
 #include "avr/eeprom.h"
+#include <util/delay.h>
 #include <stdarg.h>
 
-// LUFA configuration
-
 /** Buffer to hold the previously generated Keyboard HID report, for comparison purposes inside the HID class driver. */
-static uint8_t PrevKeyboardHIDReportBuffer[sizeof(USB_KeyboardReport_Data_t)];
+KeyboardReport_Data_t PrevKeyboardHIDReportBuffer;
 
-/** Buffer to hold the previously generated Mouse HID report, for comparison purposes inside the HID class driver. */
-uint8_t PrevMouseHIDReportBuffer[sizeof(USB_MouseReport_Data_t)];
-
-/** LUFA HID Class driver interface configuration and state information. This structure is
- *  passed to all HID Class driver functions, so that multiple instances of the same class
- *  within a device can be differentiated from one another.
- */
-USB_ClassInfo_HID_Device_t Keyboard_HID_Interface =
- 	{
-		.Config =
-			{
-				.InterfaceNumber              = 0,
-
-				.ReportINEndpointNumber       = KEYBOARD_IN_EPNUM,
-				.ReportINEndpointSize         = KEYBOARD_EPSIZE,
-				.ReportINEndpointDoubleBank   = false,
-
-				.PrevReportINBuffer           = PrevKeyboardHIDReportBuffer,
-				.PrevReportINBufferSize       = sizeof(PrevKeyboardHIDReportBuffer),
-			},
-	};
-
-/** LUFA HID Class driver interface configuration and state information. This structure is
- *  passed to all HID Class driver functions, so that multiple instances of the same class
- *  within a device can be differentiated from one another. This is for the mouse HID
- *  interface within the device.
- */
-USB_ClassInfo_HID_Device_t Mouse_HID_Interface =
-	{
-		.Config =
-			{
-				.InterfaceNumber              = 1,
-
-				.ReportINEndpointNumber       = MOUSE_IN_EPNUM,
-				.ReportINEndpointSize         = MOUSE_EPSIZE,
-
-				.PrevReportINBuffer           = PrevMouseHIDReportBuffer,
-				.PrevReportINBufferSize       = sizeof(PrevMouseHIDReportBuffer),
-			},
-	};
-
+#ifdef BUILD_FOR_LUFA
+/** Buffer to hold the previously generated Mouse HID report, for comparison purposes inside the HID class driver.  Only needed for LUFA class driver. */
+MouseReport_Data_t PrevMouseHIDReportBuffer;
+#endif
 
 // Keyboard
-
-// time in ms since boot, wraps every 32 days or so.
-static uint32_t uptimems = 0;
-
-#define NO_KEY 0xFF
-
-/* Logical keys are mapped to HID codes. We want to be able to assign some extra actions
-   that don't correspond to valid HID codes, so we assign some extra codes for our use 
-   at the end of the HID range, after E7, the last HID key. As these aren't valid keycodes,
-   they'll never be sent via USB
-*/
-#define SPECIAL_HID_KEYS_START 0xE8
-// some special keys are so special we want to forbid ever remapping them.
-// We put these after PROGRAM
-#define SPECIAL_HID_KEYS_NOREMAP_START SPECIAL_HID_KEY_PROGRAM
-
-#define SPECIAL_HID_KEYS_MOUSE_START SPECIAL_HID_KEY_MOUSE_BTN1
-#define SPECIAL_HID_KEYS_MOUSE_END SPECIAL_HID_KEY_MOUSE_RIGHT
-
-enum SPECIAL_HID_KEYS{
-	SPECIAL_HID_KEY_MOUSE_BTN1 = 0xE8,
-	SPECIAL_HID_KEY_MOUSE_BTN2,
-	SPECIAL_HID_KEY_MOUSE_BTN3,
-	SPECIAL_HID_KEY_MOUSE_BTN4,
-	SPECIAL_HID_KEY_MOUSE_BTN5,
-	SPECIAL_HID_KEY_MOUSE_FWD,
-	SPECIAL_HID_KEY_MOUSE_BACK,
-	SPECIAL_HID_KEY_MOUSE_LEFT,
-	SPECIAL_HID_KEY_MOUSE_RIGHT,
-	// We'll want placeholder special keys for "look up a macro or program to execute" - if a lkey maps to them,
-	// look up that lkey in the macros/programs table
-	SPECIAL_HID_KEY_PROGRAM = 0xFD,
-	SPECIAL_HID_KEY_KEYPAD,
-};
-
+volatile uint32_t uptimems;
 
 // keyboard settings
 /* #include "4key.h" */
@@ -167,20 +109,37 @@ static state next_state;
 static uint8_t keypad_mode;
 #endif
 
-
-// State engine handlers
+// Predeclarations
 void handle_state_normal(void);
 void handle_state_programming(void);
+
+void updateLEDs(void);
+void blinkLEDs(void);
+
+void KeyState_Init(void);
+void KeyState_Update(void);
+
+bool KeyState_CheckKey(logical_keycode key);
+bool KeyState_CheckKeys(uint8_t count, ...);
+void KeyState_GetKeys(logical_keycode* keys);
+
+void Eeprom_Init(void);
+void Eeprom_ResetDefaults(void);
+void Eeprom_ResetFully(void);
+uint8_t Eeprom_DeleteLayout(uint8_t num);
+uint8_t Eeprom_SaveLayout(uint8_t num);
+uint8_t Eeprom_LoadLayout(uint8_t num);
 
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
  */
-int main(void)
+void __attribute__((noreturn)) Keyboard_Main(void)
 {
-	SetupHardware();
+	ports_init();
+	KeyState_Init();
+	Eeprom_Init();
 
-	set_all_leds(LEDMASK_USB_NOTREADY);
 	sei();
 
 	struct { int keys:1; int mouse:1; } update;
@@ -237,16 +196,16 @@ int main(void)
 		   identical reports won't be ignored by the class driver, so
 		   report speed affects mouse movement speed. */
 		uint8_t mouse_slice = (uptimems & 0x8);
+		uint8_t perform_mouse_update = 0;
 		if(!mouse_slice && update.mouse){
-			HID_Device_USBTask(&Mouse_HID_Interface);
+			perform_mouse_update = 1;
 			update.mouse = 0;
 		}
 		else if(!update.mouse && mouse_slice){
 			update.mouse = 1;
 		}
 
-		HID_Device_USBTask(&Keyboard_HID_Interface);
-		USB_USBTask();
+		Perform_USB_Update(1, perform_mouse_update);
 	}
 }
 
@@ -688,71 +647,7 @@ void Eeprom_Init(void){
 	}
 }
 
-/** Configures the board hardware and chip peripherals for the demo's functionality. */
-void SetupHardware(void)
-{
-	/* Disable watchdog if enabled by bootloader/fuses */
-	MCUSR &= ~(1 << WDRF);
-	wdt_disable();
-
-	/* Disable clock division */
-	clock_prescale_set(clock_div_1);
-
-	/* Hardware Initialization */
-	ports_init();
-
-	KeyState_Init();
-
-	Eeprom_Init();
-
-	USB_Init();
-
-}
-
-
-/** Event handler for the library USB Connection event. */
-void EVENT_USB_Device_Connect(void)
-{
-	set_all_leds(LEDMASK_USB_ENUMERATING);
-}
-
-/** Event handler for the library USB Disconnection event. */
-void EVENT_USB_Device_Disconnect(void)
-{
-	set_all_leds(LEDMASK_USB_NOTREADY);
-}
-
-/** Event handler for the library USB Configuration Changed event. */
-void EVENT_USB_Device_ConfigurationChanged(void)
-{
-	bool ConfigSuccess = true;
-
-	ConfigSuccess &= HID_Device_ConfigureEndpoints(&Keyboard_HID_Interface);
-
-	ConfigSuccess &= HID_Device_ConfigureEndpoints(&Mouse_HID_Interface);
-
-	// enable the start-of-frame event (millisecond callback)
-	USB_Device_EnableSOFEvents();
-
-	set_all_leds(ConfigSuccess ? LEDMASK_USB_READY : LEDMASK_USB_ERROR);
-}
-
-/** Event handler for the library USB Control Request reception event. */
-void EVENT_USB_Device_ControlRequest(void)
-{
-	HID_Device_ProcessControlRequest(&Keyboard_HID_Interface);
-	HID_Device_ProcessControlRequest(&Mouse_HID_Interface);
-}
-
-/** Event handler for the USB device Start Of Frame event. */
-void EVENT_USB_Device_StartOfFrame(void)
-{
-	++uptimems;
-	HID_Device_MillisecondElapsed(&Keyboard_HID_Interface);
-	HID_Device_MillisecondElapsed(&Mouse_HID_Interface);
-}
-
-static void Fill_HIDReport_normal(USB_KeyboardReport_Data_t* KeyboardReport){
+static void Fill_HIDReport_normal(KeyboardReport_Data_t* KeyboardReport){
 	uint8_t UsedKeyCodes = 0;
 	uint8_t rollover = false;
 	// todo: macro mode: if i'm in macro mode, ignore my state and fire the next events in the macro
@@ -825,7 +720,7 @@ static uint8_t mouse_accel(uint16_t time){
 	}
 }
 
-static int Fill_MouseReport(USB_MouseReport_Data_t* MouseReport){
+bool Fill_MouseReport(MouseReport_Data_t* MouseReport){
 	static uint16_t mousedown_time = 1;
 
 	// check key state
@@ -1055,12 +950,12 @@ static void char_to_keys(const char nextchar, hid_keycode* nextkey, hid_keycode*
 	}
 }
 
-void Fill_HIDReport_printing(USB_KeyboardReport_Data_t* ReportData){
+void Fill_HIDReport_printing(KeyboardReport_Data_t* ReportData){
 	// if the last report was a key, send empty. Otherwise send the
 	// next character from print_buffer
-	USB_KeyboardReport_Data_t* prev = (USB_KeyboardReport_Data_t*) PrevKeyboardHIDReportBuffer;
-	if(prev->Modifier || prev->KeyCode[0])
+	if(PrevKeyboardHIDReportBuffer.Modifier || PrevKeyboardHIDReportBuffer.KeyCode[0]){
 		return; // empty report
+	}
 	else{
 		char nextchar = pgm_read_byte_near(print_buffer++);
 		uint8_t key, mod;
@@ -1071,51 +966,30 @@ void Fill_HIDReport_printing(USB_KeyboardReport_Data_t* ReportData){
 	}
 }
 
-
-
-/** HID class driver callback function for the creation of HID reports to the host.
- *
- *  \param[in]     HIDInterfaceInfo  Pointer to the HID class interface configuration structure being referenced
- *  \param[in,out] ReportID    Report ID requested by the host if non-zero, otherwise callback should set to the generated report ID
- *  \param[in]     ReportType  Type of the report to create, either HID_REPORT_ITEM_In or HID_REPORT_ITEM_Feature
- *  \param[out]    ReportData  Pointer to a buffer where the created report should be stored
- *  \param[out]    ReportSize  Number of bytes written in the report (or zero if no report is to be sent
- *
- *  \return Boolean true to force the sending of the report, false to let the library determine if it needs to be sent
+/**
+ * Fills the argument buffer with a keyboard report according to the
+ * current state returns true if the report must be sent, false if it
+ * may be compared to the previous report before sending.
  */
-bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo, uint8_t* const ReportID,
-										 const uint8_t ReportType, void* ReportData, uint16_t* const ReportSize)
-{
-	if (HIDInterfaceInfo == &Keyboard_HID_Interface){
-		USB_KeyboardReport_Data_t* KeyboardReport = (USB_KeyboardReport_Data_t*)ReportData;
-
-		*ReportSize = sizeof(USB_KeyboardReport_Data_t);
-
-		switch(current_state){
-		case STATE_NORMAL:
-		case STATE_PROGRAMMING_SRC:
-		case STATE_PROGRAMMING_DST:
-			Fill_HIDReport_normal(KeyboardReport);
-			return false;
-		case STATE_PRINTING:
-			Fill_HIDReport_printing(KeyboardReport);
-			return true;
-		case STATE_MACRO_RECORD:
-			Fill_HIDReport_normal(KeyboardReport);
-			// TODO: If this report is different to the previous one, save it in the macro buffer.
-		case STATE_MACRO_PLAY:
-			// TODO: Fetch the next report from the macro buffer and replay it
-		default:
-			// We're not in a state which allows typing: report no keys
-			return false;
-		}
+bool Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
+	switch(current_state){
+	case STATE_NORMAL:
+	case STATE_PROGRAMMING_SRC:
+	case STATE_PROGRAMMING_DST:
+		Fill_HIDReport_normal(KeyboardReport);
+		return false;
+	case STATE_PRINTING:
+		Fill_HIDReport_printing(KeyboardReport);
+		return true;
+	case STATE_MACRO_RECORD:
+		Fill_HIDReport_normal(KeyboardReport);
+		// TODO: If this report is different to the previous one, save it in the macro buffer.
+	case STATE_MACRO_PLAY:
+		// TODO: Fetch the next report from the macro buffer and replay it
+	default:
+		// We're not in a state which allows typing: report no keys
+		return false;
 	}
-	else{
-		USB_MouseReport_Data_t* MouseReport = (USB_MouseReport_Data_t*)ReportData;
-		*ReportSize = sizeof(USB_MouseReport_Data_t);
-		return Fill_MouseReport(MouseReport);
-	}
-	return false;
 }
 
 
@@ -1162,23 +1036,27 @@ void updateLEDs(void){
 	set_all_leds(LEDMask);
 }
 
-/** HID class driver callback function for the processing of HID reports from the host.
- *
- *  \param[in] HIDInterfaceInfo  Pointer to the HID class interface configuration structure being referenced
- *  \param[in] ReportID    Report ID of the received report from the host
- *  \param[in] ReportType  The type of report that the host has sent, either HID_REPORT_ITEM_Out or HID_REPORT_ITEM_Feature
- *  \param[in] ReportData  Pointer to a buffer where the created report has been stored
- *  \param[in] ReportSize  Size in bytes of the received HID report
- */
-void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo,
-										  const uint8_t ReportID,
-										  const uint8_t ReportType,
-										  const void* ReportData,
-										  const uint16_t ReportSize)
-{
-	if (HIDInterfaceInfo == &Keyboard_HID_Interface)
-		{
-			uint8_t* LEDReport = (uint8_t*)ReportData;
-			USB_LEDReport = *LEDReport;
-		}
+void Process_KeyboardLEDReport(uint8_t report){
+	USB_LEDReport = report;
+}
+
+void Update_USBState(USB_State state){
+	switch(state){
+	case NOTREADY:
+		set_all_leds(LEDMASK_USB_NOTREADY);
+		break;
+	case ENUMERATING:
+		set_all_leds(LEDMASK_USB_ENUMERATING);
+		break;
+	case READY:
+		set_all_leds(LEDMASK_USB_READY);
+		break;
+	case ERROR:
+		set_all_leds(LEDMASK_USB_ERROR);
+		break;
+	}
+}
+
+void Update_Millis(uint8_t increment){
+	uptimems += increment;
 }

@@ -1,0 +1,97 @@
+# Name: Makefile.vusb
+# Project: Kinesis Ergonomic Keyboard Firmware Replacement (v-usb)
+# Author: Christian Starkjohann, Chris Andreae
+# Creation Date: 2012-08-12
+# Tabsize: 4
+# Copyright: (c) 2008 by OBJECTIVE DEVELOPMENT Software GmbH, 2012 by Chris Andreae
+# License: GNU GPL v2 (see GPL2.txt)
+
+DEVICE  = atmega16a
+AVRDUDE_DEVICE = atmega16
+
+FUSE_L  = 0xFF
+FUSE_H  = 0xC1
+
+F_CPU   = 16000000	# in Hz
+AVRDUDE = avrdude -c usbasp -p $(AVRDUDE_DEVICE) # edit this line for your programmer
+
+CFLAGS  = -I. -Ivusb -Ivusb/usbdrv -DDEBUG_LEVEL=0 -DBUILD_FOR_VUSB -std=c99
+
+OBJDIR = obj
+
+SRCS = vusb/usbdrv/usbdrv.o    \
+	   vusb/usbdrv/usbdrvasm.o \
+	   vusb/usbdrv/oddebug.o   \
+	   vusb/vusb_main.o 	   \
+	   Keyboard.o 			   \
+	   Descriptors.o 		   \
+	   kinesis.o
+
+OBJECTS = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(SRCS))))
+
+COMPILE = avr-gcc -Wall -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
+
+# symbolic targets:
+help:
+	@echo "This Makefile has no default rule. Use one of the following:"
+	@echo "make hex ....... to build main.hex"
+	@echo "make program ... to flash fuses and firmware"
+	@echo "make fuse ...... to flash the fuses"
+	@echo "make flash ..... to flash the firmware (use this on metaboard)"
+	@echo "make clean ..... to delete objects and hex file"
+
+hex: vusb_main.hex
+
+program: flash fuse
+
+# rule for programming fuse bits:
+fuse:
+	@[ "$(FUSE_H)" != "" -a "$(FUSE_L)" != "" ] || \
+		{ echo "*** Edit Makefile and choose values for FUSE_L and FUSE_H!"; exit 1; }
+	$(AVRDUDE) -U hfuse:w:$(FUSE_H):m -U lfuse:w:$(FUSE_L):m
+
+# rule for uploading firmware:
+flash: vusb_main.hex
+	$(AVRDUDE) -U flash:w:vusb_main.hex:i
+
+# rule for deleting dependent files (those which can be built by Make):
+clean:
+	rm -rf vusb_main.hex vusb_main.lst vusb_main.obj  vusb_main.cof  \
+		vusb_main.list vusb_main.map vusb_main.eep.hex vusb_main.elf \
+		obj/*
+
+# Ensure output directories exist:
+%/.made:
+	mkdir -p $(dir $@)
+	touch $@
+
+# Dependencies
+DEPS=$(addsuffix .d,$(basename $(OBJECTS)))
+-include $(DEPS)
+
+$(OBJECTS): | $(addsuffix .made,$(sort $(dir $(OBJECTS))))
+
+# Generic rule for compiling C files:
+$(OBJDIR)/%.o: %.c
+	$(COMPILE) -c -MMD -MF ${@:.o=.d} -MT $@ -o $@ $<
+
+# Generic rule for assembling Assembler source files:
+$(OBJDIR)/%.o: %.S
+	$(COMPILE) -x assembler-with-cpp -c $< -o $@
+# "-x assembler-with-cpp" should not be necessary since this is the default
+# file type for the .S (with capital S) extension. However, upper case
+# characters are not always preserved on Windows. To ensure WinAVR
+# compatibility define the file type manually.
+
+vusb_main.elf: $(OBJECTS)
+	$(COMPILE) -o vusb_main.elf $(OBJECTS)
+
+vusb_main.hex: vusb_main.elf
+	rm -f vusb_main.hex vusb_main.eep.hex
+	avr-objcopy -j .text -j .data -O ihex vusb_main.elf vusb_main.hex
+	avr-size vusb_main.hex
+
+# debugging targets:
+
+disasm:	vusb_main.elf
+	avr-objdump -d vusb_main.elf

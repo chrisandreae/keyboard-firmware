@@ -1,12 +1,29 @@
 /*
-             LUFA Library
-     Copyright (C) Dean Camera, 2011.
+  Kinesis ergonomic keyboard firmware replacement
+
+  Copyright 2012 Chris Andreae (chris (at) andreae.gen.nz)
+
+  This file is offered under either of the GNU GPL v2 or MIT licences
+  below in order that it may be used with either of the V-USB or LUFA
+  USB libraries.
+
+  See Kinesis.h for keyboard hardware documentation.
+
+  ==========================
+
+  If built for V-USB, this program includes library and sample code from:
+     V-USB, (C) Objective Development Software GmbH
+	 Licensed under the GNU GPL v2 (see GPL2.txt)
+
+  ==========================
+
+  If built for LUFA, this program includes library and sample code from:
+			 LUFA Library
+	 Copyright (C) Dean Camera, 2011.
 
   dean [at] fourwalledcubicle [dot] com
-           www.lufa-lib.org
-*/
+		   www.lufa-lib.org
 
-/*
   Copyright 2011  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
@@ -28,10 +45,6 @@
   this software.
 */
 
-/** \file
- *
- *  Header file for Descriptors.c.
- */
 
 #ifndef _DESCRIPTORS_H_
 #define _DESCRIPTORS_H_
@@ -39,7 +52,11 @@
 	/* Includes: */
 		#include <avr/pgmspace.h>
 
+#ifdef BUILD_FOR_LUFA
 		#include <LUFA/Drivers/USB/USB.h>
+#else
+		#include <LUFA_compat.h> // Stripped types from LUFA headers
+#endif
 
 	/* Type Defines: */
 		/** Type define for the device configuration descriptor structure. This must be defined in the
@@ -57,6 +74,23 @@
 	        USB_Descriptor_Endpoint_t             HID2_ReportINEndpoint;
 		} USB_Descriptor_Configuration_t;
 
+		typedef struct
+		{
+			uint8_t Button; /**< Button mask for currently pressed buttons in the mouse. */
+			int8_t  X; /**< Current delta X movement of the mouse. */
+			int8_t  Y; /**< Current delta Y movement on the mouse. */
+			int8_t  Wheel;
+		} __attribute__((packed)) MouseReport_Data_t;
+		
+		typedef struct
+		{
+			uint8_t Modifier; /**< Keyboard modifier byte, indicating pressed modifier keys (a combination of
+							   *   \c HID_KEYBOARD_MODIFER_* masks).
+							   */
+			uint8_t Reserved; /**< Reserved for OEM use, always set to 0. */
+			uint8_t KeyCode[6]; /**< Key codes of the currently pressed keys. */
+		} __attribute__((packed)) KeyboardReport_Data_t;
+
 	/* Macros: */
 		/** Endpoint number of the Keyboard HID reporting IN endpoint. */
 		#define KEYBOARD_IN_EPNUM               1
@@ -65,14 +99,8 @@
 		#define MOUSE_IN_EPNUM            3
 
 		/** Size in bytes of the Keyboard HID reporting IN and OUT endpoints. */
-		#define KEYBOARD_EPSIZE           8
-		#define MOUSE_EPSIZE              8
+		#define HID_EPSIZE           8
 
-	/* Function Prototypes: */
-		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
-		                                    const uint8_t wIndex,
-		                                    const void** const DescriptorAddress)
-		                                    ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
 #endif
 
