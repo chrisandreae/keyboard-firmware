@@ -51,7 +51,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM KeyboardReport[] =
 	HID_DESCRIPTOR_KEYBOARD(6)
 };
 
-USB_Descriptor_HIDReport_Datatype_t PROGMEM MouseReport[] =
+const USB_Descriptor_HIDReport_Datatype_t PROGMEM MouseReport[] =
 {
 	HID_RI_USAGE_PAGE(8, 0x01),                                           /* Usage Page (Generic Desktop)                    */
 	HID_RI_USAGE(8, 0x02),                                                /* Usage (Mouse)                                   */

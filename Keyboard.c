@@ -154,7 +154,7 @@ static uint8_t key_press_count = 0;
 
 // Buffer for printing.
 const char MSG_NO_MACRO[] PROGMEM = "no macro support yet";
-const prog_char* print_buffer;
+const char* print_buffer;
 
 
 static state current_state = STATE_NORMAL;
