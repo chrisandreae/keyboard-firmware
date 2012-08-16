@@ -723,6 +723,8 @@ static uint8_t mouse_accel(uint16_t time){
 bool Fill_MouseReport(MouseReport_Data_t* MouseReport){
 	static uint16_t mousedown_time = 1;
 
+	static uint8_t last_button_report = 0;
+
 	// check key state
 	int send = 0;
 	int moving = 0;
@@ -776,6 +778,9 @@ bool Fill_MouseReport(MouseReport_Data_t* MouseReport){
 		mousedown_time++;
 	else
 		mousedown_time = 1;
+
+	if(MouseReport->Button != last_button_report) send = true; // If the buttons have changed, send a report immediately
+	last_button_report = MouseReport->Button;
 
 	return send;
 }
