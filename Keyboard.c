@@ -48,6 +48,7 @@
 
 #include "Keyboard.h"
 #include "avr/eeprom.h"
+#include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stdarg.h>
 
@@ -78,12 +79,16 @@ uint8_t eeprom_safety_byte EEMEM;
 #define EEPROM_SENTINEL 42
 uint8_t eeprom_sentinel_byte EEMEM;
 
+// Persistent configuration (e.g. sound enabled)
+configuration_state current_config;
+configuration_state eeprom_config EEMEM;
+
 // Key configuration is stored in eeprom. If the sentinel is not valid, initialize from the defaults.
 hid_keycode logical_to_hid_map[NUM_LOGICAL_KEYS] EEMEM;
 
 // We support saving up to 10 key mappings as their difference from the default.
 #define NUM_KEY_MAPPING_INDICES 10
-struct { uint8_t start; uint8_t end; } saved_key_mapping_indices[10] EEMEM;
+struct { uint8_t start; uint8_t end; } saved_key_mapping_indices[NUM_KEY_MAPPING_INDICES] EEMEM;
 
 // Key mappings are saved as a list of (logical_keycode, hid_keycode) pairs.
 #define SAVED_KEY_MAPPINGS_BUFFER_SIZE 128
@@ -130,6 +135,14 @@ uint8_t Eeprom_DeleteLayout(uint8_t num);
 uint8_t Eeprom_SaveLayout(uint8_t num);
 uint8_t Eeprom_LoadLayout(uint8_t num);
 
+configuration_state Eeprom_LoadConfig(void);
+void Eeprom_SaveConfig(configuration_state state);
+
+#ifdef USE_BUZZER
+void buzzer_init(void);
+void buzzer_start(int ms);
+void buzzer_update(void);
+#endif
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
@@ -139,6 +152,10 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 	ports_init();
 	KeyState_Init();
 	Eeprom_Init();
+#ifdef USE_BUZZER
+	buzzer_init();
+#endif
+	current_config = Eeprom_LoadConfig();
 
 	sei();
 
@@ -155,6 +172,10 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 		else if(!update.keys && slice){
 			update.keys = 1;
 		}
+
+#ifdef USE_BUZZER
+		buzzer_update();
+#endif
 
 		// in all non-wait states we want to handle the keypad layer button
 #ifdef KEYPAD_LAYER
@@ -227,10 +248,19 @@ void handle_state_normal(void){
 					next_state = STATE_NORMAL;
 					break;
 				case LOGICAL_KEY_F12:
-				case LOGICAL_KEY_HYPHEN:
 					current_state = STATE_WAITING;
 					next_state = STATE_PROGRAMMING_SRC;
 					break;
+#ifdef USE_BUZZER
+				case LOGICAL_KEY_BACKSLASH:
+					current_config.key_sound_enabled = !current_config.key_sound_enabled;
+					Eeprom_SaveConfig(current_config);
+					buzzer_start(current_config.key_sound_enabled ? 300 : 150);
+
+					current_state = STATE_WAITING;
+					next_state = STATE_NORMAL;
+					break;
+#endif
 				case LOGICAL_KEY_F7:
 					Eeprom_ResetDefaults();
 					current_state = STATE_WAITING;
@@ -390,6 +420,10 @@ void KeyState_Update(void){
 						if(key->state == 0 && key->debounce == DEBOUNCE_MASK){
 							++key_press_count;
 							key->state = 1;
+							#ifdef USE_BUZZER
+							if(current_config.key_sound_enabled)
+								buzzer_start(1);
+							#endif
 						}
 					}
 					goto next_matrix; // done with this reading
@@ -495,6 +529,7 @@ void Eeprom_ResetDefaults(void){
 		hid_keycode default_key = pgm_read_byte_near(&logical_to_hid_map_default[i]);
 		eeprom_update_byte(&logical_to_hid_map[i], default_key);
 	}
+	eeprom_update_byte((uint8_t*)&eeprom_config, 0x0);
 	// flash LEDs to show that we had to reset
 	blinkLEDs();
 }
@@ -507,6 +542,25 @@ void Eeprom_ResetFully(void){
 	}
 	Eeprom_ResetDefaults();
 }
+
+configuration_state Eeprom_LoadConfig(void){
+	union {
+		uint8_t b;
+		configuration_state s;
+	} r;
+	r.b = eeprom_read_byte((uint8_t*)&eeprom_config);
+	return r.s;
+}
+
+void Eeprom_SaveConfig(configuration_state state){
+	union {
+		uint8_t b;
+		configuration_state s;
+	} r;
+	r.s = state;
+	eeprom_update_byte((uint8_t*)&eeprom_config, r.b);
+}
+
 
 static const char MSG_NO_LAYOUT[] PROGMEM = "No such layout";
 
@@ -1065,3 +1119,42 @@ void Update_USBState(USB_State state){
 void Update_Millis(uint8_t increment){
 	uptimems += increment;
 }
+
+#ifdef USE_BUZZER
+static uint16_t buzzer_ms;
+
+static const int TIMER_FREQ = ((1<<CS01) | (1<<CS00));
+
+void buzzer_init(void){
+	// up timer0 for CTC mode at FCPU / 64: 4us per tick, enable compare interrupt
+	TCNT0 = 0;
+	OCR0  = 150;
+	TCCR0 |= (1<<WGM01);
+	TIMSK |= (1<<OCIE0);
+}
+
+void buzzer_start(int ms){
+	int end = uptimems + ms;
+	if(buzzer_ms < end){
+		buzzer_ms = end;
+
+		// Turn on the buzzer and start the timer
+		BUZZER_PORT |= BUZZER;
+		TCCR0       |= TIMER_FREQ;
+	}
+}
+
+void buzzer_update(void){
+	if(buzzer_ms && buzzer_ms <= uptimems){
+		buzzer_ms = 0;
+		// Stop the timer and turn off the buzzer
+		TCCR0       &= ~TIMER_FREQ;
+		BUZZER_PORT &= ~BUZZER;
+	}
+}
+
+ISR(TIMER0_COMP_vect){
+	BUZZER_PORT ^= BUZZER;
+}
+
+#endif

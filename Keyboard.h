@@ -86,6 +86,13 @@ typedef struct _key_state {
 
 #define DEBOUNCE_MASK 0x07 // care about last 3 physical reports
 
+// Configuration is saved in the eeprom
+typedef struct _configuration_state {
+	unsigned char key_sound_enabled:1;
+	unsigned char packing:7;
+} configuration_state;
+
+
 // Keys
 
 #define NO_KEY 0xFF

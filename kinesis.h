@@ -247,8 +247,6 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 #define INT_LED2 (1<<6)
 #define ALL_LEDS (LED_CAPS | LED_NUMLOCK | LED_SCROLLLOCK | LED_KEYPAD | INT_LED1 | INT_LED2)
 
-#define USE_BUZZER 0
-#define USE_EEPROM 0
 /*
 #define BUZZER_PORT PORTD
 #define BUZZER_DDR DDRD

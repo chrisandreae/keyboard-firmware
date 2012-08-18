@@ -15,7 +15,6 @@ Additional features include:
 
 Not yet implemented are:
  * Macro recording
- * Key click buzzer
 
 == Building ==
 
@@ -44,3 +43,4 @@ combinations are as follows:
 * Save current layout      =  Progrm + [1 - 0] + S
 * Load saved layout        =  Progrm + [1 - 0] + L
 * Delete saved layout      =  Progrm + [1 - 0] + D
+* Enable/disable key click =  Progrm + \

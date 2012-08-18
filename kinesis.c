@@ -268,13 +268,13 @@ void ports_init(void){
 	LED_PORT &= ~(ALL_LEDS);
 	LED_DDR  &= ~(ALL_LEDS); // start as hi-z (disabled)
 
-#if USE_BUZZER
-	// don't know how the buzzer should be pulled to enable it, so start out high-impedance
+#ifdef USE_BUZZER
+	// start out output/low
 	BUZZER_PORT &= ~BUZZER;
-	BUZZER_DDR &= ~BUZZER;
+	BUZZER_DDR  |= BUZZER;
 #endif
 	
-#if USE_EEPROM
+#ifdef USE_EEPROM
 	EEPROM_PORT &= ~(EEPROM_SCL | EEPROM_SDA); // low/hi-z
 	EEPROM_DDR  &= ~(EEPROM_SCL | EEPROM_SDA); 	// Initially, don't talk to the eeprom (input)
 #endif
