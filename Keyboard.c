@@ -706,8 +706,9 @@ static void Fill_HIDReport_normal(KeyboardReport_Data_t* KeyboardReport){
 				break;
 			}
 			logical_keycode l_key = key_states[i].l_key;
-			/* hid_keycode h_key = pgm_read_byte_near(&logical_to_hid_map_default[l_key]); */
-			hid_keycode h_key = eeprom_read_byte(&logical_to_hid_map[l_key]); // Disable programmability for the moment
+			if(l_key == LOGICAL_KEY_PROGRAM) rollover = true; // Simple way to ensure program key combinations never cause typing
+
+			hid_keycode h_key = eeprom_read_byte(&logical_to_hid_map[l_key]);
 
 			// check for special and modifier keys
 			if(h_key >= SPECIAL_HID_KEYS_START){
