@@ -10,7 +10,7 @@
   ==========================
 
   If built for V-USB, this program includes library and sample code from:
-     V-USB, (C) Objective Development Software GmbH
+	 V-USB, (C) Objective Development Software GmbH
 	 Licensed under the GNU GPL v2 (see GPL2.txt)
 
   ==========================
@@ -167,7 +167,7 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 // 74LS138 demultiplexer matrix select output:
 //  A-C connect to the address pins 1-3 of the LS138s, externally pulled up.
 //  P138SEL connects to pin 4 (negated input) of the first and pin 6 of the second,
-//  to select between them, also externally pulled up. 
+//  to select between them, also externally pulled up.
 //  The opposing pins are tied to VCC and ground respectively.
 //  Pin 10 ("WP") is connected to pin 5 of both demultiplexers, and must be pulled low to enable them.
 //    A (pin 39) = C2
@@ -191,7 +191,7 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 //  have access to up to two AT24C164 2kb serial eeproms via pins 7 and
 //  8, connected to SCL and SDA respectively with external pull-ups.
 //  The eeproms have their addresse lines tied to 000 and 001 respectively.
-//         WP  (write protect) (pin10) = connected to WP pin of eeprom, must be low to enable. 
+//         WP  (write protect) (pin10) = connected to WP pin of eeprom, must be low to enable.
 //                                       (note that this is also connected to the demultiplexers)
 //         SCL (serial eeprom clock line) (pin7) = NC
 //         SDA (serial eeprom data line) (pin8) =  NC

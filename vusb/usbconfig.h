@@ -32,7 +32,7 @@ section at the end of this file).
 #elif defined(__AVR_ATmega16A__)
 	#define USB_CFG_DMINUS_BIT      1
 #else
-    #error Ports not yet defined for this microcontroller
+	#error Ports not yet defined for this microcontroller
 #endif
 /* This is the bit number in USB_CFG_IOPORT where the USB D- line is connected.
  * This may be any bit in the port.

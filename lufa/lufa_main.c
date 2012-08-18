@@ -42,7 +42,7 @@
  *  within a device can be differentiated from one another.
  */
 USB_ClassInfo_HID_Device_t Keyboard_HID_Interface =
- 	{
+	{
 		.Config =
 			{
 				.InterfaceNumber              = 0,

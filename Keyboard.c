@@ -12,7 +12,7 @@
   ==========================
 
   If built for V-USB, this program includes library and sample code from:
-     V-USB, (C) Objective Development Software GmbH
+	 V-USB, (C) Objective Development Software GmbH
 	 Licensed under the GNU GPL v2 (see GPL2.txt)
 
   ==========================
@@ -234,7 +234,7 @@ void handle_state_normal(void){
 	// check for special keyboard (pre-mapping) key combinations for state transitions
 
 	if(key_press_count >= 2 && KeyState_CheckKey(LOGICAL_KEY_PROGRAM)){
-		
+
 		switch(key_press_count){
 		case 2:
 			{
@@ -327,7 +327,7 @@ void handle_state_normal(void){
 void handle_state_programming(void){
 	static hid_keycode program_src_hkey = 0;
 
-	if(KeyState_CheckKeys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F12) || 
+	if(KeyState_CheckKeys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F12) ||
 	  KeyState_CheckKeys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_HYPHEN)){
 		current_state = STATE_WAITING;
 		next_state = STATE_NORMAL;
@@ -339,14 +339,14 @@ void handle_state_programming(void){
 
 	logical_keycode lkey;
 	KeyState_GetKeys(&lkey); // Will only write one key, as key_press_count == 1
-	
+
 	hid_keycode default_hkey = pgm_read_byte_near(&logical_to_hid_map_default[lkey]);
-	
+
 	// can't reprogram a "special" key type (i.e program, keypad), but NO_KEY is ok.
 	if(default_hkey >= SPECIAL_HID_KEYS_NOREMAP_START && default_hkey != NO_KEY){
 		return;
 	}
-	
+
 	if(current_state == STATE_PROGRAMMING_SRC){
 		program_src_hkey = default_hkey;
 		next_state = STATE_PROGRAMMING_DST;
@@ -362,7 +362,7 @@ void handle_state_programming(void){
 
 
 
-/** 
+/**
  * Looks up the key data (config/defaults) index associated with a
  * matrix position.  Not all matrix positions will have a key
  * associated.
@@ -379,7 +379,7 @@ void KeyState_Init(void){
 	}
 }
 
-	
+
 void KeyState_Update(void){
 	// for each entry i in the matrix
 	for(uint8_t matrix_row = 0; matrix_row < MATRIX_ROWS; ++matrix_row){
@@ -534,7 +534,7 @@ void Eeprom_ResetDefaults(void){
 	blinkLEDs();
 }
 
-// reset the keyboard, including saved layouts 
+// reset the keyboard, including saved layouts
 void Eeprom_ResetFully(void){
 	eeprom_update_byte(&eeprom_sentinel_byte, EEPROM_SENTINEL);
 	for(int i = 0; i < NUM_KEY_MAPPING_INDICES; ++i){
@@ -594,7 +594,7 @@ uint8_t Eeprom_DeleteLayout(uint8_t num){
 			eeprom_update_byte(&saved_key_mapping_indices[i].end,   i_end - length);
 		}
 	}
-	
+
 	// and move down the data.
 	for(int i = end+1; i <= max_end; ++i){
 		uint8_t lk = eeprom_read_byte(&saved_key_mappings[i].l_key);
@@ -804,7 +804,7 @@ bool Fill_MouseReport(MouseReport_Data_t* MouseReport){
 				case SPECIAL_HID_KEY_MOUSE_BTN5:
 					MouseReport->Button |= 1<<4;
 					break;
-					
+
 				case SPECIAL_HID_KEY_MOUSE_FWD:
 					moving = 1;
 					MouseReport->Y -= mouse_accel(mousedown_time);
@@ -1081,7 +1081,7 @@ void updateLEDs(void){
 		// populate from USB LED report
 		if (USB_LEDReport & HID_KEYBOARD_LED_NUMLOCK)
 			LEDMask |= LEDMASK_NUMLOCK;
-		
+
 		if (USB_LEDReport & HID_KEYBOARD_LED_CAPSLOCK)
 			LEDMask |= LEDMASK_CAPS;
 

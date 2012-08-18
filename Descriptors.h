@@ -12,7 +12,7 @@
   ==========================
 
   If built for V-USB, this program includes library and sample code from:
-     V-USB, (C) Objective Development Software GmbH
+	 V-USB, (C) Objective Development Software GmbH
 	 Licensed under the GNU GPL v2 (see GPL2.txt)
 
   ==========================
@@ -68,10 +68,10 @@
 			USB_Descriptor_Configuration_Header_t Config;
 			USB_Descriptor_Interface_t            HID1_KeyboardInterface;
 			USB_HID_Descriptor_HID_t              HID1_KeyboardHID;
-	        USB_Descriptor_Endpoint_t             HID1_ReportINEndpoint;
+			USB_Descriptor_Endpoint_t             HID1_ReportINEndpoint;
 			USB_Descriptor_Interface_t            HID2_MouseInterface;
 			USB_HID_Descriptor_HID_t              HID2_MouseHID;
-	        USB_Descriptor_Endpoint_t             HID2_ReportINEndpoint;
+			USB_Descriptor_Endpoint_t             HID2_ReportINEndpoint;
 		} USB_Descriptor_Configuration_t;
 
 		typedef struct
@@ -81,7 +81,7 @@
 			int8_t  Y; /**< Current delta Y movement on the mouse. */
 			int8_t  Wheel;
 		} __attribute__((packed)) MouseReport_Data_t;
-		
+
 		typedef struct
 		{
 			uint8_t Modifier; /**< Keyboard modifier byte, indicating pressed modifier keys (a combination of
@@ -103,4 +103,3 @@
 
 
 #endif
-

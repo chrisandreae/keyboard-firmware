@@ -12,7 +12,7 @@
   ==========================
 
   If built for V-USB, this program includes library and sample code from:
-     V-USB, (C) Objective Development Software GmbH
+	 V-USB, (C) Objective Development Software GmbH
 	 Licensed under the GNU GPL v2 (see GPL2.txt)
 
   ==========================
@@ -98,7 +98,7 @@ typedef struct _configuration_state {
 #define NO_KEY 0xFF
 
 /* Logical keys are mapped to HID codes. We want to be able to assign some extra actions
-   that don't correspond to valid HID codes, so we assign some extra codes for our use 
+   that don't correspond to valid HID codes, so we assign some extra codes for our use
    at the end of the HID range, after E7, the last HID key. As these aren't valid keycodes,
    they'll never be sent via USB
 */
@@ -147,4 +147,3 @@ extern KeyboardReport_Data_t PrevKeyboardHIDReportBuffer;
 #endif
 
 #endif
-
