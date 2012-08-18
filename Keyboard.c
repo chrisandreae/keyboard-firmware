@@ -139,9 +139,8 @@ configuration_state Eeprom_LoadConfig(void);
 void Eeprom_SaveConfig(configuration_state state);
 
 #ifdef USE_BUZZER
-void buzzer_init(void);
-void buzzer_start(int ms);
-void buzzer_update(void);
+void buzzer_start(uint16_t ms);
+void buzzer_update(uint8_t increment);
 #endif
 
 /** Main program entry point. This routine contains the overall program flow, including initial
@@ -152,9 +151,6 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 	ports_init();
 	KeyState_Init();
 	Eeprom_Init();
-#ifdef USE_BUZZER
-	buzzer_init();
-#endif
 	current_config = Eeprom_LoadConfig();
 
 	sei();
@@ -172,10 +168,6 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 		else if(!update.keys && slice){
 			update.keys = 1;
 		}
-
-#ifdef USE_BUZZER
-		buzzer_update();
-#endif
 
 		// in all non-wait states we want to handle the keypad layer button
 #ifdef KEYPAD_LAYER
@@ -255,7 +247,7 @@ void handle_state_normal(void){
 				case LOGICAL_KEY_BACKSLASH:
 					current_config.key_sound_enabled = !current_config.key_sound_enabled;
 					Eeprom_SaveConfig(current_config);
-					buzzer_start(current_config.key_sound_enabled ? 300 : 150);
+					buzzer_start(current_config.key_sound_enabled ? 150 : 75);
 
 					current_state = STATE_WAITING;
 					next_state = STATE_NORMAL;
@@ -1118,38 +1110,39 @@ void Update_USBState(USB_State state){
 
 void Update_Millis(uint8_t increment){
 	uptimems += increment;
+
+#ifdef USE_BUZZER
+	buzzer_update(increment);
+#endif
 }
 
 #ifdef USE_BUZZER
 static uint16_t buzzer_ms;
 
-static const int TIMER_FREQ = ((1<<CS01) | (1<<CS00));
+static const int TIMER_MODE = ((1<<WGM01) | (1<<CS01) | (1<<CS00));
 
-void buzzer_init(void){
-	// up timer0 for CTC mode at FCPU / 64: 4us per tick, enable compare interrupt
-	TCNT0 = 0;
-	OCR0  = 150;
-	TCCR0 |= (1<<WGM01);
-	TIMSK |= (1<<OCIE0);
-}
-
-void buzzer_start(int ms){
-	int end = uptimems + ms;
-	if(buzzer_ms < end){
-		buzzer_ms = end;
+void buzzer_start(uint16_t ms){
+	if(buzzer_ms <= ms){
+		buzzer_ms = ms;
 
 		// Turn on the buzzer and start the timer
 		BUZZER_PORT |= BUZZER;
-		TCCR0       |= TIMER_FREQ;
+
+		TCNT0  = 0;
+		OCR0   = 150;
+		TCCR0 |= TIMER_MODE;
+		TIMSK |= (1<<OCIE0);
 	}
 }
 
-void buzzer_update(void){
-	if(buzzer_ms && buzzer_ms <= uptimems){
-		buzzer_ms = 0;
-		// Stop the timer and turn off the buzzer
-		TCCR0       &= ~TIMER_FREQ;
-		BUZZER_PORT &= ~BUZZER;
+void buzzer_update(uint8_t increment){
+	if(buzzer_ms){
+		buzzer_ms = (increment >= buzzer_ms) ? 0 : buzzer_ms - increment;
+		if(buzzer_ms == 0){
+			// Stop the timer and turn off the buzzer
+			TCCR0       &= ~TIMER_MODE;
+			BUZZER_PORT &= ~BUZZER;
+		}
 	}
 }
 
