@@ -12,7 +12,7 @@ AVRDUDE_DEVICE = atmega16
 FUSE_L  = 0xFF
 FUSE_H  = 0xC1
 
-F_CPU   = 16000000	# in Hz
+F_CPU   = 16000000	# in Hz 
 AVRDUDE = avrdude -c usbasp -p $(AVRDUDE_DEVICE) # edit this line for your programmer
 
 CFLAGS  = -I. -Ivusb -Ivusb/usbdrv -DDEBUG_LEVEL=0 -DBUILD_FOR_VUSB -std=c99
@@ -22,9 +22,10 @@ OBJDIR = obj
 SRCS = vusb/usbdrv/usbdrv.o    \
 	   vusb/usbdrv/usbdrvasm.o \
 	   vusb/usbdrv/oddebug.o   \
-	   vusb/vusb_main.o 	   \
-	   Keyboard.o 			   \
-	   Descriptors.o 		   \
+	   vusb/vusb_main.o		   \
+	   Keyboard.o			   \
+	   Descriptors.o		   \
+	   twi.o				   \
 	   kinesis.o
 
 OBJECTS = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(SRCS))))

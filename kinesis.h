@@ -43,6 +43,9 @@
   this software.
 */
 
+#ifndef __KINESIS_H
+#define __KINESIS_H
+
 #include "Keyboard.h"
 
 /* Kinesis Matrix */
@@ -307,9 +310,14 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 
 #define EEPROM_PORT PORTC
 #define EEPROM_DDR  DDRC
+#define EEPROM_PIN  PINC
 #define EEPROM_SCL (1<<1)
 #define EEPROM_SDA (1<<2)
 
+
+// TODO:
+// * Use built in I2C support for eeprom (PORTC 1,2)
+// * Use OC0 or OC2 timer compare pin for buzzer (PB3 or PD7)
 
 #else
 #error Ports not yet defined for this microcontroller
@@ -349,3 +357,5 @@ uint8_t matrix_read_column(uint8_t matrix_column);
 void set_all_leds(uint8_t led_mask);
 
 void test_leds(void);
+
+#endif // __KINESIS_H

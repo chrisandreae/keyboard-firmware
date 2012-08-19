@@ -273,10 +273,11 @@ void ports_init(void){
 	BUZZER_PORT &= ~BUZZER;
 	BUZZER_DDR  |= BUZZER;
 #endif
-
+ 
 #ifdef USE_EEPROM
-	EEPROM_PORT &= ~(EEPROM_SCL | EEPROM_SDA); // low/hi-z
-	EEPROM_DDR  &= ~(EEPROM_SCL | EEPROM_SDA);	// Initially, don't talk to the eeprom (input)
+	// Serial eeprom lines have external pull-ups, so 0 = output-low(1,0) / 1 = input-highz(0,0)
+	EEPROM_PORT &= ~(EEPROM_SCL | EEPROM_SDA); // initially leave floating
+	EEPROM_DDR  &= ~(EEPROM_SCL | EEPROM_SDA);
 #endif
 
 }
