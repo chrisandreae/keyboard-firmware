@@ -52,7 +52,7 @@
 #include "keystate.h"
 
 void printing_set_buffer(const char* buf);
-uint8_t printing_buffer_empty();
+uint8_t printing_buffer_empty(void);
 
 void printing_Fill_KeyboardReport(KeyboardReport_Data_t* ReportData);
 

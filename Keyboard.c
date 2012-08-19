@@ -261,10 +261,9 @@ static void handle_state_normal(void){
 		}
 
 	}
-
 }
 
-void handle_state_programming(void){
+static void handle_state_programming(void){
 	static hid_keycode program_src_hkey = 0;
 
 	if(keystate_check_keys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F12) ||
@@ -417,4 +416,5 @@ void Update_Millis(uint8_t increment){
 #ifdef USE_BUZZER
 	buzzer_update(increment);
 #endif
+
 }

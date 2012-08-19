@@ -134,7 +134,15 @@ include $(LUFA_PATH)/LUFA/makefile
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c                                                 \
 	  Descriptors.c                                               \
-	  kinesis.c 												  \
+	  kinesis.c													  \
+	  Descriptors.c												  \
+	  twi.c														  \
+	  printing.c												  \
+	  keystate.c												  \
+	  config.c													  \
+	  serial_eeprom.o											  \
+	  buzzer.c													  \
+	  leds.c													  \
 	  lufa/lufa_main.c                                            \
 	  $(LUFA_SRC_USB)                                             \
 	  $(LUFA_SRC_USBCLASS)
@@ -224,6 +232,7 @@ CFLAGS += -fshort-enums
 CFLAGS += -fno-strict-aliasing
 CFLAGS += -Wall
 CFLAGS += -Wstrict-prototypes
+CFLAGS += -Wno-unused-but-set-variable
 #CFLAGS += -mshort-calls
 #CFLAGS += -fno-unit-at-a-time
 #CFLAGS += -Wundef
@@ -444,10 +453,10 @@ MSG_CREATING_LIBRARY = Creating library:
 
 
 # Define all object files.
-OBJ = $(SRC:%.c=$(OBJDIR)/%.o) $(CPPSRC:%.cpp=$(OBJDIR)/%.o) $(ASRC:%.S=$(OBJDIR)/%.o)
+OBJ = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(SRC) $(CPPSRC) $(ASRC))))
 
 # Define all listing files.
-LST = $(SRC:%.c=$(OBJDIR)/%.lst) $(CPPSRC:%.cpp=$(OBJDIR)/%.lst) $(ASRC:%.S=$(OBJDIR)/%.lst)
+LST = $(addprefix $(OBJDIR)/,$(addsuffix .lst,$(basename $(SRC) $(CPPSRC) $(ASRC))))
 
 
 # Compiler flags to generate dependency files.
@@ -688,8 +697,7 @@ clean_list :
 	$(REMOVE) $(TARGET).map
 	$(REMOVE) $(TARGET).sym
 	$(REMOVE) $(TARGET).lss
-	$(REMOVE) $(SRC:%.c=$(OBJDIR)/%.o) $(CPPSRC:%.cpp=$(OBJDIR)/%.o) $(ASRC:%.S=$(OBJDIR)/%.o)
-	$(REMOVE) $(SRC:%.c=$(OBJDIR)/%.lst) $(CPPSRC:%.cpp=$(OBJDIR)/%.lst) $(ASRC:%.S=$(OBJDIR)/%.lst)
+	$(REMOVEDIR) $(OBJDIR)
 	$(REMOVE) $(SRC:.c=.s)
 	$(REMOVE) $(SRC:.c=.d)
 	$(REMOVE) $(SRC:.c=.i)
@@ -721,4 +729,3 @@ $(OBJ): | $(addsuffix .made,$(sort $(dir $(OBJ))))
 build elf hex eep lss sym coff extcoff doxygen clean          \
 clean_list clean_doxygen program dfu flip flip-ee dfu-ee      \
 debug gdb-config
-

@@ -55,7 +55,7 @@ void printing_set_buffer(const char* buf){
 	print_buffer = buf;
 }
 
-uint8_t printing_buffer_empty(){
+uint8_t printing_buffer_empty(void){
 	return pgm_read_byte_near(print_buffer) == '\0';
 }
 
