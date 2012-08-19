@@ -45,23 +45,29 @@
   this software.
 */
 
-#ifndef __TWI_H
-#define __TWI_H
+#ifndef __CONFIG_H
+#define __CONFIG_H
 
-#include "hardware.h"
+#include "keystate.h"
 
-#ifdef USE_EEPROM
+// Configuration is saved in the eeprom
+typedef struct _configuration_flags {
+	unsigned char key_sound_enabled:1;
+	unsigned char packing:7;
+} configuration_flags;
 
-typedef enum _twi_ack {
-	ACK = 0,
-	NACK = 1
-} twi_ack;
+hid_keycode config_get_definition(logical_keycode l_key);
+void config_save_definition(logical_keycode l_key, hid_keycode h_key);
 
-void twi_start(void);
-void twi_stop(void);
-uint8_t twi_read_byte(twi_ack ack);
-twi_ack twi_write_byte(uint8_t val);
+void config_init(void);
+void config_reset_defaults(void);
+void config_reset_fully(void);
+uint8_t config_delete_layout(uint8_t num);
+uint8_t config_save_layout(uint8_t num);
+uint8_t config_load_layout(uint8_t num);
 
-#endif
+configuration_flags config_get_flags(void);
+void config_save_flags(configuration_flags state);
 
-#endif
+
+#endif // __CONFIG_H

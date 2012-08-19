@@ -27,7 +27,7 @@
 /* ----------------------------- USB interface ----------------------------- */
 /* ------------------------------------------------------------------------- */
 
-static uint8_t idleRate 	  = 0;   /* repeat rate for keyboard in 4ms increments - 0 means report only on changes */
+static uint8_t idleRate		  = 0;   /* repeat rate for keyboard in 4ms increments - 0 means report only on changes */
 static uint8_t reportProtocol = 1; // 1 = hid reports, 0 = boot protocol
 static uint8_t expectReport = 0;
 
@@ -42,17 +42,17 @@ static MouseReport_Data_t MouseReportData;
 usbMsgLen_t usbFunctionSetup(uchar data[8]){
 	usbRequest_t *rq = (void *)data;
 
-    /* The following requests are never used. But since they are required by
-     * the specification, we implement them in this example.
-     */
-    if((rq->bmRequestType & USBRQ_TYPE_MASK) == USBRQ_TYPE_CLASS){    /* class request type */
+	/* The following requests are never used. But since they are required by
+	 * the specification, we implement them in this example.
+	 */
+	if((rq->bmRequestType & USBRQ_TYPE_MASK) == USBRQ_TYPE_CLASS){    /* class request type */
 		switch(rq->bRequest){
 
 		case USBRQ_HID_GET_REPORT:
 			if(!rq->wIndex.word){ // wIndex specifies which interface we're talking about: 0 = kbd, 1 = mouse
 				Fill_KeyboardReport(&KeyboardReportData); // We can assume that this isn't happening at the
 														  // same time as interrupt in reports
-				
+
 				PrevKeyboardHIDReportBuffer = KeyboardReportData;
 
 				usbMsgPtr = (void*)&KeyboardReportData;
@@ -73,7 +73,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			break;
 		case USBRQ_HID_GET_IDLE:
 			usbMsgPtr = &idleRate;
-            return 1;	
+			return 1;
 		case USBRQ_HID_SET_IDLE:
 			idleRate = rq->wValue.bytes[1];
 			break;
@@ -84,10 +84,10 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			reportProtocol = rq->wValue.bytes[1];
 			break;
 		}
-    }else{
-        /* no vendor specific requests implemented */
-    }
-    return 0;   /* default for not implemented requests: return no data back to host */
+	}else{
+		/* no vendor specific requests implemented */
+	}
+	return 0;   /* default for not implemented requests: return no data back to host */
 }
 
 uchar usbFunctionWrite(uchar *data, uchar len) {
@@ -116,28 +116,28 @@ void usbFunctionWriteOut(uchar *data, uchar len){
 int main(void) {
 	uchar   i;
 
-    wdt_enable(WDTO_1S);
-    /* Even if you don't use the watchdog, turn it off here. On newer devices,
-     * the status of the watchdog (on/off, period) is PRESERVED OVER RESET!
-     */
-    /* RESET status: all port bits are inputs without pull-up.
-     * That's the way we need D+ and D-. Therefore we don't need any
-     * additional hardware initialization.
-     */
-    odDebugInit();
-    DBG1(0x00, 0, 0);       /* debug output: main starts */
-	
-	TCCR1B |= ((1 << CS10) | (1 << CS11)); // Set up timer at Fcpu/64 
+	wdt_enable(WDTO_1S);
+	/* Even if you don't use the watchdog, turn it off here. On newer devices,
+	 * the status of the watchdog (on/off, period) is PRESERVED OVER RESET!
+	 */
+	/* RESET status: all port bits are inputs without pull-up.
+	 * That's the way we need D+ and D-. Therefore we don't need any
+	 * additional hardware initialization.
+	 */
+	odDebugInit();
+	DBG1(0x00, 0, 0);       /* debug output: main starts */
 
-    usbInit();
-    usbDeviceDisconnect();  /* enforce re-enumeration, do this while interrupts are disabled! */
-    i = 0;
-    while(--i){             /* fake USB disconnect for > 250 ms */
-        wdt_reset();
-        _delay_ms(1);
-    }
-    usbDeviceConnect();
-	
+	TCCR1B |= ((1 << CS10) | (1 << CS11)); // Set up timer at Fcpu/64
+
+	usbInit();
+	usbDeviceDisconnect();  /* enforce re-enumeration, do this while interrupts are disabled! */
+	i = 0;
+	while(--i){             /* fake USB disconnect for > 250 ms */
+		wdt_reset();
+		_delay_ms(1);
+	}
+	usbDeviceConnect();
+
 	Keyboard_Main();
 }
 
@@ -167,7 +167,7 @@ void update_uptimems(){
 extern void Perform_USB_Update(int update_kbd, int update_mouse){
 	wdt_reset();
 	usbPoll();
-	
+
 	static bool sending_keyboard;
 	static bool sending_mouse;
 
@@ -183,7 +183,7 @@ extern void Perform_USB_Update(int update_kbd, int update_mouse){
 		else if(kbd_idle_expired){
 			KeyboardReportData = PrevKeyboardHIDReportBuffer;
 		}
-		
+
 		if(idleRate){
 			// reset idle time out
 			keyboard_idle_ms = idleRate * 4;
@@ -210,13 +210,13 @@ extern void Perform_USB_Update(int update_kbd, int update_mouse){
 		}
 
 	}
-	 
+
 	if(sending_keyboard && usbInterruptIsReady()){
 		usbSetInterrupt((void*)&KeyboardReportData, sizeof(KeyboardReportData));
 		sending_keyboard = 0;
 	}
 
-	
+
 	if(sending_mouse && usbInterruptIsReady3()){
 		usbSetInterrupt3((void *)&MouseReportData, sizeof(MouseReportData));
 		sending_mouse = 0;

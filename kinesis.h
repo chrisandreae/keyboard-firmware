@@ -46,7 +46,7 @@
 #ifndef __KINESIS_H
 #define __KINESIS_H
 
-#include "Keyboard.h"
+#include "keystate.h"
 
 /* Kinesis Matrix */
 

@@ -45,23 +45,41 @@
   this software.
 */
 
-#ifndef __TWI_H
-#define __TWI_H
-
+#include "buzzer.h"
 #include "hardware.h"
 
-#ifdef USE_EEPROM
+#ifdef USE_BUZZER
+static uint16_t buzzer_ms;
 
-typedef enum _twi_ack {
-	ACK = 0,
-	NACK = 1
-} twi_ack;
+static const int TIMER_MODE = ((1<<WGM01) | (1<<CS01) | (1<<CS00));
 
-void twi_start(void);
-void twi_stop(void);
-uint8_t twi_read_byte(twi_ack ack);
-twi_ack twi_write_byte(uint8_t val);
+void buzzer_start(uint16_t ms){
+	if(buzzer_ms <= ms){
+		buzzer_ms = ms;
 
-#endif
+		// Turn on the buzzer and start the timer
+		BUZZER_PORT |= BUZZER;
+
+		TCNT0  = 0;
+		OCR0   = 150;
+		TCCR0 |= TIMER_MODE;
+		TIMSK |= (1<<OCIE0);
+	}
+}
+
+void buzzer_update(uint8_t increment){
+	if(buzzer_ms){
+		buzzer_ms = (increment >= buzzer_ms) ? 0 : buzzer_ms - increment;
+		if(buzzer_ms == 0){
+			// Stop the timer and turn off the buzzer
+			TCCR0       &= ~TIMER_MODE;
+			BUZZER_PORT &= ~BUZZER;
+		}
+	}
+}
+
+ISR(TIMER0_COMP_vect){
+	BUZZER_PORT ^= BUZZER;
+}
 
 #endif

@@ -45,23 +45,18 @@
   this software.
 */
 
-#ifndef __TWI_H
-#define __TWI_H
+#include "leds.h"
 
 #include "hardware.h"
 
-#ifdef USE_EEPROM
+#include <util/delay.h>
 
-typedef enum _twi_ack {
-	ACK = 0,
-	NACK = 1
-} twi_ack;
-
-void twi_start(void);
-void twi_stop(void);
-uint8_t twi_read_byte(twi_ack ack);
-twi_ack twi_write_byte(uint8_t val);
-
-#endif
-
-#endif
+// blink the LEDs for a while to show that we did some work successfully
+void leds_blink(void){
+	for(int i = 0; i < 5; ++i){
+		set_all_leds(LEDMASK_SCROLLLOCK | LEDMASK_CAPS);
+		_delay_ms(50);
+		set_all_leds(LEDMASK_SCROLLLOCK | LEDMASK_NUMLOCK);
+		_delay_ms(50);
+	}
+}

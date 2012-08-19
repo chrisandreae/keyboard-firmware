@@ -71,60 +71,6 @@ typedef enum _state {
 	STATE_MACRO_PLAY,
 } state;
 
-// Keycodes go through three transformations.
-// A raw keyboard matrix code maps to a index in the (keyboard specific) logical key positions table.
-// We then look up a HID keycode for this position using the key_defaults/key_config tables.
-typedef uint8_t matrix_keycode;
-typedef uint8_t logical_keycode;
-typedef uint8_t hid_keycode;
-
-typedef struct _key_state {
-	logical_keycode l_key;
-	unsigned char state:1;
-	unsigned char debounce:7; // bit vector of last n physical reports: debounced state asserted when they're all the same
-} key_state;
-
-#define DEBOUNCE_MASK 0x07 // care about last 3 physical reports
-
-// Configuration is saved in the eeprom
-typedef struct _configuration_state {
-	unsigned char key_sound_enabled:1;
-	unsigned char packing:7;
-} configuration_state;
-
-
-// Keys
-
-#define NO_KEY 0xFF
-
-/* Logical keys are mapped to HID codes. We want to be able to assign some extra actions
-   that don't correspond to valid HID codes, so we assign some extra codes for our use
-   at the end of the HID range, after E7, the last HID key. As these aren't valid keycodes,
-   they'll never be sent via USB
-*/
-#define SPECIAL_HID_KEYS_START 0xE8
-// some special keys are so special we want to forbid ever remapping them.
-// We put these after PROGRAM
-#define SPECIAL_HID_KEYS_NOREMAP_START SPECIAL_HID_KEY_PROGRAM
-
-#define SPECIAL_HID_KEYS_MOUSE_START SPECIAL_HID_KEY_MOUSE_BTN1
-#define SPECIAL_HID_KEYS_MOUSE_END SPECIAL_HID_KEY_MOUSE_RIGHT
-
-enum SPECIAL_HID_KEYS{
-	SPECIAL_HID_KEY_MOUSE_BTN1 = 0xE8,
-	SPECIAL_HID_KEY_MOUSE_BTN2,
-	SPECIAL_HID_KEY_MOUSE_BTN3,
-	SPECIAL_HID_KEY_MOUSE_BTN4,
-	SPECIAL_HID_KEY_MOUSE_BTN5,
-	SPECIAL_HID_KEY_MOUSE_FWD,
-	SPECIAL_HID_KEY_MOUSE_BACK,
-	SPECIAL_HID_KEY_MOUSE_LEFT,
-	SPECIAL_HID_KEY_MOUSE_RIGHT,
-	// We'll want placeholder special keys for "look up a macro or program to execute" - if a lkey maps to them,
-	// look up that lkey in the macros/programs table
-	SPECIAL_HID_KEY_PROGRAM = 0xFD,
-	SPECIAL_HID_KEY_KEYPAD,
-};
 
 /** Must be provided by USB driver */
 extern void Perform_USB_Update(int update_kbd, int update_mouse);

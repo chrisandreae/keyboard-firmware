@@ -45,23 +45,16 @@
   this software.
 */
 
-#ifndef __TWI_H
-#define __TWI_H
+#ifndef __SERIAL_EEPROM_H
+#define __SERIAL_EEPROM_H
 
 #include "hardware.h"
 
 #ifdef USE_EEPROM
-
-typedef enum _twi_ack {
-	ACK = 0,
-	NACK = 1
-} twi_ack;
-
-void twi_start(void);
-void twi_stop(void);
-uint8_t twi_read_byte(twi_ack ack);
-twi_ack twi_write_byte(uint8_t val);
-
+uint8_t serial_eeprom_write_byte(uint16_t addr, uint8_t data);
+int16_t serial_eeprom_write(uint16_t addr, uint8_t* buf, int16_t len);
+int16_t serial_eeprom_read(uint16_t addr, uint8_t* buf, int16_t len);
+uint8_t serial_eeprom_test_read(void);
 #endif
 
-#endif
+#endif // __SERIAL_EEPROM_H

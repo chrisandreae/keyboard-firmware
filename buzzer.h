@@ -45,23 +45,14 @@
   this software.
 */
 
-#ifndef __TWI_H
-#define __TWI_H
+#ifndef __BUZZER_H
+#define __BUZZER_H
 
 #include "hardware.h"
 
-#ifdef USE_EEPROM
-
-typedef enum _twi_ack {
-	ACK = 0,
-	NACK = 1
-} twi_ack;
-
-void twi_start(void);
-void twi_stop(void);
-uint8_t twi_read_byte(twi_ack ack);
-twi_ack twi_write_byte(uint8_t val);
-
+#ifdef USE_BUZZER
+void buzzer_start(uint16_t ms);
+void buzzer_update(uint8_t increment);
 #endif
 
-#endif
+#endif // __BUZZER_H

@@ -45,23 +45,12 @@
   this software.
 */
 
-#ifndef __TWI_H
-#define __TWI_H
+#ifndef __HARDWARE_H
+#define __HARDWARE_H
 
-#include "hardware.h"
+// Select the specific keyboard hardware
 
-#ifdef USE_EEPROM
+#include "kinesis.h"
+// #include "4key.h"
 
-typedef enum _twi_ack {
-	ACK = 0,
-	NACK = 1
-} twi_ack;
-
-void twi_start(void);
-void twi_stop(void);
-uint8_t twi_read_byte(twi_ack ack);
-twi_ack twi_write_byte(uint8_t val);
-
-#endif
-
-#endif
+#endif // __HARDWARE_H

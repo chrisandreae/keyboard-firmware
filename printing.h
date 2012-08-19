@@ -45,23 +45,18 @@
   this software.
 */
 
-#ifndef __TWI_H
-#define __TWI_H
+#ifndef __PRINTING_H
+#define __PRINTING_H
 
-#include "hardware.h"
+#include "Keyboard.h"
+#include "keystate.h"
 
-#ifdef USE_EEPROM
+void printing_set_buffer(const char* buf);
+uint8_t printing_buffer_empty();
 
-typedef enum _twi_ack {
-	ACK = 0,
-	NACK = 1
-} twi_ack;
+void printing_Fill_KeyboardReport(KeyboardReport_Data_t* ReportData);
 
-void twi_start(void);
-void twi_stop(void);
-uint8_t twi_read_byte(twi_ack ack);
-twi_ack twi_write_byte(uint8_t val);
+void char_to_keys(const char nextchar, hid_keycode* nextkey, hid_keycode* nextmod);
+const char* const print_byte(const uint8_t byte);
 
-#endif
-
-#endif
+#endif // __PRINTING_H

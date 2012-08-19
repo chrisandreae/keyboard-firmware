@@ -15,7 +15,7 @@ FUSE_H  = 0xC1
 F_CPU   = 16000000	# in Hz 
 AVRDUDE = avrdude -c usbasp -p $(AVRDUDE_DEVICE) # edit this line for your programmer
 
-CFLAGS  = -I. -Ivusb -Ivusb/usbdrv -DDEBUG_LEVEL=0 -DBUILD_FOR_VUSB -std=c99
+CFLAGS  = -I. -Ivusb -Ivusb/usbdrv -DDEBUG_LEVEL=0 -DBUILD_FOR_VUSB -std=c99 -ffunction-sections
 
 OBJDIR = obj
 
@@ -26,11 +26,17 @@ SRCS = vusb/usbdrv/usbdrv.o    \
 	   Keyboard.o			   \
 	   Descriptors.o		   \
 	   twi.o				   \
+	   printing.o			   \
+	   keystate.o			   \
+	   config.o				   \
+	   serial_eeprom.o		   \
+	   buzzer.o				   \
+	   leds.o				   \
 	   kinesis.o
 
 OBJECTS = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(SRCS))))
 
-COMPILE = avr-gcc -Wall -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
+COMPILE = avr-gcc -Wall -Werror=implicit-function-declaration -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
 
 # symbolic targets:
 help:
@@ -85,7 +91,7 @@ $(OBJDIR)/%.o: %.S
 # compatibility define the file type manually.
 
 vusb_main.elf: $(OBJECTS)
-	$(COMPILE) -o vusb_main.elf $(OBJECTS)
+	$(COMPILE) -o vusb_main.elf -Wl,-Map=$(OBJDIR)/vusb_main.map,--cref -Wl,--gc-sections $(OBJECTS)
 
 vusb_main.hex: vusb_main.elf
 	rm -f vusb_main.hex vusb_main.eep.hex
