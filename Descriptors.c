@@ -355,7 +355,7 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 #ifdef BUILD_FOR_VUSB
 
 #include "usbdrv.h"
-uchar usbFunctionDescriptor(usbRequest_t* rq)
+usbMsgLen_t usbFunctionDescriptor(usbRequest_t* rq)
 {
 
 	const uint8_t  DescriptorType   = (rq->wValue.word >> 8);

@@ -48,7 +48,45 @@
 #include <util/delay.h>
 #include "twi.h"
 
-#ifdef USE_EEPROM
+#if USE_EEPROM
+
+#ifndef BITBANG_TWI
+#include <util/twi.h>
+
+void twi_start(){
+	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+	while ((TWCR & (1<<TWINT)) == 0);
+}
+void twi_stop(){
+	TWCR = (1<<TWINT) | (1<<TWSTO) | (1<<TWEN);
+}
+uint8_t twi_read_byte(twi_ack ack){
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	if(ack == ACK){
+		TWCR |= (1<<TWEA);
+	}
+	while ((TWCR & (1<<TWINT)) == 0);
+	return TWDR;
+}
+twi_ack twi_write_byte(uint8_t val){
+	TWDR = val;
+	TWCR = (1<<TWINT)|(1<<TWEN);
+	while ((TWCR & (1<<TWINT)) == 0);
+
+	// upper 5 bits from TWSR register describe our whole status
+	// We only care whether we have ack or nack-or-fail
+	// after some type of send - SLA+R, SLA+W or data
+	uint8_t status = TWSR & 0xf8;
+	// our compatible API only cares about ack/nack
+	if(status == TW_MT_DATA_ACK || // 0x28
+	   status == TW_MT_SLA_ACK  || // 0x18
+	   status == TW_MR_SLA_ACK)    // 0x40
+		return ACK;
+	else
+		return NACK;
+}
+
+#else // bitbang TWI
 
 // At ideal voltage, can clock at up to 400khz (i.e 2.5 us per clock). Be slightly slower.
 #define TWI_CLOCK_US 4
@@ -156,4 +194,6 @@ uint8_t twi_read_byte(twi_ack ack){
 	return r;
 }
 
-#endif
+#endif // BITBANG_TWI
+
+#endif // USE_EEPROM

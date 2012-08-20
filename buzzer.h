@@ -50,8 +50,10 @@
 
 #include "hardware.h"
 
-#ifdef USE_BUZZER
+#if USE_BUZZER
+
 void buzzer_start(uint16_t ms);
+void buzzer_start_f(uint16_t ms, uint8_t freq);
 void buzzer_update(uint8_t increment);
 #endif
 

@@ -6,8 +6,8 @@
 # Copyright: (c) 2008 by OBJECTIVE DEVELOPMENT Software GmbH, 2012 by Chris Andreae
 # License: GNU GPL v2 (see GPL2.txt)
 
-DEVICE  = atmega16a
-AVRDUDE_DEVICE = atmega16
+DEVICE  = atmega32
+AVRDUDE_DEVICE = atmega32
 
 FUSE_L  = 0xFF
 FUSE_H  = 0xC1
@@ -16,6 +16,7 @@ F_CPU   = 16000000	# in Hz
 AVRDUDE = avrdude -c usbasp -p $(AVRDUDE_DEVICE) # edit this line for your programmer
 
 CFLAGS  = -I. -Ivusb -Ivusb/usbdrv -DDEBUG_LEVEL=0 -DBUILD_FOR_VUSB -std=c99 -ffunction-sections
+CFLAGS += -fshort-enums -fno-strict-aliasing -fpack-struct -funsigned-bitfields
 
 OBJDIR = obj
 
@@ -32,7 +33,8 @@ SRCS = vusb/usbdrv/usbdrv.o    \
 	   serial_eeprom.o		   \
 	   buzzer.o				   \
 	   leds.o				   \
-	   kinesis.o
+	   kinesis.o			   \
+	   interpreter.o
 
 OBJECTS = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(SRCS))))
 
@@ -90,8 +92,13 @@ $(OBJDIR)/%.o: %.S
 # characters are not always preserved on Windows. To ensure WinAVR
 # compatibility define the file type manually.
 
+LDFLAGS=-Wl,-Map=$(OBJDIR)/vusb_main.map \
+		-Wl,--cref						 \
+		-Wl,--gc-sections				 \
+		-Wl,--section-start=.eeexternal=00850000
+
 vusb_main.elf: $(OBJECTS)
-	$(COMPILE) -o vusb_main.elf -Wl,-Map=$(OBJDIR)/vusb_main.map,--cref -Wl,--gc-sections $(OBJECTS)
+	$(COMPILE) -o vusb_main.elf	$(LDFLAGS) $(OBJECTS)
 
 vusb_main.hex: vusb_main.elf
 	rm -f vusb_main.hex vusb_main.eep.hex

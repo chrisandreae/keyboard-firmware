@@ -46,131 +46,239 @@
 */
 
 #include "keyboard.h"
-#include "serial_eeprom.h"
 #include "twi.h"
 #include "printing.h"
 #include "hardware.h"
+#include "serial_eeprom.h"
 
-#ifdef USE_EEPROM
+#include <util/delay.h>     /* for _delay_ms() */
+
+#if USE_EEPROM
 
 /* Serial eeprom support */
 
-static const uint8_t SERIAL_EEPROM_WRITE_TIME_MS = 10;
+serial_eeprom_err serial_eeprom_errno = SUCCESS;
 
-static enum { SUCCESS, WSELECT_ERROR, RSELECT_ERROR, ADDRESS_ERROR, DATA_ERROR } serial_eeprom_errno = SUCCESS;
+#define SERIAL_EEPROM_WRITE_TIME_MS 10
 
 // communicate with AT24C164 serial eeprom(s)
-uint8_t serial_eeprom_write_byte(uint16_t addr, uint8_t data){
-	serial_eeprom_errno = SUCCESS;
 
-	twi_start();
+// Start a write (or random read dummy) transaction with the
+// eeprom. If the eeprom is not responding, keep trying for up to the
+// eeprom write delay in case it is busy.
+serial_eeprom_err serial_eeprom_start_write(uint8_t* addr){
+	const uint16_t iaddr = (uint16_t) addr;
 
 	// [ 1 | A2 | A1 | A0 | B2 | B1 | B0 | R/W ] A0-2 = device address, B0-2 = 3 MSB of 11-bit device address
 	uint8_t address_byte = 0b10100000; // 010 address (all low) and write operation
-	address_byte ^= ((addr >> 7) & 0b01111110); // select 14-bit device-and-address at once
+	address_byte ^= ((iaddr >> 7) & 0b01111110); // select 14-bit device-and-address at once
 
-	if(twi_write_byte(address_byte) != ACK){
-		serial_eeprom_errno = WSELECT_ERROR; goto fail;
-	}
-	if(twi_write_byte(addr & 0xff) != ACK){
-		serial_eeprom_errno = ADDRESS_ERROR; goto fail;
-	}
-	if(twi_write_byte(data) != ACK){
-		serial_eeprom_errno = DATA_ERROR; goto fail;
+	// the eeprom may be ignoring inputs because it's writing, so we
+	// keep trying to issue our start condition for up to its write
+	// time.  We can't use uptimems here, because with the v-usb model
+	// that's not interrupt-fed, so just delay and check again
+
+	uint8_t ack = 0;
+	for(int i = 0; i < 11; ++i){ // wait up to 11ms
+		twi_start();
+		if(twi_write_byte(address_byte) == ACK) {
+			ack = 1;
+			break;
+		}
+		_delay_ms(1);
 	}
 
- fail:
-	twi_stop();
-	return serial_eeprom_errno == SUCCESS;
+	// If it timed out, return an error.
+	if(!ack) {
+		twi_stop();
+		return WSELECT_ERROR;
+	}
+
+	if(twi_write_byte(iaddr & 0xff) != ACK){
+		twi_stop();
+		return ADDRESS_ERROR;
+	}
+
+	return SUCCESS;
 }
 
-int16_t serial_eeprom_write(uint16_t addr, uint8_t* buf, int16_t len){
-	// todo: support page write to save rewrite cycles
-	serial_eeprom_errno = SUCCESS;
-
-	for(int i = 0; i < len; ++i){
-		if(!serial_eeprom_write_byte(addr+i, buf[i])){
-			if(i) return i;
-			else return -1;
+// Continues writing an eeprom page-write transaction. Returns bytes
+// written: if < len, an error occurred.
+int8_t serial_eeprom_continue_write(const uint8_t* buf, uint8_t len){
+	int i = 0;
+	for(; i < len; ++i){
+		if(twi_write_byte(buf[i]) != ACK){
+			serial_eeprom_errno = DATA_ERROR;
+			twi_stop();
+			break;
 		}
 	}
-	return len;
+	return i;
 }
 
-int16_t serial_eeprom_read(uint16_t addr, uint8_t* buf, int16_t len){
+// Write len bytes within an eeprom page. The caller is responsible
+// for ensuring 0 < len <= 16 and aligned within the 16 byte page.
+// returns bytes written: if < len, an error occurred.
+int8_t serial_eeprom_write_page(uint8_t* addr, const uint8_t* buf, uint8_t len){
+	serial_eeprom_errno = SUCCESS;
+
+	uint8_t r = serial_eeprom_start_write(addr);
+	if(r != SUCCESS){
+		serial_eeprom_errno = r;
+		return 0;
+	}
+
+	int8_t wr = serial_eeprom_continue_write(buf, len);
+	if(wr == len){
+		// no error
+		serial_eeprom_end_write();
+	}
+
+	return wr;
+}
+
+
+/**
+ * Repeatedly called to incrementally write chunks of data to eeprom.
+ * The caller is responsible for ensuring that the range to be written
+ * does not cross a page boundary, and that writing begins at a page
+ * boundary.  Function automatically starts a page write if addr is at
+ * a page boundary, and stops the page write after writing if addr+len
+ * is a page boundary, or if 'last' is set.
+ *
+ * Returns serial_eeprom_err.
+ */
+serial_eeprom_err serial_eeprom_write_step(uint8_t* addr, uint8_t* data, uint8_t len, uint8_t last){
+	serial_eeprom_err r;
+	if(((intptr_t)addr & (EEEXT_PAGE_SIZE-1)) == 0){
+		// page aligned: start write
+		r = serial_eeprom_start_write(addr);
+		if(r != SUCCESS) return r;
+	}
+
+	if(len != serial_eeprom_continue_write(data, len)){
+		return serial_eeprom_errno;
+	}
+
+	intptr_t nextAddr = (intptr_t) addr+len;
+	if(last || ((nextAddr & (EEEXT_PAGE_SIZE-1)) == 0)){
+		serial_eeprom_end_write();
+	}
+
+	return SUCCESS;
+}
+
+
+int16_t serial_eeprom_read(const uint8_t* addr, uint8_t* buf, uint16_t len){
 	serial_eeprom_errno = SUCCESS;
 	uint8_t read_bytes = 0;
 
-	twi_start();
-
 	// Set the current address by doing a "dummy write" to the address -
 	// set up as though writing, but then don't send the actual byte
-
-	// [ 1 | A2 | A1 | A0 | B2 | B1 | B0 | R/W ] A0-2 = device address, B0-2 = 3 MSB of 11-bit device address
-	uint8_t address_byte = 0b10100000; // 010 address (all low) and write operation
-	address_byte ^= ((addr >> 7) & 0b01111110); // select 14-bit device-and-address at once
-
-	if(twi_write_byte(address_byte) != ACK){
-		serial_eeprom_errno = WSELECT_ERROR; goto fail;
-	}
-	if(twi_write_byte(addr & 0xff) != ACK){
-		serial_eeprom_errno = ADDRESS_ERROR; goto fail;
+	uint8_t r = serial_eeprom_start_write((uint8_t*) addr);
+	if(r != SUCCESS){
+		serial_eeprom_errno = r;
+		goto end;
 	}
 
-	// then send a start again, and the address with the read bit set.
+	// now send a new start condition, and the read command for the device address
+	// (do not re-send the byte address)
 	twi_start();
 
-	uint8_t read_addr = address_byte | 0x1; // do I need to clip out the high bits here?
-	if(twi_write_byte(read_addr) != ACK){
-		serial_eeprom_errno = RSELECT_ERROR; goto fail;
+	uint8_t read_address = 0b10100001; // 010 address (all low) and read operation
+	read_address ^= (((uint16_t)addr) >> 7) & 0b01111110; // select upper part of 14-bit device-and-address
+
+	if(twi_write_byte(read_address) != ACK){
+		serial_eeprom_errno = RSELECT_ERROR; goto end;
 	}
 
+	// and start reading
 	while(len--){
 		*buf++ = twi_read_byte(len ? ACK : NACK); // nack on last byte to stop it talking to us
 		++read_bytes;
 	}
 
- fail:
+ end:
 	twi_stop();
 	return read_bytes ? read_bytes : -1;
 }
 
+// test code to dump the contents of the eeprom - typically not linked in
 uint8_t serial_eeprom_test_read(void){
-	static uint16_t addr = 0;
-	uint8_t b;
+	static uint8_t* addr = 0;
+	static uint8_t buf[8]; // read 8 at a time to prove multi-read
+	static uint8_t bufp = sizeof(buf);
 
-	int16_t r = serial_eeprom_read(addr++, &b, 1);
-	if(r != 1){
+	uint8_t next_byte;
+	if(bufp >= sizeof(buf)){
+		int16_t r = serial_eeprom_read(addr, buf, sizeof(buf));
+		if(r != sizeof(buf)){
+			addr = 0;
+			switch(serial_eeprom_errno){
+			case RSELECT_ERROR:
+				printing_set_buffer(PGM_MSG("RSELECT_ERROR"), BUF_PGM);
+				break;
+			case WSELECT_ERROR:
+				printing_set_buffer(PGM_MSG("WSELECT_ERROR"), BUF_PGM);
+				break;
+			case ADDRESS_ERROR:
+				printing_set_buffer(PGM_MSG("ADDRESS_ERROR"), BUF_PGM);
+				break;
+			case DATA_ERROR:
+				printing_set_buffer(PGM_MSG("DATA_ERROR"), BUF_PGM);
+				break;
+			case SUCCESS:
+				printing_set_buffer(PGM_MSG("SUCCESS:WHAT_ERROR?\n"), BUF_PGM);
+				break;
+			default:
+				printing_set_buffer(PGM_MSG("WTF_ERROR"), BUF_PGM);
+			}
+			return 0;
+		}
+		addr += sizeof(buf);
+		bufp = 0;
+	}
+
+	next_byte = buf[bufp++];
+
+	printing_set_buffer(byte_to_str(next_byte), BUF_MEM);
+	return 1;
+}
+
+static uint16_t block[8] = { 0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e };
+uint8_t serial_eeprom_test_write(void){
+	static uint8_t* addr = 0;
+
+	int8_t r = serial_eeprom_write_page(addr, (uint8_t*)block, 16);
+	if(r != 16){
+		addr = 0;
 		switch(serial_eeprom_errno){
-		case RSELECT_ERROR:{
-			static const char msg[] PROGMEM = "RSELECT_ERROR";
-			printing_set_buffer(msg);
+		case RSELECT_ERROR:
+			printing_set_buffer(PGM_MSG("RSELECT_ERROR\n"), BUF_PGM);
 			break;
-		}
-		case WSELECT_ERROR:{
-			static const char msg[] PROGMEM = "WSELECT_ERROR";
-			printing_set_buffer(msg);
+		case WSELECT_ERROR:
+			printing_set_buffer(PGM_MSG("WSELECT_ERROR\n"), BUF_PGM);
 			break;
-		}
-		case ADDRESS_ERROR:{
-			static const char msg[] PROGMEM = "ADDRESS_ERROR";
-			printing_set_buffer(msg);
+		case ADDRESS_ERROR:
+			printing_set_buffer(PGM_MSG("ADDRESS_ERROR\n"), BUF_PGM);
 			break;
-		}
-		case DATA_ERROR:{
-			static const char msg[] PROGMEM = "DATA_ERROR";
-			printing_set_buffer(msg);
+		case DATA_ERROR:
+			printing_set_buffer(PGM_MSG("DATA_ERROR\n"), BUF_PGM);
 			break;
-		}
-		default:{
-			static const char msg[] PROGMEM = "WTF_ERROR";
-			printing_set_buffer(msg);
-		}
+		case SUCCESS:
+			printing_set_buffer(PGM_MSG("SUCCESS:WHAT_ERROR?\n"), BUF_PGM);
+			break;
+		default:
+			printing_set_buffer(PGM_MSG("WTF_ERROR\n"), BUF_PGM);
 		}
 		return 0;
 	}
 	else{
-		printing_set_buffer(print_byte(b));
+		printing_set_buffer(byte_to_str(((uint16_t)addr)/16), BUF_MEM);
+		addr += 16;
+		for(int i = 0; i < 8; ++i){
+			block[i] += 0x10;
+		}
 		return 1;
 	}
 }

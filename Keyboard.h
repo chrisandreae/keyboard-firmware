@@ -58,6 +58,9 @@
 
 #include "Descriptors.h"
 
+extern volatile uint32_t _uptimems;
+static inline uint32_t uptimems(void){ return _uptimems; }
+
 /* Function Prototypes: */
 void SetupHardware(void);
 

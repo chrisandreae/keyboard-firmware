@@ -51,12 +51,18 @@
 #include "Keyboard.h"
 #include "keystate.h"
 
-void printing_set_buffer(const char* buf);
+#define PGM_MSG(x) ({ static const char __pgm_msg[] PROGMEM = x; __pgm_msg; })
+
+typedef enum __attribute__((__packed__)) _buf_type {
+	BUF_MEM, BUF_PGM, BUF_EE, BUF_EEEXT
+} buf_type;
+
+void printing_set_buffer(const char* buf, buf_type typ);
 uint8_t printing_buffer_empty(void);
 
 void printing_Fill_KeyboardReport(KeyboardReport_Data_t* ReportData);
 
 void char_to_keys(const char nextchar, hid_keycode* nextkey, hid_keycode* nextmod);
-const char* const print_byte(const uint8_t byte);
+const char* byte_to_str(uint8_t byte);
 
 #endif // __PRINTING_H

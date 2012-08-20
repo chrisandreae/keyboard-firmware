@@ -50,11 +50,38 @@
 
 #include "hardware.h"
 
-#ifdef USE_EEPROM
-uint8_t serial_eeprom_write_byte(uint16_t addr, uint8_t data);
-int16_t serial_eeprom_write(uint16_t addr, uint8_t* buf, int16_t len);
-int16_t serial_eeprom_read(uint16_t addr, uint8_t* buf, int16_t len);
+#if USE_EEPROM
+#include "twi.h"
+
+#define EEEXT __attribute__((section(".eeexternal")))
+
+#define EEEXT_PAGE_SIZE 16
+
+typedef enum _serial_eeprom_err {
+	SUCCESS = 0,
+	WSELECT_ERROR,
+	RSELECT_ERROR,
+	ADDRESS_ERROR,
+	DATA_ERROR
+} serial_eeprom_err;
+
+extern serial_eeprom_err serial_eeprom_errno;
+
+serial_eeprom_err serial_eeprom_start_write(uint8_t* addr);
+int8_t serial_eeprom_continue_write(const uint8_t* buf, uint8_t len);
+static inline void serial_eeprom_end_write(){ twi_stop(); }
+
+int8_t serial_eeprom_write_page(uint8_t* addr, const uint8_t* buf, uint8_t len);
+
+serial_eeprom_err serial_eeprom_write_step(uint8_t* addr, uint8_t* data, uint8_t len, uint8_t last);
+
+int16_t serial_eeprom_read(const uint8_t* addr, uint8_t* buf, uint16_t len);
+
+// test code (not normally linked)
 uint8_t serial_eeprom_test_read(void);
+uint8_t serial_eeprom_test_write(void);
+
+
 #endif
 
 #endif // __SERIAL_EEPROM_H

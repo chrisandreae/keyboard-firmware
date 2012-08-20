@@ -48,22 +48,30 @@
 #include "buzzer.h"
 #include "hardware.h"
 
-#ifdef USE_BUZZER
+#if USE_BUZZER
 static uint16_t buzzer_ms;
 
-static const int TIMER_MODE = ((1<<WGM01) | (1<<CS01) | (1<<CS00));
+// cs00 | cs01 : clk/64
+// cs22 | cs20 : clk/64
+
+// CLK/64: 4us per tick, enable CTC mode (WGM21)
+// buzzer is connected to OC2 pin: toggle OC2 on compare match ((COM20)
+static const int TIMER_MODE = ((1<<WGM21) | (1<<COM20) | (1<<CS22) | (1<<CS20));
 
 void buzzer_start(uint16_t ms){
+	buzzer_start_f(ms, 110);
+}
+
+void buzzer_start_f(uint16_t ms, uint8_t freq){
 	if(buzzer_ms <= ms){
 		buzzer_ms = ms;
 
 		// Turn on the buzzer and start the timer
 		BUZZER_PORT |= BUZZER;
 
-		TCNT0  = 0;
-		OCR0   = 150;
-		TCCR0 |= TIMER_MODE;
-		TIMSK |= (1<<OCIE0);
+		TCNT2  = 0;
+		OCR2   = freq;
+		TCCR2 |= TIMER_MODE;
 	}
 }
 
@@ -72,14 +80,11 @@ void buzzer_update(uint8_t increment){
 		buzzer_ms = (increment >= buzzer_ms) ? 0 : buzzer_ms - increment;
 		if(buzzer_ms == 0){
 			// Stop the timer and turn off the buzzer
-			TCCR0       &= ~TIMER_MODE;
+			TCCR2       &= ~TIMER_MODE;
 			BUZZER_PORT &= ~BUZZER;
 		}
 	}
 }
 
-ISR(TIMER0_COMP_vect){
-	BUZZER_PORT ^= BUZZER;
-}
 
 #endif

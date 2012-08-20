@@ -94,8 +94,17 @@ enum SPECIAL_HID_KEYS{
 	SPECIAL_HID_KEY_MOUSE_BACK,
 	SPECIAL_HID_KEY_MOUSE_LEFT,
 	SPECIAL_HID_KEY_MOUSE_RIGHT,
-	// We'll want placeholder special keys for "look up a macro or program to execute" - if a lkey maps to them,
-	// look up that lkey in the macros/programs table
+	// We'll want placeholder special keys for "look up a macro or
+	// program to execute" - if a lkey maps to them, look up that lkey
+	// in the macros/programs table
+	SPECIAL_HID_KEY_EXEC_PROGRAM1, // 0xF1
+	SPECIAL_HID_KEY_EXEC_PROGRAM2,
+	SPECIAL_HID_KEY_EXEC_PROGRAM3,
+	SPECIAL_HID_KEY_EXEC_PROGRAM4,
+	SPECIAL_HID_KEY_EXEC_PROGRAM5,
+	SPECIAL_HID_KEY_EXEC_PROGRAM6, // Must have NUM_PROGRAMS keys
+	SPECIAL_HID_KEY_EXEC_MACRO,
+	// And the extra-special non-remappable program and keypad keys
 	SPECIAL_HID_KEY_PROGRAM = 0xFD,
 	SPECIAL_HID_KEY_KEYPAD,
 };
@@ -127,5 +136,16 @@ void keystate_get_keys(logical_keycode* l_keys);
 void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport);
 
 bool keystate_Fill_MouseReport(MouseReport_Data_t* MouseReport);
+
+/** Checks whether a key mapped to the argument keycode (or any key if
+ * argument 0) is pressed, returns keycode of first pressed key or
+ * NO_KEY.
+*/
+hid_keycode keystate_check_hid_key(hid_keycode key);
+
+/**
+ * Check for keys bound to programs, if found call vm_start
+ */
+void keystate_run_programs(void);
 
 #endif // __KEYSTATE_H

@@ -50,7 +50,7 @@
 
 #include "hardware.h"
 
-#ifdef USE_EEPROM
+#if USE_EEPROM
 
 typedef enum _twi_ack {
 	ACK = 0,

@@ -1,0 +1,22 @@
+void main(){
+	byte b;
+	byte k;
+	k = 0x04; // "A"
+
+	// wait for initial key to be released
+	while(checkPhysKey(0)){
+	}
+
+	// now loop and press each key in sequence
+	while(1){
+		pressKey(k);
+		releaseKey(k);
+
+		if(waitPhysKey(0, 200s)){
+			delay(200s);
+			break;
+		}
+
+		if(++k > 29) k = 4;
+	}
+}

@@ -268,16 +268,25 @@ void ports_init(void){
 	LED_PORT &= ~(ALL_LEDS);
 	LED_DDR  &= ~(ALL_LEDS); // start as hi-z (disabled)
 
-#ifdef USE_BUZZER
+#if USE_BUZZER
 	// start out output/low
 	BUZZER_PORT &= ~BUZZER;
 	BUZZER_DDR  |= BUZZER;
 #endif
  
-#ifdef USE_EEPROM
+#if USE_EEPROM
+#ifdef BITBANG_TWI
 	// Serial eeprom lines have external pull-ups, so 0 = output-low(1,0) / 1 = input-highz(0,0)
 	EEPROM_PORT &= ~(EEPROM_SCL | EEPROM_SDA); // initially leave floating
 	EEPROM_DDR  &= ~(EEPROM_SCL | EEPROM_SDA);
+#else
+	TWSR = 0x00;
+	TWBR = 32; // 200 kHz SCL clock (eeprom starts not responding well
+			   // when faster)
+
+	//enable TWI
+	TWCR = (1<<TWEN);
+#endif // bitbang
 #endif
 
 }

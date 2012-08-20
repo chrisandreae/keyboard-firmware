@@ -51,6 +51,7 @@
 #include "hardware.h"
 #include "config.h"
 #include "buzzer.h"
+#include "interpreter.h"
 
 #include <stdarg.h>
 
@@ -112,7 +113,7 @@ void keystate_update(void){
 						if(key->state == 0 && key->debounce == DEBOUNCE_MASK){
 							++key_press_count;
 							key->state = 1;
-							#ifdef USE_BUZZER
+							#if USE_BUZZER
 							if(config_get_flags().key_sound_enabled)
 								buzzer_start(1);
 							#endif
@@ -340,4 +341,31 @@ bool keystate_Fill_MouseReport(MouseReport_Data_t* MouseReport){
 	last_button_report = MouseReport->Button;
 
 	return send;
+}
+
+hid_keycode keystate_check_hid_key(hid_keycode key){
+	for(int i = 0; i < KEYSTATE_COUNT; ++i){
+		if(key_states[i].state){
+			logical_keycode l_key = key_states[i].l_key;
+			hid_keycode h_key = config_get_definition(l_key);
+			if(key == 0 || key == h_key) return h_key;
+		}
+	}
+	return 0xFF;
+}
+
+void keystate_run_programs(){
+#if USE_EEPROM
+	for(int i = 0; i < KEYSTATE_COUNT; ++i){
+		if(key_states[i].state){
+			logical_keycode l_key = key_states[i].l_key;
+			hid_keycode h_key = config_get_definition(l_key);
+			uint8_t i;
+			if(h_key >= SPECIAL_HID_KEY_EXEC_PROGRAM1 &&
+			   (i = h_key - SPECIAL_HID_KEY_EXEC_PROGRAM1) < NUM_PROGRAMS){
+				vm_start(i, l_key);
+			}
+		}
+	}
+#endif
 }

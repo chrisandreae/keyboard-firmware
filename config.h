@@ -50,11 +50,23 @@
 
 #include "keystate.h"
 
+// Number of programs we support. We always permit concurrent program
+// execution, so we limit the number of programs to the number of VMs.
+#define NUM_PROGRAMS 6
+
+// size in bytes of program storage (including index)
+#define PROGRAMS_SIZE 1024
+
+#define MACROS_SIZE 1024
+
 // Configuration is saved in the eeprom
 typedef struct _configuration_flags {
 	unsigned char key_sound_enabled:1;
 	unsigned char packing:7;
 } configuration_flags;
+
+// returns eeprom address of logical_to_hid_map
+hid_keycode* config_get_mapping();
 
 hid_keycode config_get_definition(logical_keycode l_key);
 void config_save_definition(logical_keycode l_key, hid_keycode h_key);
@@ -69,5 +81,12 @@ uint8_t config_load_layout(uint8_t num);
 configuration_flags config_get_flags(void);
 void config_save_flags(configuration_flags state);
 
+#if USE_EEPROM
+uint8_t* config_get_programs();
+uint8_t* config_get_macros();
+
+struct _program;
+const struct _program* config_get_program(uint8_t idx);
+#endif
 
 #endif // __CONFIG_H

@@ -11,12 +11,20 @@
 #include <avr/interrupt.h>  /* for sei() */
 #include <util/delay.h>     /* for _delay_ms() */
 
+#include "avr/eeprom.h"
 #include <avr/pgmspace.h>   /* required by usbdrv.h */
+
 #include "usbdrv.h"
 #include "oddebug.h"        /* This is also an example for using debug macros */
 
+#include "hardware.h"
+
 #include "Keyboard.h"
 #include "Descriptors.h"
+#include "interpreter.h"
+#include "config.h"
+#include "buzzer.h"
+#include "serial_eeprom.h"
 
 // Use GCC built-in memory operations
 #define memcmp(a,b,c) __builtin_memcmp(a,b,c)
@@ -29,7 +37,6 @@
 
 static uint8_t idleRate		  = 0;   /* repeat rate for keyboard in 4ms increments - 0 means report only on changes */
 static uint8_t reportProtocol = 1; // 1 = hid reports, 0 = boot protocol
-static uint8_t expectReport = 0;
 
 /** Global structure to hold the current keyboard interface HID report, for transmission to the host */
 static KeyboardReport_Data_t KeyboardReportData;
@@ -37,7 +44,50 @@ static KeyboardReport_Data_t KeyboardReportData;
 /** Global structure to hold the current mouse interface HID report, for transmission to the host */
 static MouseReport_Data_t MouseReportData;
 
+typedef enum _vendor_request {
+	READ_LAYOUT_ID,    // Which type of keyboard are we, what do the logical keycodes mean?
+	READ_MAPPING_SIZE, // How many logical keycodes do we map?
+	WRITE_MAPPING, READ_MAPPING,
+	READ_DEFAULT_MAPPING,
+
+	READ_NUM_PROGRAMS,  // How many program VMs do we run?
+	READ_PROGRAMS_SIZE, // How much space is available for program storage?
+	WRITE_PROGRAMS, READ_PROGRAMS,
+
+	RESET_DEFAULTS,
+	RESET_FULLY,
+
+	READ_CONFIG_FLAGS,
+	WRITE_CONFIG_FLAGS, // one byte: passed in wvalue
+} vendor_request;
+
+typedef enum _transfer_action {
+	LED_REPORT,
+	WRITE_EEEXT,
+	READ_EEEXT,
+	WRITE_EEPROM,
+	READ_EEPROM,
+	READ_PROGMEM,
+} transfer_action;
+
+static union {
+	struct {
+		transfer_action type;
+		uint8_t* addr;
+		uint16_t remaining;
+	} state;
+	uint8_t byte;
+	uint16_t word;
+} transfer;
+
+void(*transfer_callback)() = (void*) 0x0;
+
+
 /* ------------------------------------------------------------------------- */
+
+static uint16_t min_u16(uint16_t a, uint16_t b){
+	return (a < b) ? a : b;
+}
 
 usbMsgLen_t usbFunctionSetup(uchar data[8]){
 	usbRequest_t *rq = (void *)data;
@@ -67,8 +117,8 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			break;
 		case USBRQ_HID_SET_REPORT:
 			if (!rq->wIndex.word && rq->wLength.word == 1) { /* We expect one byte reports for keyboard LEDs */
-				expectReport=1;
-				return 0xFF; /* Call usbFunctionWrite with data */
+				transfer.state.type = LED_REPORT;
+				return USB_NO_MSG; /* Call usbFunctionWrite with data */
 			}
 			break;
 		case USBRQ_HID_GET_IDLE:
@@ -85,20 +135,142 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			break;
 		}
 	}else{
-		/* no vendor specific requests implemented */
+		/* Vendor requests: */
+		switch(rq->bRequest){
+		case READ_NUM_PROGRAMS:
+			transfer.byte = NUM_PROGRAMS;
+			goto transfer_byte;
+		case READ_LAYOUT_ID:
+			transfer.byte = LAYOUT_ID;
+			goto transfer_byte;
+		case READ_MAPPING_SIZE:
+			transfer.byte = NUM_LOGICAL_KEYS;
+			goto transfer_byte;
+		case READ_CONFIG_FLAGS: {
+			configuration_flags fs = config_get_flags();
+			transfer.byte = *((uint8_t*)&fs);
+		}
+		transfer_byte:
+			usbMsgPtr = &transfer.byte;
+			return 1;
+#if USE_EEPROM
+		case READ_PROGRAMS_SIZE:
+			transfer.word = PROGRAMS_SIZE;
+			usbMsgPtr = (uint8_t*)&transfer.word;
+			return 2;
+		case WRITE_PROGRAMS:
+			transfer.state.type = WRITE_EEEXT;
+			transfer_callback = &vm_init;
+			goto programs_rw;
+		case READ_PROGRAMS:
+			transfer.state.type = READ_EEEXT;
+		programs_rw:
+			transfer.state.addr = config_get_programs();
+			transfer.state.remaining = rq->wLength.word;
+			return USB_NO_MSG;
+#endif
+		case WRITE_CONFIG_FLAGS: {
+			uint8_t b = (rq->wValue.word & 0xff);
+			config_save_flags(*(configuration_flags*)&b);
+			break;
+		}
+		case WRITE_MAPPING:
+			transfer.state.type = WRITE_EEPROM;
+			goto mapping_rw1;
+		case READ_DEFAULT_MAPPING:
+			transfer.state.type = READ_PROGMEM;
+			transfer.state.addr = (uint8_t*) logical_to_hid_map_default;
+			goto mapping_rw2;
+		case READ_MAPPING:
+			transfer.state.type = READ_EEPROM;
+		mapping_rw1:
+			transfer.state.addr = config_get_mapping();
+		mapping_rw2:
+			transfer.state.remaining = min_u16(NUM_LOGICAL_KEYS, rq->wLength.word);
+			return USB_NO_MSG;
+		case RESET_DEFAULTS:
+			config_reset_defaults();
+			break;
+		case RESET_FULLY:
+			config_reset_fully();
+			break;
+		}
 	}
 	return 0;   /* default for not implemented requests: return no data back to host */
 }
 
+uint8_t* step_addr;
+
+// Receive information from computer. Return 0 or 1 to tell the driver
+// whether we are finished with this transfer.
 uchar usbFunctionWrite(uchar *data, uchar len) {
-	if ((expectReport)&&(len==1)) {
-		Process_KeyboardLEDReport(data[0]);
-		expectReport=0;
-		return 1;
+	uint8_t write_sz = len <= transfer.state.remaining ? len : transfer.state.remaining;
+	uint8_t ret = 1;
+
+	switch(transfer.state.type){
+#if USE_EEPROM
+	case WRITE_EEEXT: {
+		serial_eeprom_err r = serial_eeprom_write_step(transfer.state.addr, data, write_sz,
+													   transfer.state.remaining == write_sz);
+		if(r != SUCCESS){
+			buzzer_start(200);
+			break; // end transfer if failed
+		}
 	}
-	expectReport=0;
-	return 0x01;
+		goto end_write_step;
+#endif
+	case WRITE_EEPROM:
+		eeprom_update_block(data, transfer.state.addr, write_sz);
+	end_write_step:
+		transfer.state.addr += write_sz;
+		transfer.state.remaining -= write_sz;
+		ret = (transfer.state.remaining == 0);
+		break;
+	case LED_REPORT:
+		Process_KeyboardLEDReport(data[0]);
+		break;
+	default:
+		break;
+	}
+
+	if(ret == 1 && transfer_callback){
+		transfer_callback();
+		transfer_callback = (void*) 0x0;
+	}
+	return ret;
 }
+
+#include <buzzer.h>
+
+// Send information back to the computer
+// returns bytes put in buffer
+uchar usbFunctionRead(uchar* data, uchar len) {
+	uint8_t read_sz = len <= transfer.state.remaining ? len : transfer.state.remaining;
+	int16_t r;
+
+	switch(transfer.state.type){
+#if USE_EEPROM
+	case READ_EEEXT:
+		r = serial_eeprom_read(transfer.state.addr, data, read_sz);
+		if(r == -1) return 0; // no bytes sent, error
+		goto end_read_step;
+#endif
+	case READ_PROGMEM:
+		for(int i = 0; i < read_sz; ++i){
+			data[i] = pgm_read_byte_near(&transfer.state.addr[i]);
+		}
+		goto end_read_step;
+	case READ_EEPROM:
+		eeprom_read_block(data, transfer.state.addr, read_sz);
+	end_read_step:
+		transfer.state.addr += read_sz;
+		transfer.state.remaining -= read_sz;
+		return read_sz;
+	default:
+		return 0;
+	}
+}
+
 
 #if 0 // receive LED state via interrupt OUT endpoint 2
 /* This function is called by the driver when data is received on an interrupt-
@@ -213,6 +385,7 @@ extern void Perform_USB_Update(int update_kbd, int update_mouse){
 
 	if(sending_keyboard && usbInterruptIsReady()){
 		usbSetInterrupt((void*)&KeyboardReportData, sizeof(KeyboardReportData));
+		vm_report_callback();
 		sending_keyboard = 0;
 	}
 

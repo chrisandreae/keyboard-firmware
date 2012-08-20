@@ -55,10 +55,12 @@
 #include "buzzer.h"
 #include "leds.h"
 
+#include "serial_eeprom.h"
+#include "interpreter.h"
+
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stdarg.h>
-
 
 /** Buffer to hold the previously generated Keyboard HID report, for comparison purposes inside the HID class driver. */
 KeyboardReport_Data_t PrevKeyboardHIDReportBuffer;
@@ -69,7 +71,7 @@ MouseReport_Data_t PrevMouseHIDReportBuffer;
 #endif
 
 // Keyboard
-volatile uint32_t uptimems;
+volatile uint32_t _uptimems;
 
 // Messages
 const char MSG_NO_MACRO[] PROGMEM = "no macro support yet";
@@ -84,8 +86,8 @@ static void handle_state_normal(void);
 static void handle_state_programming(void);
 static void ledstate_update(void);
 
-static void print_message(const char* buffer, state next){
-	printing_set_buffer(buffer);
+static void print_pgm_message(const char* buffer, state next){
+	printing_set_buffer(buffer, BUF_PGM);
 	current_state = STATE_PRINTING;
 	next_state = next;
 }
@@ -98,14 +100,22 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 	ports_init();
 	keystate_init();
 	config_init();
+#if USE_EEPROM
+	vm_init();
+#endif
 
 	sei();
+
+#if USE_BUZZER
+	// buzz on startup
+	buzzer_start(200);
+#endif
 
 	struct { int keys:1; int mouse:1; } update;
 
 	for (;;) {
 		// update key state once per 2ms slice
-		uint8_t slice = (uptimems & 0x1);
+		uint8_t slice = (uptimems() & 0x1);
 		if(!slice && update.keys){
 			keystate_update();
 			ledstate_update();
@@ -147,16 +157,21 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 		case STATE_MACRO_RECORD:
 		case STATE_MACRO_PLAY:
 		default: {
-			static const char msg[] PROGMEM = "Unexpected state";
-			print_message(msg, STATE_NORMAL);
+			print_pgm_message(PGM_MSG("Unexpected state"), STATE_NORMAL);
 			break;
 		}
 		}
 
+#if USE_EEPROM
+		if(current_state == STATE_NORMAL){
+			vm_step_all();
+		}
+#endif
+
 		/* Limit frequency of mouse reports. Unlike keyboard reports,
 		   identical reports won't be ignored by the class driver, so
 		   report speed affects mouse movement speed. */
-		uint8_t mouse_slice = (uptimems & 0x8);
+		uint8_t mouse_slice = (uptimems() & 0x8);
 		uint8_t perform_mouse_update = 0;
 		if(!mouse_slice && update.mouse){
 			perform_mouse_update = 1;
@@ -183,13 +198,13 @@ static void handle_state_normal(void){
 				logical_keycode other = (keys[0] == LOGICAL_KEY_PROGRAM) ? keys[1] : keys[0];
 				switch(other){
 				case LOGICAL_KEY_F11:
-					print_message(MSG_NO_MACRO,STATE_NORMAL);
+					print_pgm_message(MSG_NO_MACRO, STATE_NORMAL);
 					break;
 				case LOGICAL_KEY_F12:
 					current_state = STATE_WAITING;
 					next_state = STATE_PROGRAMMING_SRC;
 					break;
-#ifdef USE_BUZZER
+#if USE_BUZZER
 				case LOGICAL_KEY_BACKSLASH: {
 					configuration_flags flags = config_get_flags();
 					flags.key_sound_enabled = !flags.key_sound_enabled;
@@ -261,6 +276,11 @@ static void handle_state_normal(void){
 		}
 
 	}
+
+	// If we are still in state normal, handle programs and macros
+	if(current_state == STATE_NORMAL){
+		keystate_run_programs();
+	}
 }
 
 static void handle_state_programming(void){
@@ -308,6 +328,9 @@ bool Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
 	switch(current_state){
 	case STATE_NORMAL:
 		keystate_Fill_KeyboardReport(KeyboardReport);
+#if USE_EEPROM
+		vm_append_KeyboardReport(KeyboardReport);
+#endif
 		return false;
 	case STATE_PRINTING:
 		printing_Fill_KeyboardReport(KeyboardReport);
@@ -364,13 +387,13 @@ static void ledstate_update(void){
 	switch(current_state){
 	case STATE_PROGRAMMING_SRC:
 		// flash quickly - change every 128ms
-		if(uptimems & 128){
+		if(uptimems() & 128){
 			LEDMask |= LEDMASK_PROGRAMMING_SRC;
 		}
 		break;
 	case STATE_PROGRAMMING_DST:
 		// flash slowly - change every 256ms
-		if(uptimems & 256){
+		if(uptimems() & 256){
 			LEDMask |= LEDMASK_PROGRAMMING_DST;
 		}
 		break;
@@ -411,9 +434,9 @@ void Update_USBState(USB_State state){
 }
 
 void Update_Millis(uint8_t increment){
-	uptimems += increment;
+	_uptimems += increment;
 
-#ifdef USE_BUZZER
+#if USE_BUZZER
 	buzzer_update(increment);
 #endif
 

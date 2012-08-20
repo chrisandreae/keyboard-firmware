@@ -52,6 +52,9 @@
 #include "printing.h"
 #include "keystate.h"
 #include "leds.h"
+#include "serial_eeprom.h"
+#include "interpreter.h"
+#include "buzzer.h"
 
 #include "avr/eeprom.h"
 
@@ -65,13 +68,44 @@ configuration_flags eeprom_flags EEMEM;
 // Key configuration is stored in eeprom. If the sentinel is not valid, initialize from the defaults.
 hid_keycode logical_to_hid_map[NUM_LOGICAL_KEYS] EEMEM;
 
-// We support saving up to 10 key mappings as their difference from the default.
+hid_keycode* config_get_mapping(){
+	return &logical_to_hid_map[0];
+}
+
+// We support saving up to 10 keyboard remappings as their differences from the default.
+// These (variable sized) mappings are stored in the fixed-size buffer saved_key_mappings,
+// indexed by saved_key_mapping_indices. The buffer is kept packed (subsequent mappings
+// moved down on removal)
 #define NUM_KEY_MAPPING_INDICES 10
 struct { uint8_t start; uint8_t end; } saved_key_mapping_indices[NUM_KEY_MAPPING_INDICES] EEMEM;
 
 // Key mappings are saved as a list of (logical_keycode, hid_keycode) pairs.
 #define SAVED_KEY_MAPPINGS_BUFFER_SIZE 128
 struct { logical_keycode l_key; hid_keycode h_key; } saved_key_mappings[SAVED_KEY_MAPPINGS_BUFFER_SIZE] EEMEM;
+
+#if USE_EEPROM
+
+// Programs are stored in external eeprom. We dedicate 1k of our 2k
+// eeprom for program storage, leaving the rest for keyboard macros.
+
+static uint8_t programs[PROGRAMS_SIZE] EEEXT;
+
+typedef struct _program_idx { uint16_t offset; uint16_t len; } program_idx;
+static program_idx *const programs_index = (uint16_t*) programs;
+
+static uint8_t *const programs_data = programs + (NUM_PROGRAMS * sizeof(program_idx));
+
+static uint8_t macros[MACROS_SIZE] EEEXT; // as yet unused
+
+uint8_t* config_get_programs(){
+	return &programs[0];
+}
+
+uint8_t* config_get_macros(){
+	return &macros[0];
+}
+#endif
+
 
 hid_keycode config_get_definition(logical_keycode l_key){
 	return eeprom_read_byte(&logical_to_hid_map[l_key]);
@@ -88,16 +122,43 @@ void config_reset_defaults(void){
 		eeprom_update_byte(&logical_to_hid_map[i], default_key);
 	}
 	eeprom_update_byte((uint8_t*)&eeprom_flags, 0x0);
-	// flash LEDs to show that we had to reset
-	leds_blink();
+
+	// Buzz to signify reset (TODO: also flash LEDs)
+#if USE_BUZZER
+	buzzer_start(300);
+#endif
 }
 
 // reset the keyboard, including saved layouts
 void config_reset_fully(void){
 	eeprom_update_byte(&eeprom_sentinel_byte, EEPROM_SENTINEL);
-	for(int i = 0; i < NUM_KEY_MAPPING_INDICES; ++i){
-		eeprom_update_byte(&saved_key_mapping_indices[i].start, NO_KEY);
+
+	{
+		// reset key mapping index
+		const uint8_t sz = sizeof(saved_key_mapping_indices) * sizeof(*saved_key_mapping_indices);
+		uint8_t buf[sz];
+		memset(buf, NO_KEY, sz);
+		eeprom_update_block(buf, saved_key_mapping_indices, sz);
 	}
+
+#if USE_EEPROM
+	{
+	// reset program index
+		uint8_t sz = NUM_PROGRAMS * sizeof(program_idx);
+
+		uint8_t buf[EEEXT_PAGE_SIZE];
+		memset(buf, NO_KEY, EEEXT_PAGE_SIZE);
+
+		uint8_t* p = (uint8_t*) programs_index;
+		while(sz > 0){
+			uint8_t step = (sz > EEEXT_PAGE_SIZE) ? EEEXT_PAGE_SIZE : sz;
+			serial_eeprom_write_page(p, buf, step);
+			p += step;
+			sz -= step;
+		}
+	}
+#endif // USE_EEPROM
+
 	config_reset_defaults();
 }
 
@@ -120,16 +181,16 @@ void config_save_flags(configuration_flags state){
 }
 
 
-static const char MSG_NO_LAYOUT[] PROGMEM = "No such layout";
+static const char MSG_NO_LAYOUT[] PROGMEM = "No layout";
 
 uint8_t config_delete_layout(uint8_t num){
 	if(num >= NUM_KEY_MAPPING_INDICES){
-		printing_set_buffer(MSG_NO_LAYOUT);
+		printing_set_buffer(MSG_NO_LAYOUT, BUF_PGM);
 		return false;
 	}
 	uint8_t start = eeprom_read_byte(&saved_key_mapping_indices[num].start);
 	if(start == NO_KEY){
-		printing_set_buffer(MSG_NO_LAYOUT);
+		printing_set_buffer(MSG_NO_LAYOUT, BUF_PGM);
 		return false;
 	}
 	uint8_t end = eeprom_read_byte(&saved_key_mapping_indices[num].end); // start and end are inclusive
@@ -166,7 +227,7 @@ uint8_t config_delete_layout(uint8_t num){
 
 uint8_t config_save_layout(uint8_t num){
 	if(num >= NUM_KEY_MAPPING_INDICES){
-		printing_set_buffer(MSG_NO_LAYOUT);
+		printing_set_buffer(MSG_NO_LAYOUT, BUF_PGM);
 		return false;
 	}
 
@@ -190,8 +251,7 @@ uint8_t config_save_layout(uint8_t num){
 		hid_keycode d = pgm_read_byte_near(&logical_to_hid_map_default[l]);
 		if(h != d){
 			if(cursor >= SAVED_KEY_MAPPINGS_BUFFER_SIZE - 1){
-				static const char msg[] PROGMEM = "Out of space, can't save layout.";
-				printing_set_buffer(msg);
+				printing_set_buffer(PGM_MSG("Fail: no space"), BUF_PGM);
 				return false; // no space!
 			}
 			eeprom_update_byte(&saved_key_mappings[cursor].l_key, l);
@@ -205,21 +265,20 @@ uint8_t config_save_layout(uint8_t num){
 		return true;
 	}
 	else{
-		static const char msg[] PROGMEM = "No changes, not saved.";
-		printing_set_buffer(msg);
+		// same as default layout: nothing to save.
 		return false;
 	}
 }
 
 uint8_t config_load_layout(uint8_t num){
 	if(num >= NUM_KEY_MAPPING_INDICES){
-		printing_set_buffer(MSG_NO_LAYOUT);
+		printing_set_buffer(MSG_NO_LAYOUT, BUF_PGM);
 		return false;
 	}
 
 	uint8_t start = eeprom_read_byte(&saved_key_mapping_indices[num].start);
 	if(start == NO_KEY){
-		printing_set_buffer(MSG_NO_LAYOUT);
+		printing_set_buffer(MSG_NO_LAYOUT, BUF_PGM);
 		return false;
 	}
 	uint8_t end = eeprom_read_byte(&saved_key_mapping_indices[num].end);
@@ -249,6 +308,22 @@ uint8_t config_load_layout(uint8_t num){
 
 	return true;
 }
+
+#if USE_EEPROM
+const program* config_get_program(uint8_t idx){
+	//index range is not checked as this can't be called from user input
+	uint16_t program_offset;
+	if(-1 == serial_eeprom_read((uint8_t*)&programs_index[idx].offset,
+								(uint8_t*)&program_offset,
+								sizeof(uint16_t))){
+		return 0;
+	}
+	if(program_offset == 0xffff){
+		return 0;
+	}
+	return (const program*) &programs_data[program_offset];
+}
+#endif // USE_EEPROM
 
 void config_init(void){
 	uint8_t sentinel = eeprom_read_byte(&eeprom_sentinel_byte);

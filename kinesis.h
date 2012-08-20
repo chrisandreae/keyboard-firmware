@@ -48,6 +48,11 @@
 
 #include "keystate.h"
 
+// Unique identifier representing this keyboard's layout and
+// definition of logical_keycode values.  Is reported to the
+// configuration program over USB to identify the layout.
+#define LAYOUT_ID 1
+
 /* Kinesis Matrix */
 
 // The Kinesis has few physical keys, so has a "keypad layer" toggle
@@ -187,7 +192,7 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 //    foot switch 2 (pin 17) - NC (note that these are likely to differ on the 3-foot-switch Advantage models)
 
 // output:
-//    4 LEDs (pins 1-4, sink current to enable) - D0-D3 (caps, numlock, scrollock, keypad)
+//    4 LEDs (pins 1-4, sink current to enable) - D0-D3 (num=1, scrolllock=2, kpd=3, caps=4)
 //    buzzer (pin 32) = NC
 
 // EEPROM access:
@@ -250,6 +255,9 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 #define INT_LED2 (1<<6)
 #define ALL_LEDS (LED_CAPS | LED_NUMLOCK | LED_SCROLLLOCK | LED_KEYPAD | INT_LED1 | INT_LED2)
 
+#define USE_BUZZER 0
+#define USE_EEPROM 0
+
 /*
 #define BUZZER_PORT PORTD
 #define BUZZER_DDR DDRD
@@ -262,6 +270,7 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 */
 
 #elif defined(__AVR_ATmega16A__)
+// Original board layout (v1)
 
 // PD4 = USB D-
 // PD2 = USB D+
@@ -301,12 +310,14 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 #define LED_KEYPAD (1<<5)
 #define ALL_LEDS (LED_CAPS | LED_NUMLOCK | LED_SCROLLLOCK | LED_KEYPAD)
 
-#define USE_BUZZER 1
-#define USE_EEPROM 1
+#define USE_BUZZER 0 // new buzzer code uses OC2 pin, not compatible with this board layout
 
 #define BUZZER_PORT PORTC
 #define BUZZER_DDR DDRC
 #define BUZZER (1<<3)
+
+#define USE_EEPROM 1
+#define BITBANG_TWI // original board bitbangs TWI, doesn't use hardware I2C pins
 
 #define EEPROM_PORT PORTC
 #define EEPROM_DDR  DDRC
@@ -314,10 +325,59 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 #define EEPROM_SCL (1<<1)
 #define EEPROM_SDA (1<<2)
 
+#elif defined(__AVR_ATmega32__)
+// New board layout (v2)
 
-// TODO:
-// * Use built in I2C support for eeprom (PORTC 1,2)
-// * Use OC0 or OC2 timer compare pin for buzzer (PB3 or PD7)
+// PD4 = USB D-
+// PD2 = USB D+
+
+#define MATRIX_PORT PORTB
+#define MATRIX_DDR  DDRB
+#define MATRIX_SELECT_A (1<<0)
+#define MATRIX_SELECT_B (1<<1)
+#define MATRIX_SELECT_C (1<<2)
+#define MATRIX_SELECT_P138SEL (1<<3)
+#define MATRIX_MASK (MATRIX_SELECT_A | MATRIX_SELECT_B | MATRIX_SELECT_C | MATRIX_SELECT_P138SEL)
+
+// keypad key
+#define INPUT_PIN5_PIN  PINC
+#define INPUT_PIN5_PORT PORTC
+#define INPUT_PIN5_DDR  DDRC
+#define INPUT_PIN5 (1<<3)
+
+// program key
+#define INPUT_PIN6_PIN  PINC
+#define INPUT_PIN6_PORT PORTC
+#define INPUT_PIN6_DDR  DDRC
+#define INPUT_PIN6 (1<<2)
+
+// FS1 and FS2 are PC5 and PC6
+
+#define INPUT_REST_PIN  PINA
+#define INPUT_REST_PORT PORTA
+#define INPUT_REST_DDR  DDRA
+#define INPUT_REST (0xFF)
+
+#define LED_PORT PORTD
+#define LED_DDR  DDRD
+#define LED_CAPS (1<<3)
+#define LED_NUMLOCK (1<<6)
+#define LED_SCROLLLOCK (1<<5)
+#define LED_KEYPAD (1<<4)
+#define ALL_LEDS (LED_CAPS | LED_NUMLOCK | LED_SCROLLLOCK | LED_KEYPAD)
+
+#define USE_BUZZER 1
+#define USE_EEPROM 1
+
+#define BUZZER_PORT PORTD
+#define BUZZER_DDR DDRD
+#define BUZZER (1<<7)
+
+#define EEPROM_PORT PORTC
+#define EEPROM_DDR  DDRC
+#define EEPROM_PIN  PINC
+#define EEPROM_SCL (1<<0)
+#define EEPROM_SDA (1<<1)
 
 #else
 #error Ports not yet defined for this microcontroller
