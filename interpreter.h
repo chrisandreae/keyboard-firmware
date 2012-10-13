@@ -140,7 +140,7 @@ typedef enum __attribute__((__packed__)) _bytecode {
 	// short getuptime(): returns uptime in seconds truncated to signed short int
 	GETUPTIME = 97,
 
-	// void buzz(short time): requests that the buzzer be run for the next arg1 ms
+	// void buzz(short time): requests that the buzzer be run for the next time ms
 	BUZZ = 98,
 } bytecode;
 

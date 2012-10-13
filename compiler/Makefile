@@ -11,11 +11,11 @@ SRCS = indexes.hs	 \
 	   parser.hs	 \
 	   typedast.hs
 
-kcompiler: $(SRCS)
+keyc: $(SRCS)
 	ghc -o $@ $^
 
-%.k: %.kc kcompiler
-	./kcompiler -o$@ $<
+%.k: %.kc keyc
+	./keyc -o$@ $<
 
 clean:
-	rm *.o *.hi kcompiler
+	rm -f *.o *.hi keyc

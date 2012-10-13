@@ -1,7 +1,6 @@
 void main(){
 	byte b;
-	byte k;
-	k = 0x04; // "A"
+	byte k = 0x04; // "A"
 
 	// wait for initial key to be released
 	while(checkPhysKey(0)){

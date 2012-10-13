@@ -1,9 +1,20 @@
 // keyboard settings
 
+#define LAYOUT_ID 2
+
 #define NUM_LOGICAL_KEYS 32
 #define MATRIX_COLS 4
 #define MATRIX_ROWS 1
 #define MATRIX_SIZE (MATRIX_COLS * MATRIX_ROWS)
+
+// We have no keypad layer
+// #define KEYPAD_LAYER 1
+// #define KEYPAD_LAYER_START n
+// #define KEYPAD_LAYER_SIZE m
+
+// We don't have hardware support for a buzzer or a serial eeprom
+#define USE_EEPROM 0
+#define USE_BUZZER 0
 
 // Logical keys we have
 enum logical_keys {
