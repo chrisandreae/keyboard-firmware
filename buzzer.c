@@ -59,20 +59,21 @@ static uint16_t buzzer_ms;
 static const int TIMER_MODE = ((1<<WGM21) | (1<<COM20) | (1<<CS22) | (1<<CS20));
 
 void buzzer_start(uint16_t ms){
-	buzzer_start_f(ms, 110);
+	buzzer_start_f(ms, BUZZER_DEFAULT_FREQ);
 }
 
 void buzzer_start_f(uint16_t ms, uint8_t freq){
-	if(buzzer_ms <= ms){
-		buzzer_ms = ms;
-
-		// Turn on the buzzer and start the timer
+	if(!buzzer_ms){
+		// timer stopped, so turn on the buzzer and start the timer
 		BUZZER_PORT |= BUZZER;
-
 		TCNT2  = 0;
-		OCR2   = freq;
 		TCCR2 |= TIMER_MODE;
 	}
+	// always update the frequency
+	OCR2 = freq;
+
+	// and update the time remaining (allow it to be cut short)
+	buzzer_ms = ms;
 }
 
 void buzzer_update(uint8_t increment){
@@ -82,6 +83,7 @@ void buzzer_update(uint8_t increment){
 			// Stop the timer and turn off the buzzer
 			TCCR2       &= ~TIMER_MODE;
 			BUZZER_PORT &= ~BUZZER;
+			TCNT2       =  0;
 		}
 	}
 }

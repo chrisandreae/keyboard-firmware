@@ -115,6 +115,7 @@ void vm_append_KeyboardReport(KeyboardReport_Data_t* report){
 		// as long as there are free slots, add in keys from vm that are not already there.
 		for(uint8_t k = 0; report_next < 6 && k < vms[i].pressed_key_count; ++k){
 			hid_keycode keycode = vms[i].pressed_keys[k];
+			if(keycode >= SPECIAL_HID_KEYS_START) continue; // ignore special keys
 			for(uint8_t j = 0; j < report_start; ++j){
 				if(report->KeyCode[j] == keycode) goto next_vk; // already pressed; labelled-continue
 			}
@@ -851,10 +852,15 @@ static void vm_step(vmstate* vm){
 		vm->state = VMDELAY;
 		break;
 	}
-	case BUZZ: {
+	case BUZZAT:;
+		vbyte freq = POP_BYTE(vm);
+		goto buzz;
+	case BUZZ:
+		freq = BUZZER_DEFAULT_FREQ;
+	buzz: {
 		vshort delay = POP_SHORT(vm);
 		if(delay > 0){
-			buzzer_start(delay);
+			buzzer_start_f(delay, (uint8_t) freq);
 		}
 		break;
 	}

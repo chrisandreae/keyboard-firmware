@@ -51,6 +51,7 @@
 #include "hardware.h"
 
 #if USE_BUZZER
+#define BUZZER_DEFAULT_FREQ 110 // f = 1/(x * 4e-6) Hz
 
 void buzzer_start(uint16_t ms);
 void buzzer_start_f(uint16_t ms, uint8_t freq);

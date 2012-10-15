@@ -7,7 +7,7 @@
 #include "keystate.h"
 #endif
 
-typedef enum __attribute__((__packed__)) _bytecode {
+typedef enum _bytecode {
 	// local variable store
 	BSTORE   = 0,
 	BSTORE_0 = 1,
@@ -142,6 +142,10 @@ typedef enum __attribute__((__packed__)) _bytecode {
 
 	// void buzz(short time): requests that the buzzer be run for the next time ms
 	BUZZ = 98,
+
+	// void buzzAt(short time, byte freq): runs the buzzer at 1/((unsigned byte)freq * 4e-6) for short ms.
+	BUZZAT = 99,
+
 } bytecode;
 
 typedef int8_t vbyte;

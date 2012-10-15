@@ -64,20 +64,22 @@ data TExpression = TGlobalStore Type VariableID TExpression
                  | TBooleanConversion TExpression    -- convert argument to a boolean (byte) value -- not just truncating
                  deriving (Eq)
 
-data SyscallOp = PressKey | ReleaseKey | CheckKey | CheckPhysKey | WaitKey | WaitPhysKey | Delay | GetUptimeMS | GetUptime | Buzz
+data SyscallOp = PressKey | ReleaseKey | CheckKey | CheckPhysKey | WaitKey | WaitPhysKey
+               | Delay | GetUptimeMS | GetUptime | Buzz | BuzzAt
                deriving (Show, Eq)
 
 syscalls :: [(Ident, (SyscallOp, Type, [Type]))]
-syscalls = [("pressKey", (PressKey, Void, [Byte]))
-           ,("releaseKey", (ReleaseKey,Void,[Byte]))
-           ,("checkKey", (CheckKey,Byte,[Byte]))
-           ,("checkPhysKey", (CheckPhysKey,Byte,[Byte]))
-           ,("waitKey", (WaitKey,Byte,[Byte, Short]))
-           ,("waitPhysKey", (WaitPhysKey,Byte,[Byte, Short]))
-           ,("delay", (Delay,Void,[Short]))
-           ,("getUptimeMS", (GetUptimeMS,Short,[]))
-           ,("getUptime", (GetUptime,Short,[]))
-           ,("buzz", (Buzz,Void,[Short]))]
+syscalls = [("pressKey",     (PressKey, Void, [Byte]))
+           ,("releaseKey",   (ReleaseKey, Void, [Byte]))
+           ,("checkKey",     (CheckKey, Byte, [Byte]))
+           ,("checkPhysKey", (CheckPhysKey, Byte, [Byte]))
+           ,("waitKey",      (WaitKey, Byte, [Byte, Short]))
+           ,("waitPhysKey",  (WaitPhysKey, Byte, [Byte, Short]))
+           ,("delay",        (Delay, Void, [Short]))
+           ,("getUptimeMS",  (GetUptimeMS, Short, []))
+           ,("getUptime",    (GetUptime, Short, []))
+           ,("buzz",         (Buzz, Void, [Short]))
+           ,("buzzAt",       (BuzzAt, Void, [Short, Byte]))]
 
 -- Show instances
 

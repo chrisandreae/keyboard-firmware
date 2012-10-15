@@ -161,6 +161,7 @@ bytecodeByte (SYSCALL Delay)        = 95
 bytecodeByte (SYSCALL GetUptimeMS)  = 96
 bytecodeByte (SYSCALL GetUptime)    = 97
 bytecodeByte (SYSCALL Buzz)         = 98
+bytecodeByte (SYSCALL BuzzAt)       = 99
 
 
 type VarAllocation = IntMap (Int, Type)
