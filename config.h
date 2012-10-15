@@ -66,7 +66,7 @@ typedef struct _configuration_flags {
 } configuration_flags;
 
 // returns eeprom address of logical_to_hid_map
-hid_keycode* config_get_mapping();
+hid_keycode* config_get_mapping(void);
 
 hid_keycode config_get_definition(logical_keycode l_key);
 void config_save_definition(logical_keycode l_key, hid_keycode h_key);

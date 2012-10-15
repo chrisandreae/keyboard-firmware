@@ -68,7 +68,7 @@ configuration_flags eeprom_flags EEMEM;
 // Key configuration is stored in eeprom. If the sentinel is not valid, initialize from the defaults.
 hid_keycode logical_to_hid_map[NUM_LOGICAL_KEYS] EEMEM;
 
-hid_keycode* config_get_mapping(){
+hid_keycode* config_get_mapping(void){
 	return &logical_to_hid_map[0];
 }
 

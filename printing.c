@@ -57,7 +57,7 @@ void printing_set_buffer(const char* buf, buf_type typ){
 	print_buffer_type = typ;
 }
 
-uint8_t print_buffer_get(){
+uint8_t print_buffer_get(void){
 	switch(print_buffer_type){
 	case BUF_MEM:
 		return *print_buffer;
