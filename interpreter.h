@@ -19,7 +19,7 @@ typedef enum _bytecode {
 	SSTORE_1,
 	SSTORE_2,
 	SSTORE_3,
-
+	
 	// local variable load
 	BLOAD    = 10,
 	BLOAD_0  = 11,
@@ -177,7 +177,7 @@ typedef struct __attribute__((__packed__)) _stack_frame { // stack frames live w
 #ifdef DEBUG
 #define STACK_SIZE 1024 // bytes
 #else
-#define STACK_SIZE 48 // bytes
+#define STACK_SIZE 96 // bytes
 #endif
 // globals
 typedef struct __attribute__((__packed__)) _vmstate {

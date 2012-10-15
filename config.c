@@ -79,8 +79,9 @@ hid_keycode* config_get_mapping(){
 #define NUM_KEY_MAPPING_INDICES 10
 struct { uint8_t start; uint8_t end; } saved_key_mapping_indices[NUM_KEY_MAPPING_INDICES] EEMEM;
 
-// Key mappings are saved as a list of (logical_keycode, hid_keycode) pairs.
-#define SAVED_KEY_MAPPINGS_BUFFER_SIZE 128
+// Key mappings are saved as a list of (logical_keycode, hid_keycode)
+// pairs, approximately filling the remaining internal eeprom.
+#define SAVED_KEY_MAPPINGS_BUFFER_SIZE 384
 struct { logical_keycode l_key; hid_keycode h_key; } saved_key_mappings[SAVED_KEY_MAPPINGS_BUFFER_SIZE] EEMEM;
 
 #if USE_EEPROM
