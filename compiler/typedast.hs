@@ -480,6 +480,10 @@ constantEval (TMethodCall t id args) = TMethodCall t id (map constantEval args)
 
 constantEval (TSyscall t op args)    = TSyscall t op (map constantEval args)
 
+constantEval (TGlobalStore t id ex) = TGlobalStore t id (constantEval ex)
+
+constantEval (TLocalStore t id ex) = TLocalStore t id (constantEval ex)
+
 constantEval (TBooleanConversion ex) =
   let ex' = constantEval ex in
   case ex' of

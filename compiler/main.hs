@@ -16,15 +16,15 @@ import qualified Data.ByteString.Lazy as B
 
 data Opts = Opts {
   outputFile :: FilePath,
-  verbose :: Bool
+  verbose :: Integer
 } deriving (Show)
 
-defaultOpts = Opts { outputFile = "a.out", verbose = False }
+defaultOpts = Opts { outputFile = "a.out", verbose = 0 }
 
 options :: [OptDescr (Opts -> Opts)]
 options = [
   (Option ['o'] ["output"] (OptArg (maybe id (\f opts -> opts { outputFile = f })) "FILE") "Output file"),
-  (Option ['v'] ["verbose"] (NoArg (\opts -> opts { verbose = True })) "Verbose")
+  (Option ['v'] ["verbose"] (NoArg (\opts -> opts { verbose = (verbose opts) + 1 })) "Verbose")
   ]
 
 getOptions :: IO (Opts, [FilePath])
@@ -46,14 +46,16 @@ main = do
     ir       <- buildIR ast
     bytecode <- outputProgram ir
     code     <- return $ binaryProgram bytecode
-    return (ir, code)
+    return (optast, ir, bytecode, code)
 
   -- handle error
   when (isError result) $ ioError $ userError $ show $ extractError result
 
-  let (ir, code) = extractValue result
+  let (optast, ir, bytecode, code) = extractValue result
 
-  when (verbose opts) $ print ir
+  when (verbose opts > 1) $ putStrLn "======= AST =======" >> print optast
+  when (verbose opts > 0) $ putStrLn "======= IR =======" >> print ir
+  when (verbose opts > 2) $ putStrLn "======= Bytecode =======" >> print bytecode
 
   outFile <- openBinaryFile (outputFile opts) WriteMode
   B.hPut outFile code
