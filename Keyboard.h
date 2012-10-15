@@ -84,15 +84,12 @@ typedef enum _USB_State{ NOTREADY, ENUMERATING, READY, ERROR } USB_State;
 void __attribute__((noreturn)) Keyboard_Main(void);
 void Update_USBState(USB_State state);
 void Update_Millis(uint8_t increment);
-bool Fill_MouseReport(MouseReport_Data_t* MouseReport);
-bool Fill_KeyboardReport(KeyboardReport_Data_t* report);
+void Fill_MouseReport(MouseReport_Data_t* MouseReport);
+void Fill_KeyboardReport(KeyboardReport_Data_t* report);
 void Process_KeyboardLEDReport(uint8_t report);
 
 /** Buffer to hold the previously generated Keyboard/Mouse HID reports, for comparison purposes inside the HID class driver. */
 extern KeyboardReport_Data_t PrevKeyboardHIDReportBuffer;
-
-#ifdef BUILD_FOR_LUFA
-	extern MouseReport_Data_t PrevMouseHIDReportBuffer;
-#endif
+extern MouseReport_Data_t PrevMouseHIDReportBuffer;
 
 #endif

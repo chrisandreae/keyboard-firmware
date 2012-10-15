@@ -146,6 +146,22 @@ typedef enum _bytecode {
 	// void buzzAt(short time, byte freq): runs the buzzer at 1/((unsigned byte)freq * 4e-6) for short ms.
 	BUZZAT = 99,
 
+	// void moveMouse(byte x, byte y): Moves the mouse by the
+	// requested offset next time the mouse report is sent. Does not
+	// return until report has been sent.
+	MOVEMOUSE = 100,
+
+	// void pressMouseButtons(byte buttonMask): Presses the mouse
+	// buttons specified by buttonMask (bits 1-5 = buttons 1-5). Does
+	// not return until report has been sent.
+	PRESSMOUSEBUTTONS = 101,
+
+	// void releaseMouseButtons(byte buttonMask): Releases the mouse
+	// buttons specified by buttonMask (bits 1-5 = buttons 1-5) if
+	// they are pressed by this program. Does not return until report
+	// has been sent.
+	RELEASEMOUSEBUTTONS = 102,
+
 } bytecode;
 
 typedef int8_t vbyte;
@@ -181,7 +197,7 @@ typedef struct __attribute__((__packed__)) _stack_frame { // stack frames live w
 #endif
 // globals
 typedef struct __attribute__((__packed__)) _vmstate {
-	enum __attribute__((__packed__)) { VMSTOPPED, VMCRASHED, VMNOPROGRAM, VMRUNNING, VMWAITREPORT, VMDELAY, VMWAITKEY, VMWAITPHYSKEY } state;
+	enum __attribute__((__packed__)) { VMSTOPPED, VMCRASHED, VMNOPROGRAM, VMRUNNING, VMWAITREPORT, VMWAITMOUSEREPORT, VMDELAY, VMWAITKEY, VMWAITPHYSKEY } state;
 	// uptimems at which our current delay or waitkey ends
 	uint32_t delay_end_ms;
 	// key that we're waiting for
@@ -192,6 +208,8 @@ typedef struct __attribute__((__packed__)) _vmstate {
 	uint8_t pressed_modifiers;
 	hid_keycode pressed_keys[6];
 	uint8_t pressed_key_count;
+
+	MouseReport_Data_t mousereport;
 
 	const program* program;
 	const bytecode* code;
@@ -220,13 +238,13 @@ uint8_t vm_start(uint8_t vm_idx, logical_keycode trigger_lkey);
 void vm_step_all(void);
 
 /**
- * Notify waiting virtual machines that a keyboard report has been sent
- */
-void vm_report_callback(void);
-
-/**
  * add the pressed key status of every running VM to an existing keyboard report
  */
 void vm_append_KeyboardReport(KeyboardReport_Data_t* report);
+
+/**
+ * Add the mouse status of every running VM to an existing keyboard report
+ */
+void vm_append_MouseReport(MouseReport_Data_t* report);
 
 #endif // __INTERPRETER_H

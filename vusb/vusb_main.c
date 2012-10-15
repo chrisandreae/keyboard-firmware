@@ -336,65 +336,63 @@ void update_uptimems(){
 	mouse_idle_ms    = (elapsed >= mouse_idle_ms)    ? 0 : mouse_idle_ms - elapsed;
 }
 
+bool update_and_compare(void* buf, void* prev_buf, size_t buflen, void(*fill_fn)(void*)){
+	memset(buf, 0x0, buflen);
+	fill_fn(buf);
+	if(0 == memcmp(buf, prev_buf, buflen)){
+		// Buffers are the same
+		return 0;
+	}
+	else{
+		// buffers are different
+		memcpy(prev_buf, buf, buflen);
+		return 1;
+	}
+}
+
 extern void Perform_USB_Update(int update_kbd, int update_mouse){
 	wdt_reset();
 	usbPoll();
 
-	static bool sending_keyboard;
-	static bool sending_mouse;
+	static bool sending_keyboard = 0;
+	static bool sending_mouse = 0;
 
-	bool kbd_idle_expired = idleRate && keyboard_idle_ms == 0;
-
-	if(!sending_keyboard && (update_kbd || kbd_idle_expired)){
-		bool must_send = kbd_idle_expired;
-
-		if(update_kbd){
-			memset(&KeyboardReportData, 0x00, sizeof(KeyboardReport_Data_t));
-			must_send = must_send || Fill_KeyboardReport(&KeyboardReportData);
-		}
-		else if(kbd_idle_expired){
-			KeyboardReportData = PrevKeyboardHIDReportBuffer;
-		}
-
-		if(idleRate){
-			// reset idle time out
-			keyboard_idle_ms = idleRate * 4;
-		}
-
-		if(must_send || 0 != memcmp(&PrevKeyboardHIDReportBuffer, &KeyboardReportData, sizeof(KeyboardReport_Data_t))){
-			sending_keyboard = 1;
-			PrevKeyboardHIDReportBuffer = KeyboardReportData;
-		}
+	// Keyboard
+	if(!sending_keyboard && update_kbd){
+		// Update, set sending_keyboard if the report is different to last time
+		sending_keyboard = update_and_compare(&KeyboardReportData, &PrevKeyboardHIDReportBuffer, sizeof(KeyboardReport_Data_t), (void(*)(void*)) &Fill_KeyboardReport);
 	}
-
-	bool mouse_idle_expired = idleRate && mouse_idle_ms == 0;
-	if(!sending_mouse && (update_mouse || mouse_idle_expired)){
-		memset(&MouseReportData, 0x00, sizeof(MouseReport_Data_t));
-
-		sending_mouse = mouse_idle_expired;
-
-		if(update_mouse){
-			sending_mouse = sending_mouse || Fill_MouseReport(&MouseReportData);
-		}
-
-		if(idleRate){
-			mouse_idle_ms = idleRate * 4;
-		}
-
+	if(!sending_keyboard && (idleRate && keyboard_idle_ms == 0)){
+		// if still not sending and expired, re-send the previous buffer
+		KeyboardReportData = PrevKeyboardHIDReportBuffer;
+		sending_keyboard = 1;
 	}
 
 	if(sending_keyboard && usbInterruptIsReady()){
 		usbSetInterrupt((void*)&KeyboardReportData, sizeof(KeyboardReportData));
-		vm_report_callback();
 		sending_keyboard = 0;
+		// now that we've sent, reset the idle timer
+		keyboard_idle_ms = idleRate * 4;
 	}
 
+	// Mouse
+	if(!sending_mouse && update_mouse){
+		// Update, set sending_mouse if the report is different to last time
+		sending_mouse = update_and_compare(&MouseReportData, &PrevMouseHIDReportBuffer, sizeof(MouseReport_Data_t), (void(*)(void*)) &Fill_MouseReport);
+	}
+	if(!sending_mouse && (idleRate && mouse_idle_ms == 0)){
+		// if still not sending and expired, re-send the previous buffer
+		MouseReportData = PrevMouseHIDReportBuffer;
+		sending_mouse = 1;
+	}
 
 	if(sending_mouse && usbInterruptIsReady3()){
 		usbSetInterrupt3((void *)&MouseReportData, sizeof(MouseReportData));
 		sending_mouse = 0;
+		mouse_idle_ms = idleRate * 4;
 	}
 
+	// and update the uptime
 	update_uptimems();
 
 }

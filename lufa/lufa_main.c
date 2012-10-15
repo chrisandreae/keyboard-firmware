@@ -164,13 +164,13 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
 		KeyboardReport_Data_t* KeyboardReport = (KeyboardReport_Data_t*)ReportData;
 
 		*ReportSize = sizeof(KeyboardReport_Data_t);
-		return Fill_KeyboardReport(KeyboardReport);
+		Fill_KeyboardReport(KeyboardReport);
 
 	}
 	else{
 		MouseReport_Data_t* MouseReport = (MouseReport_Data_t*)ReportData;
 		*ReportSize = sizeof(MouseReport_Data_t);
-		return Fill_MouseReport(MouseReport);
+		Fill_MouseReport(MouseReport);
 	}
 	return false;
 }

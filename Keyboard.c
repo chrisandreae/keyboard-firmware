@@ -65,10 +65,8 @@
 /** Buffer to hold the previously generated Keyboard HID report, for comparison purposes inside the HID class driver. */
 KeyboardReport_Data_t PrevKeyboardHIDReportBuffer;
 
-#ifdef BUILD_FOR_LUFA
-/** Buffer to hold the previously generated Mouse HID report, for comparison purposes inside the HID class driver.  Only needed for LUFA class driver. */
+/** Buffer to hold the previously generated Mouse HID report, for comparison purposes inside the HID class driver. */
 MouseReport_Data_t PrevMouseHIDReportBuffer;
-#endif
 
 // Keyboard
 volatile uint32_t _uptimems;
@@ -324,39 +322,44 @@ static void handle_state_programming(void){
  * current state returns true if the report must be sent, false if it
  * may be compared to the previous report before sending.
  */
-bool Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
+void Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
 	switch(current_state){
 	case STATE_NORMAL:
 		keystate_Fill_KeyboardReport(KeyboardReport);
 #if USE_EEPROM
 		vm_append_KeyboardReport(KeyboardReport);
 #endif
-		return false;
+		return;
 	case STATE_PRINTING:
 		printing_Fill_KeyboardReport(KeyboardReport);
-		return true;
+		return;
 	case STATE_MACRO_RECORD:
 		keystate_Fill_KeyboardReport(KeyboardReport);
 		// TODO: If this report is different to the previous one, save it in the macro buffer.
-		return false;
+		return;
 	case STATE_MACRO_PLAY:
 		// TODO: Fetch the next report from the macro buffer and replay it
 	case STATE_PROGRAMMING_SRC:
 	case STATE_PROGRAMMING_DST:
 	default:
 		// We're not in a state which allows typing: report no keys
-		return false;
+		return;
 	}
 }
 
-bool Fill_MouseReport(MouseReport_Data_t* MouseReport){
+void Fill_MouseReport(MouseReport_Data_t* MouseReport){
 	switch(current_state){
-	case STATE_NORMAL:
-		return keystate_Fill_MouseReport(MouseReport);
+	case STATE_NORMAL:{
+		keystate_Fill_MouseReport(MouseReport);
+#if USE_EEPROM
+		vm_append_MouseReport(MouseReport);
+#endif
+		return;
+	}
 	case STATE_MACRO_RECORD: {
-		uint8_t r = keystate_Fill_MouseReport(MouseReport);
+		keystate_Fill_MouseReport(MouseReport);
 		// TODO: If this report is different to the previous one, save it in the macro buffer.
-		return r;
+		return;
 	}
 	case STATE_MACRO_PLAY:
 		// TODO: Fetch the next report from the macro buffer and replay it
@@ -365,7 +368,7 @@ bool Fill_MouseReport(MouseReport_Data_t* MouseReport){
 	case STATE_PROGRAMMING_DST:
 	default:
 		// We're not in a state which allows typing: report no keys
-		return false;
+		return;
 	}
 
 }

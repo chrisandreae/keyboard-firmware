@@ -278,20 +278,16 @@ static uint8_t mouse_accel(uint16_t time){
 	}
 }
 
-bool keystate_Fill_MouseReport(MouseReport_Data_t* MouseReport){
+void keystate_Fill_MouseReport(MouseReport_Data_t* MouseReport){
 	static uint16_t mousedown_time = 1;
 
-	static uint8_t last_button_report = 0;
-
 	// check key state
-	int send = 0;
 	int moving = 0;
 	for(int i = 0; i < KEYSTATE_COUNT; ++i){
 		if(key_states[i].state){
 			logical_keycode l_key = key_states[i].l_key;
 			hid_keycode h_key = config_get_definition(l_key);
 			if(h_key >= SPECIAL_HID_KEYS_MOUSE_START && h_key <= SPECIAL_HID_KEYS_MOUSE_END){
-				send = 1;
 				switch(h_key){
 				case SPECIAL_HID_KEY_MOUSE_BTN1:
 					MouseReport->Button |= 1;
@@ -336,11 +332,6 @@ bool keystate_Fill_MouseReport(MouseReport_Data_t* MouseReport){
 		mousedown_time++;
 	else
 		mousedown_time = 1;
-
-	if(MouseReport->Button != last_button_report) send = true; // If the buttons have changed, send a report immediately
-	last_button_report = MouseReport->Button;
-
-	return send;
 }
 
 hid_keycode keystate_check_hid_key(hid_keycode key){

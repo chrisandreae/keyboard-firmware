@@ -66,20 +66,24 @@ data TExpression = TGlobalStore Type VariableID TExpression
 
 data SyscallOp = PressKey | ReleaseKey | CheckKey | CheckPhysKey | WaitKey | WaitPhysKey
                | Delay | GetUptimeMS | GetUptime | Buzz | BuzzAt
+               | MoveMouse | PressMouseButtons | ReleaseMouseButtons
                deriving (Show, Eq)
 
 syscalls :: [(Ident, (SyscallOp, Type, [Type]))]
-syscalls = [("pressKey",     (PressKey, Void, [Byte]))
-           ,("releaseKey",   (ReleaseKey, Void, [Byte]))
-           ,("checkKey",     (CheckKey, Byte, [Byte]))
-           ,("checkPhysKey", (CheckPhysKey, Byte, [Byte]))
-           ,("waitKey",      (WaitKey, Byte, [Byte, Short]))
-           ,("waitPhysKey",  (WaitPhysKey, Byte, [Byte, Short]))
-           ,("delay",        (Delay, Void, [Short]))
-           ,("getUptimeMS",  (GetUptimeMS, Short, []))
-           ,("getUptime",    (GetUptime, Short, []))
-           ,("buzz",         (Buzz, Void, [Short]))
-           ,("buzzAt",       (BuzzAt, Void, [Short, Byte]))]
+syscalls = [("pressKey",            (PressKey           , Void,  [Byte]))
+           ,("releaseKey",          (ReleaseKey         , Void,  [Byte]))
+           ,("checkKey",            (CheckKey           , Byte,  [Byte]))
+           ,("checkPhysKey",        (CheckPhysKey       , Byte,  [Byte]))
+           ,("waitKey",             (WaitKey            , Byte,  [Byte, Short]))
+           ,("waitPhysKey",         (WaitPhysKey        , Byte,  [Byte, Short]))
+           ,("delay",               (Delay              , Void,  [Short]))
+           ,("getUptimeMS",         (GetUptimeMS        , Short, []))
+           ,("getUptime",           (GetUptime          , Short, []))
+           ,("buzz",                (Buzz               , Void,  [Short]))
+           ,("buzzAt",              (BuzzAt             , Void,  [Short, Byte]))
+           ,("moveMouse",           (MoveMouse          , Void,  [Byte, Byte]))
+           ,("pressMouseButtons",   (PressMouseButtons  , Void,  [Byte]))
+           ,("releaseMouseButtons", (ReleaseMouseButtons, Void,  [Byte]))]
 
 -- Show instances
 

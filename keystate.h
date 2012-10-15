@@ -135,7 +135,7 @@ void keystate_get_keys(logical_keycode* l_keys);
 
 void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport);
 
-bool keystate_Fill_MouseReport(MouseReport_Data_t* MouseReport);
+void keystate_Fill_MouseReport(MouseReport_Data_t* MouseReport);
 
 /** Checks whether a key mapped to the argument keycode (or any key if
  * argument 0) is pressed, returns keycode of first pressed key or

@@ -91,13 +91,6 @@ void vm_step_all(void){
 	}
 }
 
-void vm_report_callback(void){
-	for(uint8_t i = 0; i < NUM_PROGRAMS; ++i){
-		if(vms[i].state == VMWAITREPORT)
-			vms[i].state = VMRUNNING;
-	}
-}
-
 void vm_append_KeyboardReport(KeyboardReport_Data_t* report){
 	// find free slots
 	uint8_t report_next;
@@ -107,6 +100,8 @@ void vm_append_KeyboardReport(KeyboardReport_Data_t* report){
 	for(uint8_t i = 0; i < NUM_PROGRAMS; ++i){
 		if(vms[i].state < VMRUNNING) continue;
 
+		if(vms[i].state == VMWAITREPORT) vms[i].state = VMRUNNING;
+
 		uint8_t report_start = report_next;
 
 		// add in modifier keys
@@ -115,13 +110,36 @@ void vm_append_KeyboardReport(KeyboardReport_Data_t* report){
 		// as long as there are free slots, add in keys from vm that are not already there.
 		for(uint8_t k = 0; report_next < 6 && k < vms[i].pressed_key_count; ++k){
 			hid_keycode keycode = vms[i].pressed_keys[k];
-			if(keycode >= SPECIAL_HID_KEYS_START) continue; // ignore special keys
 			for(uint8_t j = 0; j < report_start; ++j){
 				if(report->KeyCode[j] == keycode) goto next_vk; // already pressed; labelled-continue
 			}
 			report->KeyCode[report_next++] = keycode;
 		next_vk:;
 		}
+	}
+}
+
+static int8_t addT(int8_t x, int8_t y){
+	int16_t s = x + y;
+	if(s > INT8_MAX)
+		return INT8_MAX;
+	else if(s < INT8_MIN)
+		return INT8_MIN;
+	else
+		return (int8_t) s;
+}
+
+
+void vm_append_MouseReport(MouseReport_Data_t* report){
+	for(uint8_t i = 0; i < NUM_PROGRAMS; ++i){
+		if(vms[i].state < VMRUNNING) continue;
+		if(vms[i].state == VMWAITMOUSEREPORT) vms[i].state = VMRUNNING;
+
+		report->X = addT(report->X, vms[i].mousereport.X);
+		report->Y = addT(report->Y, vms[i].mousereport.Y);
+		vms[i].mousereport.X = vms[i].mousereport.Y = 0;
+
+		report->Button |= vms[i].mousereport.Button;
 	}
 }
 
@@ -214,7 +232,8 @@ static void vm_step(vmstate* vm){
 	}
 
 	switch(vm->state){
-	case VMWAITREPORT: {
+	case VMWAITREPORT:
+	case VMWAITMOUSEREPORT: {
 		LOG("VM waiting for report send\n");
 		return; // nothing to do until flag is cleared
 	}
@@ -768,6 +787,10 @@ static void vm_step(vmstate* vm){
 	case PRESSKEY: {
 		hid_keycode key = (hid_keycode) POP_BYTE(vm);
 		LOG("Press Key: %d\n", key);
+		if(key >= SPECIAL_HID_KEYS_START){
+			// mouse is handled separately from keys
+			break;
+		}
 		if(key >= HID_KEYBOARD_SC_LEFT_CONTROL){
 			vm->pressed_modifiers |= 1 << (key - HID_KEYBOARD_SC_LEFT_CONTROL);
 			LOG("Pressed modifier\n");
@@ -810,6 +833,27 @@ static void vm_step(vmstate* vm){
 			}
 		}
 		vm->state = VMWAITREPORT;
+		break;
+	}
+	case PRESSMOUSEBUTTONS:
+	case RELEASEMOUSEBUTTONS: {
+		uint8_t mask = (uint8_t) POP_BYTE(vm);
+		mask &= 0x1f;
+		if(current_instr == PRESSMOUSEBUTTONS){
+			vm->mousereport.Button |= mask;
+		}
+		else{
+			vm->mousereport.Button &= ~mask;
+		}
+		vm->state = VMWAITMOUSEREPORT;
+		break;
+	}
+	case MOVEMOUSE: {
+		vbyte y = POP_BYTE(vm);
+		vbyte x = POP_BYTE(vm);
+		vm->mousereport.X = x;
+		vm->mousereport.Y = y;
+		vm->state = VMWAITMOUSEREPORT;
 		break;
 	}
 	case CHECKKEY: {
