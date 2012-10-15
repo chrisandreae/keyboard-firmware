@@ -72,6 +72,9 @@ void buzzer_start_f(uint16_t ms, uint8_t freq){
 	// always update the frequency
 	OCR2 = freq;
 
+	// and reset if we've gone below
+	if(TCNT2 > OCR2) TCNT2=0;
+
 	// and update the time remaining (allow it to be cut short)
 	buzzer_ms = ms;
 }

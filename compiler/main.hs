@@ -43,7 +43,7 @@ main = do
   result <- return $ do
     ast      <- parseProgram source >>= buildTProgram
     optast   <- optTProgram ast
-    ir       <- buildIR ast
+    ir       <- buildIR optast
     bytecode <- outputProgram ir
     code     <- return $ binaryProgram bytecode
     return (optast, ir, bytecode, code)
