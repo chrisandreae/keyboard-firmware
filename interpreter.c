@@ -579,15 +579,15 @@ static void vm_step(vmstate* vm){
 		break;
 	}
 	case BLSHIFT: {
-		vbyte v = POP_BYTE(vm);
 		vbyte s = POP_BYTE(vm);
+		vbyte v = POP_BYTE(vm);
 		LOG("%d << %d = %d\n", v, s, v << s);
 		PUSH_BYTE(vm, v << s);
 		break;
 	}
 	case BRSHIFT: {
-		vbyte v = POP_BYTE(vm);
 		vbyte s = POP_BYTE(vm);
+		vbyte v = POP_BYTE(vm);
 		LOG("%d >> %d = %d\n", v, s, v >> s);
 		PUSH_BYTE(vm, v >> s);
 		break;
@@ -663,15 +663,15 @@ static void vm_step(vmstate* vm){
 		break;
 	}
 	case SLSHIFT: {
-		vshort v = POP_SHORT(vm);
 		vbyte s = POP_BYTE(vm);
+		vshort v = POP_SHORT(vm);
 		LOG("%d << %d = %d\n", v, s, v << s);
 		PUSH_SHORT(vm, v << s);
 		break;
 	}
 	case SRSHIFT: {
-		vshort v = POP_SHORT(vm);
 		vbyte s = POP_BYTE(vm);
+		vshort v = POP_SHORT(vm);
 		LOG("%d >> %d = %d\n", v, s, v >> s);
 		PUSH_SHORT(vm, v >> s);
 		break;

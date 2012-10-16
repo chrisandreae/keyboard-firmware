@@ -1,10 +1,14 @@
 // Fake API for test harness
 
 #define HID_KEYBOARD_SC_LEFT_CONTROL 0xE0
+#define SPECIAL_HID_KEYS_START 0xE7
+#define BUZZER_DEFAULT_FREQ 110
+
 typedef uint8_t hid_keycode;
 typedef uint8_t logical_keycode;
 #define NO_KEY 0xFF
 typedef struct _kbdr {int Modifier; int KeyCode[6];} KeyboardReport_Data_t;
+typedef struct _msr {uint8_t X; uint8_t Y; uint8_t Button;} MouseReport_Data_t;
 
 #include "interpreter.h"
 
@@ -99,7 +103,8 @@ int main(int argc, const char** argv){
 	while(1){
 		vm_step_all();
 		if((i++ % 5) == 0){
-			vm_report_callback();
+			KeyboardReport_Data_t r;
+			vm_append_KeyboardReport(&r);
 		}
 	}
 
@@ -137,4 +142,8 @@ uint8_t keystate_check_key(logical_keycode key){
 
 void buzzer_start(short s){
 	LOG("Running buzzer for %d ms\n", s);
+}
+
+void buzzer_start_f(short s, uint8_t freq){
+	LOG("Running buzzer at %d for %d ms\n", freq, s);
 }
