@@ -124,14 +124,18 @@ void keystate_update(void);
 // Only defined when KEYPAD_LAYER is enabled
 void keystate_toggle_keypad(void);
 
-bool keystate_check_key(logical_keycode l_key);
+/** PHYSICAL keys are not affected by keypad layer, while LOGICAL are. */
+typedef enum _lkey_type { PHYSICAL, LOGICAL } lkey_type;
+
+/** Checks if the argument key is down. */
+bool keystate_check_key(logical_keycode l_key, lkey_type ktype);
 
 /** returns true if all argument keys are down */
-bool keystate_check_keys(uint8_t count, ...);
+bool keystate_check_keys(uint8_t count, lkey_type ktype, ...);
 
 /** writes up to key_press_count currently pressed key indexes to the
- * output buffer keys */
-void keystate_get_keys(logical_keycode* l_keys);
+ * output buffer keys. */
+void keystate_get_keys(logical_keycode* l_keys, lkey_type ktype);
 
 void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport);
 

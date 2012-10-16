@@ -125,7 +125,7 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 
 		// in all non-wait states we want to handle the keypad layer button
 #ifdef KEYPAD_LAYER
-		if(current_state != STATE_WAITING && keystate_check_key(LOGICAL_KEY_KEYPAD)){
+		if(current_state != STATE_WAITING && keystate_check_key(LOGICAL_KEY_KEYPAD, LOGICAL)){
 			keystate_toggle_keypad();
 			next_state = current_state;
 			current_state = STATE_WAITING;
@@ -186,13 +186,12 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 static void handle_state_normal(void){
 	// check for special keyboard (pre-mapping) key combinations for state transitions
 
-	if(key_press_count >= 2 && keystate_check_key(LOGICAL_KEY_PROGRAM)){
-
+	if(key_press_count >= 2 && keystate_check_key(LOGICAL_KEY_PROGRAM, LOGICAL)){
 		switch(key_press_count){
 		case 2:
 			{
 				logical_keycode keys[2];
-				keystate_get_keys(keys);
+				keystate_get_keys(keys, PHYSICAL);
 				logical_keycode other = (keys[0] == LOGICAL_KEY_PROGRAM) ? keys[1] : keys[0];
 				switch(other){
 				case LOGICAL_KEY_F11:
@@ -226,15 +225,16 @@ static void handle_state_normal(void){
 			break;
 		case 3:
 			// full reset
-			if(keystate_check_keys(2, LOGICAL_KEY_F7, LOGICAL_KEY_LSHIFT)){
+			if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_F7, LOGICAL_KEY_LSHIFT)){
 				config_reset_fully();
 				current_state = STATE_WAITING;
 				next_state = STATE_NORMAL;
 			}
 			else{
-				// save/load/delete state : PGM + {S/L/D} + {0-9}
 				logical_keycode keys[3];
-				keystate_get_keys(keys);
+				keystate_get_keys(keys, PHYSICAL);
+
+				// save/load/delete state : PGM + {S/L/D} + {0-9}
 				logical_keycode type = NO_KEY; // S/L/D
 				logical_keycode pos = NO_KEY;  //0-9
 				for(int i = 0; i < 3; ++i){
@@ -284,8 +284,7 @@ static void handle_state_normal(void){
 static void handle_state_programming(void){
 	static hid_keycode program_src_hkey = 0;
 
-	if(keystate_check_keys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F12) ||
-	  keystate_check_keys(2, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_HYPHEN)){
+	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F12)){
 		current_state = STATE_WAITING;
 		next_state = STATE_NORMAL;
 	}
@@ -295,7 +294,7 @@ static void handle_state_programming(void){
 	}
 
 	logical_keycode lkey;
-	keystate_get_keys(&lkey); // Will only write one key, as key_press_count == 1
+	keystate_get_keys(&lkey, LOGICAL); // Will only write one key, as key_press_count == 1
 
 	hid_keycode default_hkey = pgm_read_byte_near(&logical_to_hid_map_default[lkey]);
 

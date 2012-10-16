@@ -127,7 +127,12 @@ hid_keycode keystate_check_hid_key(hid_keycode key){
 	}
 }
 
-uint8_t keystate_check_key(logical_keycode key){
+
+/** PHYSICAL keys are not affected by keypad layer, while LOGICAL are. */
+typedef enum _lkey_type { PHYSICAL, LOGICAL } lkey_type;
+
+/** Checks if the argument key is down. */
+uint8_t keystate_check_key(logical_keycode key, lkey_type ktype){
 	LOG("'checking' for physical key %d, returning ", key);
 	static unsigned int i = 1;
 	if((i++ % 5) == 0){

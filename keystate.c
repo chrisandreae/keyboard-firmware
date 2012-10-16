@@ -163,9 +163,16 @@ void keystate_toggle_keypad(void){
 #endif
 
 
-bool keystate_check_key(logical_keycode l_key){
+bool keystate_check_key(logical_keycode l_key, lkey_type ktype){
 	for(int i = 0; i < KEYSTATE_COUNT; ++i){
-		if(key_states[i].l_key == l_key){
+		logical_keycode key_i = key_states[i].l_key;
+
+#ifdef KEYPAD_LAYER
+		if(ktype == PHYSICAL && key_i >= (KEYPAD_LAYER_START + KEYPAD_LAYER_SIZE)){
+			key_i -= KEYPAD_LAYER_SIZE;
+		}
+#endif
+		if(key_i == l_key){
 			return key_states[i].state;
 		}
 	}
@@ -173,15 +180,15 @@ bool keystate_check_key(logical_keycode l_key){
 }
 
 /** returns true if all argument keys are down */
-bool keystate_check_keys(uint8_t count, ...){
+bool keystate_check_keys(uint8_t count, lkey_type ktype, ...){
 	if(count > key_press_count) return false; // trivially know it's impossible
 
 	va_list argp;
 	bool success = true;
-	va_start(argp, count);
+	va_start(argp, ktype);
 	while(count--){
 		logical_keycode lkey = va_arg(argp, int);
-		bool found_key = keystate_check_key(lkey);
+		bool found_key = keystate_check_key(lkey, ktype);
 
 		if(!found_key){
 			success = false;
@@ -193,13 +200,21 @@ bool keystate_check_keys(uint8_t count, ...){
 	return success;
 }
 
-/* writes up to key_press_count currently pressed key indexes to the
-   output buffer keys */
-void keystate_get_keys(logical_keycode* l_keys){
+/**
+ * writes up to key_press_count currently pressed key indexes to the
+ * output buffer keys.
+ */
+void keystate_get_keys(logical_keycode* l_keys, lkey_type ktype){
 	int ki = 0;
 	for(int i = 0; i < KEYSTATE_COUNT && ki < key_press_count; ++i){
 		if(key_states[i].state){
-			l_keys[ki++] = key_states[i].l_key;
+			logical_keycode key = key_states[i].l_key;
+#ifdef KEYPAD_LAYER
+			if(ktype == PHYSICAL && key >= (KEYPAD_LAYER_START + KEYPAD_LAYER_SIZE)){
+				key -= KEYPAD_LAYER_SIZE;
+			}
+#endif
+			l_keys[ki++] = key;
 		}
 	}
 }

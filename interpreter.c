@@ -240,7 +240,7 @@ static void vm_step(vmstate* vm){
 	case VMWAITPHYSKEY: {
 		if(vm->wait_key == 0){ vm->wait_key = vm->trigger_lkey; }
 		LOG("VM waiting for physkey %d: ", vm->wait_key);
-		uint8_t pressed = keystate_check_key(vm->wait_key);
+		uint8_t pressed = keystate_check_key(vm->wait_key, LOGICAL);
 		if(pressed || (vm->delay_end_ms && uptimems() > vm->delay_end_ms)){
 			if(pressed){
 				LOG("Wait over, pushing 1\n");
@@ -866,7 +866,7 @@ static void vm_step(vmstate* vm){
 	case CHECKPHYSKEY: {
 		logical_keycode lkey = (logical_keycode) POP_BYTE(vm);
 		if(lkey == 0){ lkey = vm->trigger_lkey; }
-		uint8_t ispressed = keystate_check_key(lkey);
+		uint8_t ispressed = keystate_check_key(lkey, LOGICAL); // keypad should be differentiated
 		PUSH_BYTE(vm, ispressed);
 		break;
 	}
