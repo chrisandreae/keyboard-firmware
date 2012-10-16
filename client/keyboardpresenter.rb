@@ -52,7 +52,7 @@ class KeyboardPresenter
   end
 
   def resetDefaultsAction
-    @model.currentMapping = @model.defaultMapping
+    @model.currentMapping.replace(@model.defaultMapping)
     displayCurrent
     @view.setStatusLine "Reset mapping to defaults"
   end
