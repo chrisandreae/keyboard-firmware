@@ -80,8 +80,8 @@ hid_keycode* config_get_mapping(void){
 struct { uint8_t start; uint8_t end; } saved_key_mapping_indices[NUM_KEY_MAPPING_INDICES] EEMEM;
 
 // Key mappings are saved as a list of (logical_keycode, hid_keycode)
-// pairs, approximately filling the remaining internal eeprom.
-#define SAVED_KEY_MAPPINGS_BUFFER_SIZE 384
+// pairs. Indexed by uint8_t, so must be <= 256 long.
+#define SAVED_KEY_MAPPINGS_BUFFER_SIZE 256
 struct { logical_keycode l_key; hid_keycode h_key; } saved_key_mappings[SAVED_KEY_MAPPINGS_BUFFER_SIZE] EEMEM;
 
 #if USE_EEPROM
@@ -196,10 +196,11 @@ uint8_t config_delete_layout(uint8_t num){
 	}
 	uint8_t end = eeprom_read_byte(&saved_key_mapping_indices[num].end); // start and end are inclusive
 
-	uint8_t length = start - end + 1;
+	uint8_t length = end - start + 1;
 
 	// clear this entry
 	eeprom_update_byte(&saved_key_mapping_indices[num].start, NO_KEY);
+	eeprom_update_byte(&saved_key_mapping_indices[num].end, NO_KEY);
 
 	// now scan the other entries, subtracting length from each entry indexed after end
 	// update the end position so we can move down only necessary data.
@@ -236,7 +237,7 @@ uint8_t config_save_layout(uint8_t num){
 	config_delete_layout(num);
 
 	// find last offset
-	uint8_t old_end = 0;
+	int16_t old_end = -1;
 	for(int i = 0; i < NUM_KEY_MAPPING_INDICES; ++i){
 		uint8_t i_start = eeprom_read_byte(&saved_key_mapping_indices[i].start);
 		if(i_start == NO_KEY) continue;
@@ -244,7 +245,7 @@ uint8_t config_save_layout(uint8_t num){
 		if(i_end > old_end) old_end = i_end;
 	}
 
-	uint8_t start = old_end + 1;
+	uint8_t start = (uint8_t) (old_end + 1);
 	uint8_t cursor = start;
 
 	for(logical_keycode l = 0; l < NUM_LOGICAL_KEYS; ++l){
