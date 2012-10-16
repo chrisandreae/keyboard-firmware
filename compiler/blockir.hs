@@ -38,10 +38,10 @@ data IRBlock a = IRBlock [a]
 
 -- Edges contain the results of that operation.
 -- We always have exactly one default edge, and zero or one conditional edge (or when we add switch, n value edges)
-data IREdge = DefaultEdge
-            | ConditionalEdge CondOp
+data IREdge = ConditionalEdge CondOp
+            | DefaultEdge
             -- | ValueEdge Int
-            deriving (Show, Eq, Ord)
+            deriving (Show, Eq, Ord) -- order is used in outputting: default must be last
 
 
 type IRGraph a = Gr (IRBlock a) IREdge

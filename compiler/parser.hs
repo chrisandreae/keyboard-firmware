@@ -269,7 +269,7 @@ statement = (Block <$> (braces $ many statement)
     varDeclStatement = VariableDeclarationStatement <$> typep <*> identifier <*> optionMaybe (reservedOp "=" *> expression)
 
 opP :: Show t => (t -> b) -> t -> GenParser Char st b
-opP constr op = (\_ -> constr op) <$> reservedOp (show op)
+opP constr op = (const $ constr op) <$> reservedOp (show op)
 
 opChoice :: Show t => (t -> b) -> [t] -> GenParser Char st b
 opChoice constr xs = choice $ map (opP constr) xs
@@ -314,6 +314,7 @@ expression = eAssig
                           <|>
                           do { i <- decimal; ((lexeme $ char 'u') >> return (i, False)) <|> return (i, True) }
       isShort <- ((lexeme $ char 's') >> return True) <|> return False
+      whitespace
       let (lbound, ubound) | isShort && isSigned = (-2^15, 2^15)
                            | isShort             = (0,     2^16)
                            | isSigned            = (-2^7,  2^7)
