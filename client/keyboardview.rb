@@ -17,7 +17,6 @@ class KeyboardView
     builder.add_from_file("gui.xml")
     builder.connect_signals{ |handler| method(handler) }
     @window = builder.get_object("window1")
-    @window.show()
 
     @refreshButton = builder.get_object("refresh")
 
@@ -41,8 +40,8 @@ class KeyboardView
     end
     @programSummaryLabel = builder.get_object("programlabel")
 
-    @buttons = @programButtons +
-      ["defaults", "remap", "download", "upload"].map! { |l|builder.get_object(l) }
+    @appWidgets = @programButtons +
+      ["defaults", "remap", "download", "upload", "menusave", "menuopen"].map! { |l|builder.get_object(l) }
 
     @keyboardDrawing = builder.get_object "keyboardDrawing"
 
@@ -56,6 +55,8 @@ class KeyboardView
     # The view keeps track of whether it is in a keypad mode, and uses this
     # to decide which part of the provided mapping to display on the picture
     @keypadMode = false
+
+    @window.show()
   end
 
 
@@ -102,11 +103,11 @@ class KeyboardView
     @refreshButton.set_sensitive(true)
     @devCombo.set_sensitive(true)
     @remapButton.label = "Remap"
-    @buttons.each { |b| b.set_sensitive(true) }
+    @appWidgets.each { |b| b.set_sensitive(true) }
   end
 
   def disableAppButtons
-    @buttons.each { |b| b.set_sensitive(false) }
+    @appWidgets.each { |b| b.set_sensitive(false) }
   end
 
   def enableRemapButtons(source)
@@ -140,9 +141,11 @@ class KeyboardView
   end
 
   def menuopen_activate_cb(x)
+    @presenter.loadSettingsAction
   end
 
   def menusave_activate_cb(x)
+    @presenter.saveSettingsAction
   end
 
   def refresh_clicked_cb(x)

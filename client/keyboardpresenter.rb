@@ -13,7 +13,7 @@ class KeyboardPresenter
 
   def showAction
     @view = KeyboardView.new(self)
-    selectDeviceAction(-1)
+    refreshAction
     Gtk.main() ## never return
   end
 
@@ -59,19 +59,75 @@ class KeyboardPresenter
 
   def uploadSettingsAction
     ## TODO: validation, don't upload if programs are too large.
-    @view.setStatusLine "Uploading settings..." do
+    @view.setStatusLine "Uploading settings..."
+    begin
       @kbComm.set_mapping @model.currentMapping
       @kbComm.set_programs @model.programs
+      @view.setStatusLine "Uploaded"
+    rescue Exception => e
+      errorDialog "Error uploading settings: #{e.message}"
+      @view.setStatusLine "Upload failed"
     end
-    @view.setStatusLine "Uploaded"
   end
 
   def downloadSettingsAction
-    @view.setStatusLine "Downloading settings..." do
+    @view.setStatusLine "Downloading settings..."
+    begin
       @model = KeyboardModel.new(@kbComm)
-      displayCurrent
+      @view.setStatusLine "Downloaded"
+    rescue Exception => e
+      errorDialog "Error downloading settings: #{e.message}"
+      @view.setStatusLine "Download failed"
     end
-    @view.setStatusLine "Downloaded"
+
+    displayCurrent
+  end
+
+  def errorDialog(msg)
+    md = Gtk::MessageDialog.new(@view.window, Gtk::Dialog::MODAL |
+                                    Gtk::Dialog::DESTROY_WITH_PARENT, Gtk::MessageDialog::ERROR,
+                                    Gtk::MessageDialog::BUTTONS_CLOSE, msg)
+    md.run
+    md.destroy
+  end
+
+  def saveSettingsAction
+    dialog = Gtk::FileChooserDialog.new("Save Settings",
+                                     @view.window,
+                                     Gtk::FileChooser::ACTION_SAVE,
+                                     nil,
+                                     [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
+                                     [Gtk::Stock::SAVE, Gtk::Dialog::RESPONSE_ACCEPT])
+
+
+    if dialog.run == Gtk::Dialog::RESPONSE_ACCEPT
+      begin
+        @model.save_settings(dialog.filename)
+        @view.setStatusLine "Saved settings"
+      rescue Exception => e
+        errorDialog "Error saving settings: #{e.message}"
+      end
+    end
+    dialog.destroy
+  end
+
+  def loadSettingsAction
+    dialog = Gtk::FileChooserDialog.new("Open Settings File",
+                                        @view.window,
+                                        Gtk::FileChooser::ACTION_OPEN,
+                                        nil,
+                                        [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
+                                        [Gtk::Stock::OPEN, Gtk::Dialog::RESPONSE_ACCEPT])
+     if dialog.run == Gtk::Dialog::RESPONSE_ACCEPT
+       begin
+         @model.load_settings(dialog.filename)
+         @view.setStatusLine "Loaded settings"
+       rescue Exception => e
+         errorDialog "Error loading settings: #{e.message}"
+       end
+       displayCurrent
+    end
+    dialog.destroy
   end
 
   def handleProgramClick(idx)
@@ -90,9 +146,13 @@ class KeyboardPresenter
 
 
       if dialog.run == Gtk::Dialog::RESPONSE_ACCEPT
-        File.open(dialog.filename) do | fh |
-          programdata = fh.read.unpack("C*")
-          @model.programs[idx] = programdata
+        begin
+          File.open(dialog.filename) do | fh |
+            programdata = fh.read.unpack("C*")
+            @model.programs[idx] = programdata
+          end
+        rescue Exception => e
+          errorDialog "Error loading program: #{e.message}"
         end
       end
       dialog.destroy

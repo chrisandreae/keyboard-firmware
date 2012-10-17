@@ -1,4 +1,5 @@
 require 'rexml/document'
+require 'json'
 
 require_relative "keyboardcomm"
 
@@ -51,6 +52,33 @@ class KeyboardModel
     keypad = keyboard.elements["./keypad"]
     if keypad != nil
       @keypad = Keypad.new(keypad.attributes["keyindex"].to_i, keypad.attributes["layerstart"].to_i, keypad.attributes["layersize"].to_i)
+    end
+  end
+
+  # save the current layout and program to a file
+  def save_settings(filename)
+    data = {
+      :layoutId => @layoutId,
+      :mapping => @currentMapping,
+      :programs => @programs
+    }
+    File.open(filename, "w") do |fh|
+      JSON.dump(data, fh);
+    end
+  end
+
+  def load_settings(filename)
+    File.open(filename, "r") do |fh|
+      data = JSON.load(fh)
+      raise "Corrputed settings file" unless data.is_a?(Hash)
+      raise "Corrupted settings file, does not include layout id" unless data.include?("layoutId")
+      raise "Corrupted settings file, does not include mapping" unless data.include?("mapping")
+      raise "Corrupted settings file, does not include programs" unless data.include?("programs")
+      raise "Settings file does not match this keyboard" unless data["layoutId"] == @layoutId
+      raise "Corrupted mapping data, bad length" unless data["mapping"].length == @mappingSize
+      raise "Settings file contains invalid number of programs for this keyboard" unless data["programs"].length == @programs_count
+      @currentMapping = data["mapping"]
+      @programs = data["programs"]
     end
   end
 end
