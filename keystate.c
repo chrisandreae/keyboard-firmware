@@ -115,7 +115,7 @@ void keystate_update(void){
 							key->state = 1;
 							#if USE_BUZZER
 							if(config_get_flags().key_sound_enabled)
-								buzzer_start(1);
+								buzzer_start(3);
 							#endif
 						}
 					}

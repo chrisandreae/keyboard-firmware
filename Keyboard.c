@@ -48,6 +48,7 @@
 
 #include "Keyboard.h"
 
+#include "usb.h"
 #include "hardware.h"
 #include "keystate.h"
 #include "config.h"
@@ -105,8 +106,8 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 	sei();
 
 #if USE_BUZZER
-	// buzz on startup
-	buzzer_start(200);
+	// Low pitched buzz on startup
+	buzzer_start_f(200, 200);
 #endif
 
 	struct { int keys:1; int mouse:1; } update;
@@ -179,7 +180,7 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 			update.mouse = 1;
 		}
 
-		Perform_USB_Update(1, perform_mouse_update);
+		USB_Perform_Update(1, perform_mouse_update);
 	}
 }
 
@@ -201,12 +202,24 @@ static void handle_state_normal(void){
 					current_state = STATE_WAITING;
 					next_state = STATE_PROGRAMMING_SRC;
 					break;
+				case LOGICAL_KEY_PRINTSCREEN: {
+					uint8_t i = BUZZER_DEFAULT_TONE;
+						// cause watchdog reboot (into bootloader if progm is still pressed)
+					while(1){
+						// Beep until rebooted
+						buzzer_start_f(100, i);
+						i -= 10;
+						_delay_ms(100);
+						Update_Millis(100);
+						_delay_ms(100);
+					}
+				}
 #if USE_BUZZER
 				case LOGICAL_KEY_BACKSLASH: {
 					configuration_flags flags = config_get_flags();
 					flags.key_sound_enabled = !flags.key_sound_enabled;
 					config_save_flags(flags);
-					buzzer_start(flags.key_sound_enabled ? 150 : 75);
+					buzzer_start_f(100, flags.key_sound_enabled ? BUZZER_ON_TONE : BUZZER_OFF_TONE);
 
 					current_state = STATE_WAITING;
 					next_state = STATE_NORMAL;
@@ -257,13 +270,13 @@ static void handle_state_normal(void){
 					r = config_delete_layout(index);
 				}
 				if(r){
-					// show success by blinking LEDs
-					leds_blink();
+					buzzer_start_f(200, BUZZER_SUCCESS_TONE); // high buzz for success
 					current_state = STATE_WAITING;
 					next_state = STATE_NORMAL;
 				}
 				else{
 					// failure - we have put an error msg in print_buffer
+					buzzer_start_f(200, BUZZER_FAILURE_TONE); // low buzz for error
 					current_state = STATE_PRINTING;
 					next_state = STATE_NORMAL;
 				}

@@ -59,7 +59,7 @@ static uint16_t buzzer_ms;
 static const int TIMER_MODE = ((1<<WGM21) | (1<<COM20) | (1<<CS22) | (1<<CS20));
 
 void buzzer_start(uint16_t ms){
-	buzzer_start_f(ms, BUZZER_DEFAULT_FREQ);
+	buzzer_start_f(ms, BUZZER_DEFAULT_TONE);
 }
 
 void buzzer_start_f(uint16_t ms, uint8_t freq){

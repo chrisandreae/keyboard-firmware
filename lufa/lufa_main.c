@@ -95,14 +95,23 @@ int main(void) {
 	return 0;
 }
 
-void Perform_USB_Update(int update_kbd, int update_mouse){
+void USB_KeepAlive(uint8_t poll){
+	static uint8_t in_task = 0;
+	if(poll && !in_task){
+		in_poll = 1;
+		USB_USBTask();
+		in_poll = 0;
+	}
+}
+
+void USB_Perform_Update(uint8_t update_kbd, uint8_t update_mouse){
 	if(update_mouse)
 		HID_Device_USBTask(&Mouse_HID_Interface);
 
 	if(update_kbd)
 		HID_Device_USBTask(&Keyboard_HID_Interface);
 
-	USB_USBTask();
+	USB_KeepAlive(true);
 }
 
 /** Event handler for the library USB Connection event. */

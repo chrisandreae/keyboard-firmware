@@ -51,7 +51,16 @@
 #include "hardware.h"
 
 #if USE_BUZZER
-#define BUZZER_DEFAULT_FREQ 110 // f = 1/(x * 4e-6) Hz
+// define tones for different purposes
+#define BUZZER_DEFAULT_TONE 110 // f = 1/(x * 4e-6) Hz
+
+// to indicate success or failure of an action
+#define BUZZER_SUCCESS_TONE 90
+#define BUZZER_FAILURE_TONE 220
+
+// for enabling and disabling a setting
+#define BUZZER_ON_TONE 75
+#define BUZZER_OFF_TONE 150
 
 void buzzer_start(uint16_t ms);
 void buzzer_start_f(uint16_t ms, uint8_t freq);

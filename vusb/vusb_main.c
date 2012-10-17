@@ -330,7 +330,9 @@ void update_uptimems(){
 	uint16_t elapsed = elapsed_ticks / 250;
 	remainder = elapsed_ticks % 250;
 
-	Update_Millis(elapsed);
+	if(elapsed > 0){
+		Update_Millis(elapsed);
+	}
 
 	keyboard_idle_ms = (elapsed >= keyboard_idle_ms) ? 0 : keyboard_idle_ms - elapsed;
 	mouse_idle_ms    = (elapsed >= mouse_idle_ms)    ? 0 : mouse_idle_ms - elapsed;
@@ -350,9 +352,29 @@ bool update_and_compare(void* buf, void* prev_buf, size_t buflen, void(*fill_fn)
 	}
 }
 
-extern void Perform_USB_Update(int update_kbd, int update_mouse){
+/**
+ * Call from long-running operations to keep our watchdog and timers
+ * up to date. Optionally call usbPoll() (with check to avoid
+ * reentrancy).  Be aware that calling usbPoll() means that we could
+ * hit our control transfer handlers, so avoid this if we're in a
+ * state where this would be a bad thing.
+ */
+void USB_KeepAlive(uint8_t poll){
+	// Tend to our timers
 	wdt_reset();
-	usbPoll();
+	update_uptimems();
+
+	// and usbpoll if we're not already doing so
+	static uint8_t in_poll = 0;
+	if(poll && !in_poll){
+		in_poll = 1;
+		usbPoll();
+		in_poll = 0;
+	}
+}
+
+void USB_Perform_Update(uint8_t update_kbd, uint8_t update_mouse){
+	USB_KeepAlive(true);
 
 	static bool sending_keyboard = 0;
 	static bool sending_mouse = 0;
@@ -392,7 +414,6 @@ extern void Perform_USB_Update(int update_kbd, int update_mouse){
 		mouse_idle_ms = idleRate * 4;
 	}
 
-	// and update the uptime
+	// and update the timer again
 	update_uptimems();
-
 }

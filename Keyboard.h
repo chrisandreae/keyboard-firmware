@@ -74,10 +74,6 @@ typedef enum _state {
 	STATE_MACRO_PLAY,
 } state;
 
-
-/** Must be provided by USB driver */
-extern void Perform_USB_Update(int update_kbd, int update_mouse);
-
 /** Interface provided to USB driver */
 typedef enum _USB_State{ NOTREADY, ENUMERATING, READY, ERROR } USB_State;
 

@@ -900,7 +900,7 @@ static void vm_step(vmstate* vm){
 		vbyte freq = POP_BYTE(vm);
 		goto buzz;
 	case BUZZ:
-		freq = BUZZER_DEFAULT_FREQ;
+		freq = BUZZER_DEFAULT_TONE;
 	buzz: {
 		vshort delay = POP_SHORT(vm);
 		if(delay > 0){

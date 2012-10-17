@@ -47,6 +47,7 @@
 
 #include "config.h"
 
+#include "usb.h"
 #include "Keyboard.h"
 #include "hardware.h"
 #include "printing.h"
@@ -56,7 +57,8 @@
 #include "interpreter.h"
 #include "buzzer.h"
 
-#include "avr/eeprom.h"
+#include <avr/eeprom.h>
+#include <util/delay.h>
 
 // Eeprom sentinel value - if this is not set at startup, re-initialize the eeprom.
 #define EEPROM_SENTINEL 42
@@ -118,21 +120,30 @@ void config_save_definition(logical_keycode l_key, hid_keycode h_key){
 
 // reset the current layout to the default layout
 void config_reset_defaults(void){
+#if USE_BUZZER
+	buzzer_start_f(1000, 100); // Start buzzing at low pitch
+#endif
+	_delay_ms(20); // delay so that the two tones are always heard, even if no writes need be done
+
 	for(int i = 0; i < NUM_LOGICAL_KEYS; ++i){
 		hid_keycode default_key = pgm_read_byte_near(&logical_to_hid_map_default[i]);
 		eeprom_update_byte(&logical_to_hid_map[i], default_key);
+		USB_KeepAlive(false);
 	}
-	eeprom_update_byte((uint8_t*)&eeprom_flags, 0x0);
 
-	// Buzz to signify reset (TODO: also flash LEDs)
 #if USE_BUZZER
-	buzzer_start(300);
+	buzzer_start_f(200, 80); // finish at high to signify end
 #endif
 }
 
 // reset the keyboard, including saved layouts
 void config_reset_fully(void){
-	eeprom_update_byte(&eeprom_sentinel_byte, EEPROM_SENTINEL);
+#if USE_BUZZER
+	buzzer_start_f(2000, 120); // start buzzing low
+#endif
+
+	// reset configuration flags
+	eeprom_update_byte((uint8_t*)&eeprom_flags, 0x0);
 
 	{
 		// reset key mapping index
@@ -140,11 +151,12 @@ void config_reset_fully(void){
 		uint8_t buf[sz];
 		memset(buf, NO_KEY, sz);
 		eeprom_update_block(buf, saved_key_mapping_indices, sz);
+		USB_KeepAlive(false);
 	}
 
 #if USE_EEPROM
 	{
-	// reset program index
+		// reset program index
 		uint8_t sz = NUM_PROGRAMS * sizeof(program_idx);
 
 		uint8_t buf[EEEXT_PAGE_SIZE];
@@ -154,13 +166,23 @@ void config_reset_fully(void){
 		while(sz > 0){
 			uint8_t step = (sz > EEEXT_PAGE_SIZE) ? EEEXT_PAGE_SIZE : sz;
 			serial_eeprom_write_page(p, buf, step);
+			USB_KeepAlive(false);
 			p += step;
 			sz -= step;
 		}
 	}
 #endif // USE_EEPROM
 
+	// now reset the layout and configuration defaults
 	config_reset_defaults();
+
+	// Once all reset, update the sentinel
+	eeprom_update_byte(&eeprom_sentinel_byte, EEPROM_SENTINEL);
+
+	// Higher pitched buzz to signify full reset
+	#if USE_BUZZER
+		buzzer_start_f(200, 60);
+	#endif
 }
 
 configuration_flags config_get_flags(void){
@@ -213,6 +235,7 @@ uint8_t config_delete_layout(uint8_t num){
 
 			eeprom_update_byte(&saved_key_mapping_indices[i].start, i_start - length);
 			eeprom_update_byte(&saved_key_mapping_indices[i].end,   i_end - length);
+			USB_KeepAlive(false);
 		}
 	}
 
@@ -222,6 +245,7 @@ uint8_t config_delete_layout(uint8_t num){
 		uint8_t hk = eeprom_read_byte(&saved_key_mappings[i].h_key);
 		eeprom_update_byte(&saved_key_mappings[i - length].l_key, lk);
 		eeprom_update_byte(&saved_key_mappings[i - length].h_key, hk);
+		USB_KeepAlive(false);
 	}
 
 	return true;
@@ -258,6 +282,7 @@ uint8_t config_save_layout(uint8_t num){
 			}
 			eeprom_update_byte(&saved_key_mappings[cursor].l_key, l);
 			eeprom_update_byte(&saved_key_mappings[cursor].h_key, h);
+			USB_KeepAlive(false);
 			++cursor;
 		}
 	}
@@ -268,6 +293,7 @@ uint8_t config_save_layout(uint8_t num){
 	}
 	else{
 		// same as default layout: nothing to save.
+		printing_set_buffer(PGM_MSG("No change"), BUF_PGM);
 		return false;
 	}
 }
@@ -296,6 +322,7 @@ uint8_t config_load_layout(uint8_t num){
 			// use default
 			hid_keycode def_val = pgm_read_byte_near(&logical_to_hid_map_default[lkey]);
 			eeprom_update_byte(&logical_to_hid_map[lkey], def_val);
+			USB_KeepAlive(false);
 		}
 		else{
 			// use saved
