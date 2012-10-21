@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "extrareport.h"
+
 #ifndef DEBUG // not used by interpreter debug harness
 #include "keystate.h"
 #endif
@@ -205,10 +207,7 @@ typedef struct __attribute__((__packed__)) _vmstate {
 	// the physical key that triggered this program
 	logical_keycode trigger_lkey;
 
-	uint8_t pressed_modifiers;
-	hid_keycode pressed_keys[6];
-	uint8_t pressed_key_count;
-
+	ExtraKeyboardReport keyboardreport;
 	MouseReport_Data_t mousereport;
 
 	const program* program;

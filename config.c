@@ -47,16 +47,18 @@
 
 #include "config.h"
 
+#include "hardware.h"
 #include "usb.h"
 #include "Keyboard.h"
-#include "hardware.h"
 #include "printing.h"
 #include "keystate.h"
 #include "leds.h"
 #include "serial_eeprom.h"
 #include "interpreter.h"
 #include "buzzer.h"
+#include "macro.h"
 
+#include <stdlib.h>
 #include <avr/eeprom.h>
 #include <util/delay.h>
 
@@ -88,27 +90,19 @@ struct { logical_keycode l_key; hid_keycode h_key; } saved_key_mappings[SAVED_KE
 
 #if USE_EEPROM
 
-// Programs are stored in external eeprom. We dedicate 1k of our 2k
-// eeprom for program storage, leaving the rest for keyboard macros.
-
+// Programs are stored in external eeprom.
 static uint8_t programs[PROGRAMS_SIZE] EEEXT;
 
 typedef struct _program_idx { uint16_t offset; uint16_t len; } program_idx;
-static program_idx *const programs_index = (uint16_t*) programs;
+static program_idx *const programs_index = (program_idx*) programs;
 
 static uint8_t *const programs_data = programs + (NUM_PROGRAMS * sizeof(program_idx));
-
-static uint8_t macros[MACROS_SIZE] EEEXT; // as yet unused
 
 uint8_t* config_get_programs(){
 	return &programs[0];
 }
 
-uint8_t* config_get_macros(){
-	return &macros[0];
-}
-#endif
-
+#endif // USE_EEPROM
 
 hid_keycode config_get_definition(logical_keycode l_key){
 	return eeprom_read_byte(&logical_to_hid_map[l_key]);
@@ -147,30 +141,19 @@ void config_reset_fully(void){
 
 	{
 		// reset key mapping index
-		const uint8_t sz = sizeof(saved_key_mapping_indices) * sizeof(*saved_key_mapping_indices);
+		const uint8_t sz = sizeof(saved_key_mapping_indices);
 		uint8_t buf[sz];
 		memset(buf, NO_KEY, sz);
 		eeprom_update_block(buf, saved_key_mapping_indices, sz);
-		USB_KeepAlive(false);
+		USB_KeepAlive(true);
 	}
 
 #if USE_EEPROM
-	{
-		// reset program index
-		uint8_t sz = NUM_PROGRAMS * sizeof(program_idx);
+	// reset program
+	config_reset_program_defaults();
 
-		uint8_t buf[EEEXT_PAGE_SIZE];
-		memset(buf, NO_KEY, EEEXT_PAGE_SIZE);
-
-		uint8_t* p = (uint8_t*) programs_index;
-		while(sz > 0){
-			uint8_t step = (sz > EEEXT_PAGE_SIZE) ? EEEXT_PAGE_SIZE : sz;
-			serial_eeprom_write_page(p, buf, step);
-			USB_KeepAlive(false);
-			p += step;
-			sz -= step;
-		}
-	}
+	// and macros
+	macros_reset_defaults();
 #endif // USE_EEPROM
 
 	// now reset the layout and configuration defaults
@@ -184,6 +167,8 @@ void config_reset_fully(void){
 		buzzer_start_f(200, 60);
 	#endif
 }
+
+
 
 configuration_flags config_get_flags(void){
 	union {
@@ -339,6 +324,7 @@ uint8_t config_load_layout(uint8_t num){
 }
 
 #if USE_EEPROM
+
 const program* config_get_program(uint8_t idx){
 	//index range is not checked as this can't be called from user input
 	uint16_t program_offset;
@@ -352,6 +338,24 @@ const program* config_get_program(uint8_t idx){
 	}
 	return (const program*) &programs_data[program_offset];
 }
+
+void config_reset_program_defaults(){
+	// reset program index
+	uint8_t sz = NUM_PROGRAMS * sizeof(program_idx);
+
+	uint8_t buf[EEEXT_PAGE_SIZE];
+	memset(buf, NO_KEY, EEEXT_PAGE_SIZE);
+
+	uint8_t* p = (uint8_t*) programs_index;
+	while(sz > 0){
+		uint8_t step = (sz > EEEXT_PAGE_SIZE) ? EEEXT_PAGE_SIZE : sz;
+		serial_eeprom_write_page(p, buf, step);
+		USB_KeepAlive(true);
+		p += step;
+		sz -= step;
+	}
+}
+
 #endif // USE_EEPROM
 
 void config_init(void){

@@ -45,48 +45,22 @@
   this software.
 */
 
-#ifndef _KEYBOARD_H_
-#define _KEYBOARD_H_
+#ifndef __EXTRAREPORT_H
+#define __EXTRAREPORT_H
 
-/* Includes: */
-#include <avr/io.h>
-#include <avr/wdt.h>
-#include <avr/power.h>
-#include <avr/interrupt.h>
-#include <stdbool.h>
-#include <string.h>
+#include "keystate.h"
 
-#include "Descriptors.h"
+#define EXTRA_REPORT_KEY_COUNT 6
 
-extern volatile uint32_t _uptimems;
-static inline uint32_t uptimems(void){ return _uptimems; }
+typedef struct _ExtraKeyboardReport {
+	uint8_t modifiers;
+	hid_keycode keys[EXTRA_REPORT_KEY_COUNT]; // Keys are kept unsorted and unpacked
+} ExtraKeyboardReport;
 
-/* Function Prototypes: */
-void SetupHardware(void);
+void ExtraKeyboardReport_clear(ExtraKeyboardReport* r);
+void ExtraKeyboardReport_add(ExtraKeyboardReport* r, hid_keycode key);
+void ExtraKeyboardReport_remove(ExtraKeyboardReport* r, hid_keycode key);
+void ExtraKeyboardReport_toggle(ExtraKeyboardReport* r, hid_keycode key);
+void ExtraKeyboardReport_append(ExtraKeyboardReport* extra, KeyboardReport_Data_t* report);
 
-typedef enum _state {
-	STATE_NORMAL,    // normal keyboard action
-	STATE_WAITING,   // Waiting for no keys to be pressed
-	STATE_PRINTING,  // outputting the contents of print_buffer
-	STATE_PROGRAMMING_SRC, // first key
-	STATE_PROGRAMMING_DST, // second key
-	STATE_MACRO_RECORD_TRIGGER,
-	STATE_MACRO_RECORD,
-	STATE_MACRO_PLAY,
-} state;
-
-/** Interface provided to USB driver */
-typedef enum _USB_State{ NOTREADY, ENUMERATING, READY, ERROR } USB_State;
-
-void __attribute__((noreturn)) Keyboard_Main(void);
-void Update_USBState(USB_State state);
-void Update_Millis(uint8_t increment);
-void Fill_MouseReport(MouseReport_Data_t* MouseReport);
-void Fill_KeyboardReport(KeyboardReport_Data_t* report);
-void Process_KeyboardLEDReport(uint8_t report);
-
-/** Buffer to hold the previously generated Keyboard/Mouse HID reports, for comparison purposes inside the HID class driver. */
-extern KeyboardReport_Data_t PrevKeyboardHIDReportBuffer;
-extern MouseReport_Data_t PrevMouseHIDReportBuffer;
-
-#endif
+#endif // __EXTRAREPORT_H

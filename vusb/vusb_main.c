@@ -25,6 +25,7 @@
 #include "config.h"
 #include "buzzer.h"
 #include "serial_eeprom.h"
+#include "macro.h"
 
 // Use GCC built-in memory operations
 #define memcmp(a,b,c) __builtin_memcmp(a,b,c)
@@ -59,6 +60,12 @@ typedef enum _vendor_request {
 
 	READ_CONFIG_FLAGS,
 	WRITE_CONFIG_FLAGS, // one byte: passed in wvalue
+
+	READ_MACRO_INDEX_SIZE,
+	WRITE_MACRO_INDEX, READ_MACRO_INDEX,
+	READ_MACRO_STORAGE_SIZE,
+	WRITE_MACRO_STORAGE, READ_MACRO_STORAGE,
+
 } vendor_request;
 
 typedef enum _transfer_action {
@@ -168,6 +175,36 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			transfer.state.addr = config_get_programs();
 			transfer.state.remaining = rq->wLength.word;
 			return USB_NO_MSG;
+
+		case READ_MACRO_INDEX_SIZE:
+			transfer.word = MACRO_INDEX_SIZE;
+			usbMsgPtr = (uint8_t*)&transfer.word;
+			return 2;
+		case READ_MACRO_STORAGE_SIZE:
+			transfer.word = MACROS_SIZE;
+			usbMsgPtr = (uint8_t*)&transfer.word;
+			return 2;
+
+		case WRITE_MACRO_INDEX:
+			transfer.state.type = WRITE_EEPROM;
+			goto macro_index_rw;
+		case READ_MACRO_INDEX:
+			transfer.state.type = READ_EEPROM;
+		macro_index_rw:
+			transfer.state.addr = macros_get_index();
+			transfer.state.remaining = rq->wLength.word;
+			return USB_NO_MSG;
+
+		case WRITE_MACRO_STORAGE:
+			transfer.state.type = WRITE_EEEXT;
+			goto macro_storage_rw;
+		case READ_MACRO_STORAGE:
+			transfer.state.type = READ_EEEXT;
+		macro_storage_rw:
+			transfer.state.addr = macros_get_storage();
+			transfer.state.remaining = rq->wLength.word;
+			return USB_NO_MSG;
+
 #endif
 		case WRITE_CONFIG_FLAGS: {
 			uint8_t b = (rq->wValue.word & 0xff);

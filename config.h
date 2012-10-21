@@ -48,6 +48,7 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include "hardware.h"
 #include "keystate.h"
 
 // Number of programs we support. We always permit concurrent program
@@ -56,8 +57,6 @@
 
 // size in bytes of program storage (including index)
 #define PROGRAMS_SIZE 1024
-
-#define MACROS_SIZE 1024
 
 // Configuration is saved in the eeprom
 typedef struct _configuration_flags {
@@ -83,10 +82,11 @@ void config_save_flags(configuration_flags state);
 
 #if USE_EEPROM
 uint8_t* config_get_programs();
-uint8_t* config_get_macros();
 
 struct _program;
 const struct _program* config_get_program(uint8_t idx);
+void config_reset_program_defaults();
+
 #endif
 
 #endif // __CONFIG_H

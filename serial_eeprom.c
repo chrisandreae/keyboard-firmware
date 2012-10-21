@@ -50,6 +50,7 @@
 #include "printing.h"
 #include "hardware.h"
 #include "serial_eeprom.h"
+#include "usb.h"
 
 #include <util/delay.h>     /* for _delay_ms() */
 
@@ -63,9 +64,11 @@ serial_eeprom_err serial_eeprom_errno = SUCCESS;
 
 // communicate with AT24C164 serial eeprom(s)
 
-// Start a write (or random read dummy) transaction with the
-// eeprom. If the eeprom is not responding, keep trying for up to the
-// eeprom write delay in case it is busy.
+/**
+ * Start a write (or random read dummy) transaction with the
+ * eeprom. If the eeprom is not responding, keep trying for up to the
+ * eeprom write delay in case it is busy.
+ */
 serial_eeprom_err serial_eeprom_start_write(uint8_t* addr){
 	const uint16_t iaddr = (uint16_t) addr;
 
@@ -102,8 +105,10 @@ serial_eeprom_err serial_eeprom_start_write(uint8_t* addr){
 	return SUCCESS;
 }
 
-// Continues writing an eeprom page-write transaction. Returns bytes
-// written: if < len, an error occurred.
+/**
+ * Continues writing an eeprom page-write transaction. Returns bytes
+ * written: if < len, an error occurred.
+ */
 int8_t serial_eeprom_continue_write(const uint8_t* buf, uint8_t len){
 	int i = 0;
 	for(; i < len; ++i){
@@ -116,9 +121,11 @@ int8_t serial_eeprom_continue_write(const uint8_t* buf, uint8_t len){
 	return i;
 }
 
-// Write len bytes within an eeprom page. The caller is responsible
-// for ensuring 0 < len <= 16 and aligned within the 16 byte page.
-// returns bytes written: if < len, an error occurred.
+/**
+ * Write len bytes within an eeprom page. The caller is responsible
+ * for ensuring 0 < len <= 16 and aligned within the 16 byte page.
+ * returns bytes written: if < len, an error occurred.
+ */
 int8_t serial_eeprom_write_page(uint8_t* addr, const uint8_t* buf, uint8_t len){
 	serial_eeprom_errno = SUCCESS;
 
@@ -137,6 +144,33 @@ int8_t serial_eeprom_write_page(uint8_t* addr, const uint8_t* buf, uint8_t len){
 	return wr;
 }
 
+/**
+ * Writes count bytes to serial eeprom address dst, potentially using
+ * multiple page writes. Returns number of bytes written if any bytes
+ * were successfully written, otherwise -1. A return value of less
+ * than count indicates that an error occurred and serial_eeprom_errno
+ * is set to indicate the error.
+ */
+int16_t serial_eeprom_write(uint8_t* dst, const uint8_t* buf, uint16_t count){
+	int16_t written = 0;
+	while(count){
+		uint8_t dst_page_off = ((intptr_t) dst) & (EEEXT_PAGE_SIZE - 1);
+		uint8_t dst_page_remaining = EEEXT_PAGE_SIZE - dst_page_off;
+		uint8_t n = (count < dst_page_remaining) ? (uint8_t)count : dst_page_remaining;
+
+		int8_t w = serial_eeprom_write_page(dst, buf, n);
+		written += w;
+		if(w != n){
+			// error: incomplete write
+			return (written == 0) ? written : -1;
+		}
+		buf += n;
+		dst += n;
+		count -= n;
+		USB_KeepAlive(true);
+	}
+	return written;
+}
 
 /**
  * Repeatedly called to incrementally write chunks of data to eeprom.
@@ -165,6 +199,38 @@ serial_eeprom_err serial_eeprom_write_step(uint8_t* addr, uint8_t* data, uint8_t
 		serial_eeprom_end_write();
 	}
 
+	return SUCCESS;
+}
+
+serial_eeprom_err serial_eeprom_memmove(uint8_t* dst, uint8_t* src, size_t count){
+	uint8_t buf[EEEXT_PAGE_SIZE];
+	// copy in page aligned chunks
+
+	int8_t direction = src < dst ? -1 : 1;
+
+	while(count){
+		// offset into page
+		uint8_t dst_page_off = ((intptr_t) dst) & (EEEXT_PAGE_SIZE - 1);
+		// either (0..page_off) or (page_off..15) inclusive
+		uint8_t dst_page_remaining = direction > 0 ? (EEEXT_PAGE_SIZE - dst_page_off) : (dst_page_off + 1);
+		uint8_t n = count < dst_page_remaining ? count : dst_page_remaining;
+		if(direction < 0){
+			src -= n;
+			dst -= n;
+		}
+		if(serial_eeprom_read(src, buf, n) != n){
+			return serial_eeprom_errno;
+		}
+		if(serial_eeprom_write_page(dst, buf, n) != n){
+			return serial_eeprom_errno;
+		}
+		if(direction > 0){
+			src += n;
+			dst += n;
+		}
+		count -= n;
+		USB_KeepAlive(true);
+	}
 	return SUCCESS;
 }
 
@@ -202,6 +268,8 @@ int16_t serial_eeprom_read(const uint8_t* addr, uint8_t* buf, uint16_t len){
 	twi_stop();
 	return read_bytes ? read_bytes : -1;
 }
+
+#ifdef DEBUG
 
 // test code to dump the contents of the eeprom - typically not linked in
 uint8_t serial_eeprom_test_read(void){
@@ -282,6 +350,6 @@ uint8_t serial_eeprom_test_write(void){
 		return 1;
 	}
 }
-
+#endif // DEBUG
 
 #endif

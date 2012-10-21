@@ -67,6 +67,8 @@ typedef struct _key_state {
 
 // constants
 
+#define KEYSTATE_COUNT 14 // maximum keys we track at once
+
 #define DEBOUNCE_MASK 0x07 // care about last 3 physical reports
 
 #define NO_KEY 0xFF
@@ -141,15 +143,35 @@ void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport);
 
 void keystate_Fill_MouseReport(MouseReport_Data_t* MouseReport);
 
-/** Checks whether a key mapped to the argument keycode (or any key if
+/**
+ * Checks whether a key mapped to the argument keycode (or any key if
  * argument 0) is pressed, returns keycode of first pressed key or
  * NO_KEY.
-*/
+ */
 hid_keycode keystate_check_hid_key(hid_keycode key);
+
+/**
+ * Writes up to key_press_count currently pressed HID keycodes to the
+ * output buffer keys. If exclude_special is set, do not write any
+ * special keycodes. Returns number of keycodes written.
+ */
+int keystate_get_hid_keys(hid_keycode* h_keys, bool exclude_special);
 
 /**
  * Check for keys bound to programs, if found call vm_start
  */
 void keystate_run_programs(void);
+
+/**
+ * A keystate change hook function is invoked whenever the logical key
+ * state is changed, passing the logical keycode and the type of event.
+ */
+typedef void (*keystate_change_hook)(logical_keycode key, bool press);
+
+/**
+ * Sets the given function as the keystate change hook function. Set
+ * null to unregister.
+ */
+void keystate_register_change_hook(keystate_change_hook hook);
 
 #endif // __KEYSTATE_H

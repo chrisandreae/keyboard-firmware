@@ -71,16 +71,43 @@ serial_eeprom_err serial_eeprom_start_write(uint8_t* addr);
 int8_t serial_eeprom_continue_write(const uint8_t* buf, uint8_t len);
 static inline void serial_eeprom_end_write(){ twi_stop(); }
 
+/**
+ * Write len bytes within an eeprom page. The caller is responsible
+ * for ensuring 0 < len <= 16 and aligned within the 16 byte page.
+ * returns bytes written: if < len, an error occurred.
+ */
 int8_t serial_eeprom_write_page(uint8_t* addr, const uint8_t* buf, uint8_t len);
 
+/**
+ * Writes count bytes to serial eeprom address dst, potentially using
+ * multiple page writes. Returns number of bytes written if any bytes
+ * were successfully written, otherwise -1. A return value of less
+ * than count indicates that an error occurred and serial_eeprom_errno
+ * is set to indicate the error.
+ */
+int16_t serial_eeprom_write(uint8_t* dst, const uint8_t* buf, uint16_t count);
+
+/**
+ * Repeatedly called to incrementally write chunks of data to eeprom.
+ * The caller is responsible for ensuring that the range to be written
+ * does not cross a page boundary, and that writing begins at a page
+ * boundary.  Function automatically starts a page write if addr is at
+ * a page boundary, and stops the page write after writing if addr+len
+ * is a page boundary, or if 'last' is set.
+ *
+ * Returns serial_eeprom_err.
+ */
 serial_eeprom_err serial_eeprom_write_step(uint8_t* addr, uint8_t* data, uint8_t len, uint8_t last);
 
 int16_t serial_eeprom_read(const uint8_t* addr, uint8_t* buf, uint16_t len);
 
+serial_eeprom_err serial_eeprom_memmove(uint8_t* dst, uint8_t* src, size_t count);
+
+#ifdef DEBUG
 // test code (not normally linked)
 uint8_t serial_eeprom_test_read(void);
 uint8_t serial_eeprom_test_write(void);
-
+#endif
 
 #endif
 

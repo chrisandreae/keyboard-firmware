@@ -16,6 +16,7 @@
 #include "serial_eeprom.h"
 #include "config.h"
 #include "interpreter.h"
+#include "extrareport.h"
 
 #endif
 
@@ -24,6 +25,8 @@ static vmstate vms[NUM_PROGRAMS];
 static int vm_init_vm(vmstate* vm, const program* p){
 	vm->state = VMSTOPPED;
 	memset(vm, 0x0, sizeof(vm));
+	ExtraKeyboardReport_clear(&vm->keyboardreport);
+
 	vm->program = p;
 
 	uint8_t nmethods;
@@ -92,30 +95,13 @@ void vm_step_all(void){
 }
 
 void vm_append_KeyboardReport(KeyboardReport_Data_t* report){
-	// find free slots
-	uint8_t report_next;
-	for(report_next = 0; report_next < 6 && report->KeyCode[report_next]; ++report_next);
-
 	// iterate VMs and append
 	for(uint8_t i = 0; i < NUM_PROGRAMS; ++i){
 		if(vms[i].state < VMRUNNING) continue;
 
 		if(vms[i].state == VMWAITREPORT) vms[i].state = VMRUNNING;
 
-		uint8_t report_start = report_next;
-
-		// add in modifier keys
-		report->Modifier |= vms[i].pressed_modifiers;
-
-		// as long as there are free slots, add in keys from vm that are not already there.
-		for(uint8_t k = 0; report_next < 6 && k < vms[i].pressed_key_count; ++k){
-			hid_keycode keycode = vms[i].pressed_keys[k];
-			for(uint8_t j = 0; j < report_start; ++j){
-				if(report->KeyCode[j] == keycode) goto next_vk; // already pressed; labelled-continue
-			}
-			report->KeyCode[report_next++] = keycode;
-		next_vk:;
-		}
+		ExtraKeyboardReport_append(&vms[i].keyboardreport, report);
 	}
 }
 
@@ -176,19 +162,6 @@ void vm_append_MouseReport(MouseReport_Data_t* report){
 #define PUSH_SHORT(vm, val) ({ vm->stack_top += 2; TOP_SHORT(vm) = (val);  })
 
 #define AS_SHORT(val) *((vshort*)&(val))
-
-
-/** returns index in pressed_keys if pressed else NO_KEY */
-static uint8_t vm_check_key(vmstate* vm, hid_keycode key){
-	uint8_t r = NO_KEY;
-	for(uint8_t i = 0; i < vm->pressed_key_count; ++i){
-		if(vm->pressed_keys[i] == key){
-			r = i;
-			break;
-		}
-	}
-	return r;
-}
 
 static void vm_do_return(vmstate* vm){
 	vm->stack_top = vm->current_frame->return_stack;
@@ -791,47 +764,14 @@ static void vm_step(vmstate* vm){
 			// mouse is handled separately from keys
 			break;
 		}
-		if(key >= HID_KEYBOARD_SC_LEFT_CONTROL){
-			vm->pressed_modifiers |= 1 << (key - HID_KEYBOARD_SC_LEFT_CONTROL);
-			LOG("Pressed modifier\n");
-			vm->state = VMWAITREPORT;
-			break;
-		}
-		else{
-			uint8_t foundidx = vm_check_key(vm, key);
-			if(foundidx == NO_KEY){
-				LOG("Adding key press: ");
-				if(vm->pressed_key_count == sizeof(vm->pressed_keys)){
-					LOG("Dropped, too many\n");
-					break; // too many keys, drop. Because not sending the key, don't wait.
-				}
-				else{
-					LOG("put at %d\n", vm->pressed_key_count);
-					vm->pressed_keys[vm->pressed_key_count++] = key;
-				}
-			}
-			else{
-				LOG("Already pressed\n");
-			}
-			vm->state = VMWAITREPORT;
-		}
+		ExtraKeyboardReport_add(&vm->keyboardreport, key);
+		vm->state = VMWAITREPORT;
 		break;
 	}
 	case RELEASEKEY: {
 		hid_keycode key = (hid_keycode) POP_BYTE(vm);
 		LOG("Release Key: %d\n", key);
-		if(key >= HID_KEYBOARD_SC_LEFT_CONTROL){
-			vm->pressed_modifiers &= ~(1 << (key - HID_KEYBOARD_SC_LEFT_CONTROL));
-		}
-		else{
-			uint8_t foundidx = vm_check_key(vm, key);
-			if(foundidx != NO_KEY){
-				for(int i = foundidx + 1; i < vm->pressed_key_count; ++i){
-					vm->pressed_keys[i-1] = vm->pressed_keys[i];
-				}
-				vm->pressed_key_count--;
-			}
-		}
+		ExtraKeyboardReport_remove(&vm->keyboardreport, key);
 		vm->state = VMWAITREPORT;
 		break;
 	}

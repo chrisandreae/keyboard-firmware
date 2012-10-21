@@ -58,10 +58,14 @@
 
 #include "serial_eeprom.h"
 #include "interpreter.h"
+#include "macro.h"
+
+#include "sort.h"
 
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 /** Buffer to hold the previously generated Keyboard HID report, for comparison purposes inside the HID class driver. */
 KeyboardReport_Data_t PrevKeyboardHIDReportBuffer;
@@ -80,9 +84,14 @@ static state current_state = STATE_NORMAL;
 // used for STATE_WAITING, STATE_PRINTING and STATE_EEWRITE which might transition into multiple states
 static state next_state;
 
+// Macro playback state
+static macro_playback macro_playback_state;
+
 // Predeclarations
 static void handle_state_normal(void);
 static void handle_state_programming(void);
+static void handle_state_macro_record_trigger(void);
+static void handle_state_macro_record(void);
 static void ledstate_update(void);
 
 static void print_pgm_message(const char* buffer, state next){
@@ -153,8 +162,15 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 		case STATE_PROGRAMMING_DST:
 			handle_state_programming();
 			break;
+		case STATE_MACRO_RECORD_TRIGGER:
+			handle_state_macro_record_trigger();
+			break;
 		case STATE_MACRO_RECORD:
+			handle_state_macro_record();
+			break;
 		case STATE_MACRO_PLAY:
+			// macro playback is handled entirely by macros_fill_next_report()
+			break;
 		default: {
 			print_pgm_message(PGM_MSG("Unexpected state"), STATE_NORMAL);
 			break;
@@ -196,7 +212,8 @@ static void handle_state_normal(void){
 				logical_keycode other = (keys[0] == LOGICAL_KEY_PROGRAM) ? keys[1] : keys[0];
 				switch(other){
 				case LOGICAL_KEY_F11:
-					print_pgm_message(MSG_NO_MACRO, STATE_NORMAL);
+					current_state = STATE_WAITING;
+					next_state = STATE_MACRO_RECORD_TRIGGER;
 					break;
 				case LOGICAL_KEY_F12:
 					current_state = STATE_WAITING;
@@ -288,7 +305,30 @@ static void handle_state_normal(void){
 
 	}
 
-	// If we are still in state normal, handle programs and macros
+	// otherwise, check macro triggers
+	if(key_press_count && key_press_count <= MACRO_MAX_KEYS){
+		// Read keys
+		macro_key key;
+		keystate_get_keys(key.keys, LOGICAL);
+		insertionsort_uint8(key.keys, key_press_count);
+		for(uint8_t i = key_press_count; i < MACRO_MAX_KEYS; ++i){
+			key.keys[i] = NO_KEY;
+		}
+		macro_data* m = macros_lookup(&key);
+		if(m != NO_MACRO){
+			ExtraKeyboardReport_clear(&macro_playback_state.report);
+			macro_playback_state.cursor = &m->events[0];
+			if(serial_eeprom_read((uint8_t*)&m->length, (uint8_t*)&macro_playback_state.remaining, sizeof(macro_playback_state.remaining))){
+				current_state = STATE_MACRO_PLAY;
+			}
+			else{
+				// failure to read macro data
+				buzzer_start_f(200, BUZZER_FAILURE_TONE);
+			}
+		}
+	}
+
+	// If we are still in state normal, handle programs
 	if(current_state == STATE_NORMAL){
 		keystate_run_programs();
 	}
@@ -329,6 +369,85 @@ static void handle_state_programming(void){
 	}
 }
 
+static void handle_state_macro_record_trigger(){
+	static macro_key key;
+	static uint8_t last_count = 0;
+	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F11)){
+		current_state = STATE_WAITING;
+		next_state = STATE_NORMAL;
+		return;
+	}
+	else if(keystate_check_key(LOGICAL_KEY_PROGRAM, PHYSICAL) || keystate_check_key(LOGICAL_KEY_KEYPAD, PHYSICAL)){
+		return; // ignore
+	}
+	else if(key_press_count > MACRO_MAX_KEYS){
+		// too many, give up
+		buzzer_start_f(200, BUZZER_FAILURE_TONE);
+		last_count = 0;
+		current_state = STATE_WAITING;
+		next_state = STATE_NORMAL;
+		return;
+	}
+	else if(key_press_count >= last_count){
+		keystate_get_keys(key.keys, LOGICAL);
+		last_count = key_press_count;
+	}
+	else{
+		// last is our trigger. Sort and clear remaining keys
+		insertionsort_uint8(key.keys, last_count);
+		for(uint8_t i = last_count; i < MACRO_MAX_KEYS; ++i){
+			key.keys[i] = NO_KEY;
+		}
+		last_count = 0;
+		if(macros_start_macro(&key)){
+			current_state = STATE_WAITING;
+			next_state = STATE_MACRO_RECORD;
+		}
+		else{
+			// failed to start macro
+			current_state = STATE_WAITING;
+			next_state = STATE_NORMAL;
+		}
+	}
+}
+
+static bool recording_macro = false;
+
+static void macro_record_hook(logical_keycode key, bool press){
+	if(keystate_check_key(LOGICAL_KEY_PROGRAM, PHYSICAL) || keystate_check_key(LOGICAL_KEY_KEYPAD, PHYSICAL)){
+		return; // ignore all events when program or keypad are pressed
+	}
+	hid_keycode h_key = config_get_definition(key);
+	if(h_key >= SPECIAL_HID_KEYS_START){
+		return; // Currently don't allow special keys to participate in macros
+	}
+	bool success = macros_append(h_key);
+	if(!success){
+		recording_macro = false;
+		keystate_register_change_hook(0);
+		buzzer_start_f(200, BUZZER_FAILURE_TONE);
+		macros_abort_macro();
+		current_state = STATE_WAITING;
+		next_state = STATE_NORMAL;
+	}
+}
+
+static void handle_state_macro_record(){
+	if(!recording_macro){
+		recording_macro = true;
+		keystate_register_change_hook(macro_record_hook);
+	}
+
+	// handle stopping
+	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F11)){
+		recording_macro = false;
+		keystate_register_change_hook(0);
+		macros_commit_macro();
+		current_state = STATE_WAITING;
+		next_state = STATE_NORMAL;
+	}
+}
+
 /**
  * Fills the argument buffer with a keyboard report according to the
  * current state returns true if the report must be sent, false if it
@@ -346,10 +465,16 @@ void Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
 		printing_Fill_KeyboardReport(KeyboardReport);
 		return;
 	case STATE_MACRO_RECORD:
+		// When recording a macro we want to pass through the events.
+		// They will also be recorded via the keystate change hook.
 		keystate_Fill_KeyboardReport(KeyboardReport);
-		// TODO: If this report is different to the previous one, save it in the macro buffer.
 		return;
 	case STATE_MACRO_PLAY:
+		if(!macros_fill_next_report(&macro_playback_state, KeyboardReport)){
+			current_state = STATE_WAITING;
+			next_state = STATE_NORMAL;
+		}
+		return;
 		// TODO: Fetch the next report from the macro buffer and replay it
 	case STATE_PROGRAMMING_SRC:
 	case STATE_PROGRAMMING_DST:
@@ -410,6 +535,16 @@ static void ledstate_update(void){
 		// flash slowly - change every 256ms
 		if(uptimems() & 256){
 			LEDMask |= LEDMASK_PROGRAMMING_DST;
+		}
+		break;
+	case STATE_MACRO_RECORD_TRIGGER:
+		if(uptimems() & 128){
+			LEDMask |= LEDMASK_MACRO_TRIGGER;
+		}
+		break;
+	case STATE_MACRO_RECORD:
+		if(uptimems() & 128){
+			LEDMask |= LEDMASK_MACRO_RECORD;
 		}
 		break;
 	case STATE_NORMAL:

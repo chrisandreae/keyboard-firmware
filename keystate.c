@@ -56,8 +56,9 @@
 #include <stdarg.h>
 
 // State of active keys. Keep track of all pressed or debouncing keys.
-#define KEYSTATE_COUNT 14
 static key_state key_states[KEYSTATE_COUNT];
+
+static keystate_change_hook keystate_change_hook_fn = 0;
 
 uint8_t key_press_count = 0;
 
@@ -105,14 +106,19 @@ void keystate_update(void){
 
 					if(key->debounce == 0x00){
 						// key is not pressed (either debounced-down or never made it up), remove it
-						if(key->state) key_press_count--;
+						uint8_t old_state = key->state;
 						key->l_key = NO_KEY;
 						key->state = 0;
+						if(old_state){ // if it had been pressed
+							key_press_count--;
+							if(keystate_change_hook_fn) keystate_change_hook_fn(l_key, false);
+						}
 					}
 					else{
 						if(key->state == 0 && key->debounce == DEBOUNCE_MASK){
 							++key_press_count;
 							key->state = 1;
+							if(keystate_change_hook_fn) keystate_change_hook_fn(l_key, true);
 							#if USE_BUZZER
 							if(config_get_flags().key_sound_enabled)
 								buzzer_start(3);
@@ -360,6 +366,28 @@ hid_keycode keystate_check_hid_key(hid_keycode key){
 	return 0xFF;
 }
 
+/**
+ * writes up to key_press_count currently pressed HID keycodes to the
+ * output buffer keys. If exclude_special is set, do not write any
+ * special keycodes. Returns number of keycodes written.
+ */
+int keystate_get_hid_keys(hid_keycode* h_keys, bool exclude_special){
+	int ki = 0;
+	for(int i = 0; i < KEYSTATE_COUNT && ki < key_press_count; ++i){
+		if(key_states[i].state){
+			logical_keycode l_key = key_states[i].l_key;
+			hid_keycode h_key = config_get_definition(l_key);
+			if(exclude_special && h_key >= SPECIAL_HID_KEYS_START){
+				continue;
+			}
+			h_keys[ki++] = h_key;
+		}
+	}
+	return ki;
+}
+
+
+
 void keystate_run_programs(){
 #if USE_EEPROM
 	for(int i = 0; i < KEYSTATE_COUNT; ++i){
@@ -374,4 +402,8 @@ void keystate_run_programs(){
 		}
 	}
 #endif
+}
+
+void keystate_register_change_hook(keystate_change_hook hook){
+	keystate_change_hook_fn = hook;
 }

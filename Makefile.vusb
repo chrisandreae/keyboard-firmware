@@ -15,7 +15,7 @@ FUSE_H  = 0xC1
 F_CPU   = 16000000	# in Hz 
 AVRDUDE = avrdude -c usbasp -p $(AVRDUDE_DEVICE) # edit this line for your programmer
 
-CFLAGS  = -I. -Ivusb -Ivusb/usbdrv -DDEBUG_LEVEL=0 -DBUILD_FOR_VUSB -std=c99 -ffunction-sections
+CFLAGS  = -I. -Ivusb -Ivusb/usbdrv -DDEBUG_LEVEL=0 -DBUILD_FOR_VUSB -std=gnu99 -ffunction-sections
 CFLAGS += -fshort-enums -fno-strict-aliasing -fpack-struct -funsigned-bitfields
 
 OBJDIR = obj
@@ -34,7 +34,10 @@ SRCS = vusb/usbdrv/usbdrv.o    \
 	   buzzer.o				   \
 	   leds.o				   \
 	   kinesis.o			   \
-	   interpreter.o
+	   interpreter.o		   \
+	   macro.o				   \
+	   extrareport.o		   \
+	   sort.o
 
 OBJECTS = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(SRCS))))
 

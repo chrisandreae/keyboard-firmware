@@ -49,6 +49,12 @@ class KeyboardComm
   VRQ_RESET_FULLY          = 10
   VRQ_READ_CONFIG_FLAGS    = 11
   VRQ_WRITE_CONFIG_FLAGS   = 12
+  VRQ_READ_MACRO_INDEX_SIZE   = 13
+  VRQ_WRITE_MACRO_INDEX       = 14
+  VRQ_READ_MACRO_INDEX        = 15
+  VRQ_READ_MACRO_STORAGE_SIZE = 16
+  VRQ_WRITE_MACRO_STORAGE     = 17
+  VRQ_READ_MACRO_STORAGE      = 18
 
   SERIAL_VENDOR_PREFIX = "andreae.gen.nz:";
 
@@ -79,6 +85,16 @@ class KeyboardComm
                      :wIndex => 0,
                      :wValue => 0,
                      :dataIn => bytes)
+  end
+
+  def vendor_read_char(bRequest)
+    b = vendor_read_request(bRequest, 1)
+    b.unpack('C')[0]
+  end
+
+  def vendor_read_short(bRequest)
+    s = vendor_read_request(bRequest, 2)
+    s.unpack('S<')[0]
   end
 
   def vendor_write_request(bRequest, data)
@@ -127,6 +143,27 @@ class KeyboardComm
 
   def get_program_space
     get_program_space_raw - (get_num_programs * 4)
+  end
+
+  def get_macro_index_size
+    vendor_read_short(VRQ_READ_MACRO_INDEX_SIZE)
+  end
+
+  def get_macro_storage_size
+    vendor_read_short(VRQ_READ_MACRO_STORAGE_SIZE)
+  end
+
+  def get_macro_index
+    sz = get_macro_index_size
+    data = vendor_read_request(VRQ_READ_MACRO_INDEX, sz)
+    data.unpack("C*")
+    # todo: unpack into sensible data structure
+  end
+
+  def get_macro_storage
+    sz = get_macro_storage_size
+    data = vendor_read_request(VRQ_READ_MACRO_STORAGE, sz)
+    data.unpack("C*")
   end
 
   def get_programs()
