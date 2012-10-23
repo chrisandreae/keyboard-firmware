@@ -80,7 +80,7 @@ pshow me sub | me>=sub   = printf "(%s)" $ show sub
 
 instance Show Expression where
   show me@(Assignment l r)            = printf "%s = %s" (show l) (pshow me r)
-  show me@(PrefixExpression op ex)    = (show me) ++ (pshow me ex)
+  show me@(PrefixExpression op ex)    = (show op) ++ (pshow me ex)
   show me@(PostfixExpression ex op)   = (pshow me ex) ++ (show op)
   show me@(BinaryExpression l op r)   = printf "%s %s %s" (pshow me l) (show op) (pshow me r)
   show me@(ShortLiteral v)            = (show v) ++ "S"

@@ -487,8 +487,8 @@ conditionalToVoid ex accum = do
 
 buildConditionalIRExpression :: Node -> Node -> TExpression -> BlockAccum -> ThrowsBlockingState ()
 
-buildConditionalExpression ifId elseId (TPrefixExpression t Not expr) accum =
-  buildConditionalExpression elseId ifId expr accum
+buildConditionalIRExpression ifId elseId (TPrefixExpression t Not expr) accum =
+  buildConditionalIRExpression elseId ifId expr accum
 
 buildConditionalIRExpression ifId elseId (TBinaryExpression _ lhs Disj rhs) accum = do
   rhsAccum <- newBasicBlock
