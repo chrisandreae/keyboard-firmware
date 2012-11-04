@@ -41,6 +41,8 @@ OBJECTS = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(SRCS))))
 COMPILE = avr-gcc -Wall -Werror=implicit-function-declaration -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
 
 # symbolic targets:
+.PHONY: hex help program flash fuse clean
+
 hex: vusb_main.hex
 
 help:
