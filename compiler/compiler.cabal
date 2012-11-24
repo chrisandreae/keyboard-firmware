@@ -1,0 +1,9 @@
+name:          Compiler
+version:       0.0
+cabal-version: >= 1.2
+build-type:    Simple
+
+executable keyc
+  main-is: main.hs
+  build-depends: base, containers, bytestring,
+                 mtl, fgl, parsec

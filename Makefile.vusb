@@ -44,6 +44,10 @@ OBJECTS = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(SRCS))))
 COMPILE = avr-gcc -Wall -Werror=implicit-function-declaration -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
 
 # symbolic targets:
+.PHONY: hex help program flash fuse clean
+
+hex: vusb_main.hex
+
 help:
 	@echo "This Makefile has no default rule. Use one of the following:"
 	@echo "make hex ....... to build main.hex"
@@ -51,8 +55,6 @@ help:
 	@echo "make fuse ...... to flash the fuses"
 	@echo "make flash ..... to flash the firmware (use this on metaboard)"
 	@echo "make clean ..... to delete objects and hex file"
-
-hex: vusb_main.hex
 
 program: flash fuse
 
