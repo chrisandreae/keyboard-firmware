@@ -36,7 +36,8 @@
 /* ----------------------------- USB interface ----------------------------- */
 /* ------------------------------------------------------------------------- */
 
-static uint8_t idleRate		  = 0;   /* repeat rate for keyboard in 4ms increments - 0 means report only on changes */
+static uint8_t kbd_idleRate   = 0;   /* repeat rate for keyboard in 4ms increments - 0 means report only on changes */
+static uint8_t mouse_idleRate = 0;   /* repeat rate for keyboard in 4ms increments - 0 means report only on changes */
 static uint8_t reportProtocol = 1; // 1 = hid reports, 0 = boot protocol
 
 /** Global structure to hold the current keyboard interface HID report, for transmission to the host */
@@ -129,10 +130,16 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			}
 			break;
 		case USBRQ_HID_GET_IDLE:
-			usbMsgPtr = &idleRate;
+			if(rq->wIndex.word)
+				usbMsgPtr = &mouse_idleRate;
+			else
+				usbMsgPtr = &kbd_idleRate;
 			return 1;
 		case USBRQ_HID_SET_IDLE:
-			idleRate = rq->wValue.bytes[1];
+			if(rq->wIndex.word)
+				mouse_idleRate = rq->wValue.bytes[1];
+			else
+				kbd_idleRate = rq->wValue.bytes[1];
 			break;
 		case USBRQ_HID_GET_PROTOCOL:
 			usbMsgPtr = &reportProtocol;
@@ -421,7 +428,7 @@ void USB_Perform_Update(uint8_t update_kbd, uint8_t update_mouse){
 		// Update, set sending_keyboard if the report is different to last time
 		sending_keyboard = update_and_compare(&KeyboardReportData, &PrevKeyboardHIDReportBuffer, sizeof(KeyboardReport_Data_t), (void(*)(void*)) &Fill_KeyboardReport);
 	}
-	if(!sending_keyboard && (idleRate && keyboard_idle_ms == 0)){
+	if(!sending_keyboard && (kbd_idleRate && keyboard_idle_ms == 0)){
 		// if still not sending and expired, re-send the previous buffer
 		KeyboardReportData = PrevKeyboardHIDReportBuffer;
 		sending_keyboard = 1;
@@ -431,15 +438,19 @@ void USB_Perform_Update(uint8_t update_kbd, uint8_t update_mouse){
 		usbSetInterrupt((void*)&KeyboardReportData, sizeof(KeyboardReportData));
 		sending_keyboard = 0;
 		// now that we've sent, reset the idle timer
-		keyboard_idle_ms = idleRate * 4;
+		keyboard_idle_ms = kbd_idleRate * 4;
 	}
 
 	// Mouse
 	if(!sending_mouse && update_mouse){
 		// Update, set sending_mouse if the report is different to last time
 		sending_mouse = update_and_compare(&MouseReportData, &PrevMouseHIDReportBuffer, sizeof(MouseReport_Data_t), (void(*)(void*)) &Fill_MouseReport);
+		// Mouse reports need to repeat for the cursor to continue to move, so always send if there is a movement component to the report
+		if(MouseReportData.X || MouseReportData.Y || MouseReportData.Wheel){
+			sending_mouse = 1;
+		}
 	}
-	if(!sending_mouse && (idleRate && mouse_idle_ms == 0)){
+	if(!sending_mouse && (mouse_idleRate && mouse_idle_ms == 0)){
 		// if still not sending and expired, re-send the previous buffer
 		MouseReportData = PrevMouseHIDReportBuffer;
 		sending_mouse = 1;
@@ -448,7 +459,7 @@ void USB_Perform_Update(uint8_t update_kbd, uint8_t update_mouse){
 	if(sending_mouse && usbInterruptIsReady3()){
 		usbSetInterrupt3((void *)&MouseReportData, sizeof(MouseReportData));
 		sending_mouse = 0;
-		mouse_idle_ms = idleRate * 4;
+		mouse_idle_ms = mouse_idleRate * 4;
 	}
 
 	// and update the timer again
