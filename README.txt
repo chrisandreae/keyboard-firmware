@@ -1,5 +1,5 @@
 == Kinesis ergonomic keyboard firmware replacement ==
-           == (c) 2012 Chris Andreae ==
+		   == (c) 2012 Chris Andreae ==
 
 This project aims to provide a drop-in replacement for the main
 microcontroller of the Kinesis ergonomic keyboard. It has been
@@ -11,15 +11,15 @@ for a minimal example.
 
 Additional features include:
  * Built in mouse-keys support
- * Saving and restoring programmed keyboard layouts as profiles
- * Built-in interpreter for running up to six concurrent bytecode
-   programs.
+ * Built in layout profiles to save/restore up to ten separate
+   programmed keyboard layouts.
+ * Enhanced text macros that fully support modifier keys, and can
+   be triggered by any combination of up to four keys.
+ * Built-in interpreter for running up to six concurrent fully
+   programmed macros.
  * USB API for configuring, remapping and uploading programs to
    the keyboard. (Ruby/GTK client program implemented in
    client/KeyboardClient.rb)
-
-Not yet implemented are:
- * Macro recording
 
 == Building ==
 
@@ -44,24 +44,25 @@ chip.
 The usage of the keyboard is similar to the original firmware. Key
 combinations are as follows:
 
-* Enter/exit programming   =  Progrm + F12
-* Reset to default layout  =  Progrm + F7
-* Reset all customizations =  Progrm + Shift + F7
-* Save current layout      =  Progrm + [1 - 0] + S
-* Load saved layout        =  Progrm + [1 - 0] + L
-* Delete saved layout      =  Progrm + [1 - 0] + D
-* Enable/disable key click =  Progrm + \
+* Enter/exit programming       = Progrm + F12
+* Start/finish macro recording = Progrm + F11
+* Reset to default layout      = Progrm + F7
+* Reset all customizations     = Progrm + Shift + F7
+* Save current layout          = Progrm + [1 - 0] + S
+* Load saved layout            = Progrm + [1 - 0] + L
+* Delete saved layout          = Progrm + [1 - 0] + D
+* Enable/disable key click     = Progrm + \
 
 == GUI Client usage ==
 
 The client is written in Ruby, and requires the 'libusb' and 'gtk2'
-gems to be installed. Run KeyboardClient.rb in the client/
+gems to be installed. Run KeyboardClient.rb in the 'client/'
 subdirectory.
 
 == Compiler usage ==
 
 The keyboard can run small compiled programs written in a C-like
-language. To build the compiler, run 'make' in the compiler/
+language. To build the compiler, run 'cabal build' in the compiler/
 subdirectory. The GHC Haskell compiler is required to build.
 
 To compile a program:
@@ -126,8 +127,24 @@ The system library includes the following functions:
 * short getUptimeMS()
   Returns keyboard uptime in ms truncated to a signed short int
 
-* short getuptime()
+* short getUptime()
   Returns uptime in seconds truncated to signed short int
 
 * void buzz(short time)
   Runs the buzzer for the next 'time' ms
+
+* void buzzAt(short time, unsigned byte freq)
+  Runs the buzzer for the next 'time' ms at frequency (1/(4e-6 * freq)) Hz
+
+* void moveMouse(byte x, byte y)
+  Moves the mouse by the requested offset next time the mouse report
+  is sent. Does not return until report has been sent.
+
+* void pressMouseButtons(byte buttonMask)
+  Presses the mouse buttons specified by buttonMask (bits 1-5 =
+  buttons 1-5). Does not return until report has been sent.
+
+* void releaseMouseButtons(byte buttonMask)
+  Releases the mouse buttons specified by buttonMask (bits 1-5 =
+  buttons 1-5) if they are pressed by this program. Does not return
+  until report has been sent.
