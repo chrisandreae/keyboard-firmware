@@ -45,7 +45,7 @@
   this software.
 */
 
-#include "keyboard.h"
+#include "Keyboard.h"
 #include "twi.h"
 #include "printing.h"
 #include "hardware.h"
