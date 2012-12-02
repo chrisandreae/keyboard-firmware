@@ -10,3 +10,8 @@
 *.sym
 obj
 TAGS
+\#*\#
+*.b#?
+*.s#?
+.DS_Store
+compiler/dist

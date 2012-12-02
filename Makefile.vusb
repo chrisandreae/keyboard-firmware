@@ -33,7 +33,7 @@ SRCS = vusb/usbdrv/usbdrv.o    \
 	   serial_eeprom.o		   \
 	   buzzer.o				   \
 	   leds.o				   \
-	   kinesis.o			   \
+	   hardware.o			   \
 	   interpreter.o		   \
 	   macro.o				   \
 	   extrareport.o		   \

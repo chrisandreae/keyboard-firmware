@@ -45,19 +45,5 @@
   this software.
 */
 
-#include "leds.h"
-
-#include "hardware.h"
-
-#include <util/delay.h>
-
-// blink the LEDs for a while to show that we did some work successfully
-// Avoid using this: it's not asynchronous.
-void leds_blink(void){
-	for(int i = 0; i < 5; ++i){
-		set_all_leds(LEDMASK_CAPS);
-		_delay_ms(50);
-		set_all_leds(LEDMASK_NUMLOCK);
-		_delay_ms(50);
-	}
-}
+#include "kinesis.c"
+// #include "kinesis110.c"

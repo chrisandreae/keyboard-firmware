@@ -51,6 +51,7 @@
 // Select the specific keyboard hardware
 
 #include "kinesis.h"
+// #include "kinesis110.h"
 // #include "4key.h"
 
 #endif // __HARDWARE_H

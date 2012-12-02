@@ -556,9 +556,10 @@ static void ledstate_update(void){
 		if (USB_LEDReport & HID_KEYBOARD_LED_CAPSLOCK)
 			LEDMask |= LEDMASK_CAPS;
 
+#ifdef LEDMASK_SCROLLLOCK
 		if (USB_LEDReport & HID_KEYBOARD_LED_SCROLLLOCK)
 			LEDMask |= LEDMASK_SCROLLLOCK;
-
+#endif
 
 		break;
 	}
