@@ -3,9 +3,7 @@
 
   Copyright 2012 Chris Andreae (chris (at) andreae.gen.nz)
 
-  This file is offered under either of the GNU GPL v2 or MIT licences
-  below in order that it may be used with either of the V-USB or LUFA
-  USB libraries.
+  Licensed under the GNU GPL v2 (see GPL2.txt).
 
   ==========================
 

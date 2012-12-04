@@ -1,4 +1,13 @@
-/*-
+/*
+  Kinesis ergonomic keyboard firmware replacement
+
+  Copyright 2012 Chris Andreae (chris (at) andreae.gen.nz)
+
+  Licensed under the GNU GPL v2 (see GPL2.txt).
+
+ *  -----
+ * Components of this file are
+ *
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
