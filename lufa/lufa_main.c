@@ -98,9 +98,9 @@ int main(void) {
 void USB_KeepAlive(uint8_t poll){
 	static uint8_t in_task = 0;
 	if(poll && !in_task){
-		in_poll = 1;
+		in_task = 1;
 		USB_USBTask();
-		in_poll = 0;
+		in_task = 0;
 	}
 }
 

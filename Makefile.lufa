@@ -134,7 +134,6 @@ include $(LUFA_PATH)/LUFA/makefile
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c                                                 \
 	  Descriptors.c                                               \
-	  kinesis.c													  \
 	  Descriptors.c												  \
 	  twi.c														  \
 	  printing.c												  \
@@ -143,6 +142,11 @@ SRC = $(TARGET).c                                                 \
 	  serial_eeprom.o											  \
 	  buzzer.c													  \
 	  leds.c													  \
+	  hardware.c												  \
+	  interpreter.c												  \
+	  macro.c													  \
+	  extrareport.c												  \
+	  sort.c													  \
 	  lufa/lufa_main.c                                            \
 	  $(LUFA_SRC_USB)                                             \
 	  $(LUFA_SRC_USBCLASS)
@@ -461,7 +465,7 @@ LST = $(addprefix $(OBJDIR)/,$(addsuffix .lst,$(basename $(SRC) $(CPPSRC) $(ASRC
 
 
 # Compiler flags to generate dependency files.
-GENDEPFLAGS = -MMD -MP -MF .dep/$(@F).d
+GENDEPFLAGS = -MMD -MF ${@:.o=.d} -MT $@
 
 
 # Combine all necessary flags and optional flags.
