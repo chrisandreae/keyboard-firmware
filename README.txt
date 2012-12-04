@@ -6,8 +6,7 @@ microcontroller of the Kinesis ergonomic keyboard. It has been
 designed and tested with a Kinesis Professional (PS/2) keyboard, but
 also functions with a Kinesis Advantage (USB) keyboard, although this
 unfortunately means losing access to the built-in USB hub. It is also
-designed to be easily adaptable to other keyboard hardware. See 4key.h
-for a minimal example.
+designed to be easily adaptable to other keyboard hardware.
 
 Additional features include:
  * Built in mouse-keys support
@@ -26,18 +25,16 @@ Additional features include:
 To build for a non-USB-capable AVR using the V-USB library:
    make -f Makefile.vusb hex
 
-A port layout and pin mapping for the ATmega16/32 can be found in
-Kinesis.h. An Eagle schematic of a sample board using this mapping can
+A port layout and pin mapping for the ATmega32 can be found in
+kinesis.h. An Eagle schematic of a sample board using this mapping can
 be found in the schematic/ directory.
 
 To build for a USB-capable AVR using the LUFA library:
    make -f Makefile.lufa
 
-The LUFA version has not yet been updated to support the USB control
-API. A port layout and description of the pin mapping to the Kinesis
-board can be found in Kinesis.h for the AT90USB162 using the common
-Minimus breakout board. You may need to alter these if using another
-chip.
+It will be necessary to construct a port layout and pin mapping for
+your target board and add it to kinesis.h. The LUFA version has not
+yet been updated to support the USB control API.
 
 == Usage ==
 
@@ -83,8 +80,9 @@ The language features two signed types, byte (8-bit) and short
 (16-bit). Bytes may be automatically promoted (with sign extension) to
 shorts, but to truncate a short to a byte requres a cast.  As in Java,
 unsigned values may be provided using hexadecimal literals, but will
-be treated by arithmetic as signed. Bare literals are interpreted as
-bytes: to specify a short literal, append a 's'.
+be treated by arithmetic as signed. Certain library functions expect
+unsigned values. Bare literals are interpreted as bytes: to specify a
+short literal, append a 's'.
 
 Programs by default are run in very small stacks (48 bytes), so
 unbounded recursion is not recommended. This can be increased on
