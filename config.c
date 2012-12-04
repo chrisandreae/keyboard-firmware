@@ -110,9 +110,7 @@ void config_save_definition(logical_keycode l_key, hid_keycode h_key){
 
 // reset the current layout to the default layout
 void config_reset_defaults(void){
-#if USE_BUZZER
 	buzzer_start_f(1000, 100); // Start buzzing at low pitch
-#endif
 	_delay_ms(20); // delay so that the two tones are always heard, even if no writes need be done
 
 	for(int i = 0; i < NUM_LOGICAL_KEYS; ++i){
@@ -121,16 +119,12 @@ void config_reset_defaults(void){
 		USB_KeepAlive(false);
 	}
 
-#if USE_BUZZER
 	buzzer_start_f(200, 80); // finish at high to signify end
-#endif
 }
 
 // reset the keyboard, including saved layouts
 void config_reset_fully(void){
-#if USE_BUZZER
 	buzzer_start_f(2000, 120); // start buzzing low
-#endif
 
 	// reset configuration flags
 	eeprom_update_byte((uint8_t*)&eeprom_flags, 0x0);
@@ -157,9 +151,7 @@ void config_reset_fully(void){
 	eeprom_update_byte(&eeprom_sentinel_byte, EEPROM_SENTINEL);
 
 	// Higher pitched buzz to signify full reset
-	#if USE_BUZZER
-		buzzer_start_f(200, 60);
-	#endif
+	buzzer_start_f(200, 60);
 }
 
 
