@@ -59,8 +59,6 @@
 #include <avr/eeprom.h>
 #include <util/delay.h>
 
-#if USE_EEPROM
-
 // The macro lookup index is in internal eeprom
 #define MACRO_INDEX_COUNT (MACRO_INDEX_SIZE / sizeof(macro_idx))
 static macro_idx macro_index[MACRO_INDEX_COUNT] EEMEM;
@@ -329,5 +327,3 @@ bool macros_fill_next_report(macro_playback* state, KeyboardReport_Data_t* repor
 	buzzer_start_f(200, BUZZER_FAILURE_TONE);
 	return false;
 }
-
-#endif // USE_EEPROM

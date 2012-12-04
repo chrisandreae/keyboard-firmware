@@ -80,13 +80,10 @@ uint8_t config_load_layout(uint8_t num);
 configuration_flags config_get_flags(void);
 void config_save_flags(configuration_flags state);
 
-#if USE_EEPROM
 uint8_t* config_get_programs();
 
 struct _program;
 const struct _program* config_get_program(uint8_t idx);
 void config_reset_program_defaults();
-
-#endif
 
 #endif // __CONFIG_H

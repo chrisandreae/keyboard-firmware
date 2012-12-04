@@ -389,7 +389,6 @@ int keystate_get_hid_keys(hid_keycode* h_keys, bool exclude_special){
 
 
 void keystate_run_programs(){
-#if USE_EEPROM
 	for(int i = 0; i < KEYSTATE_COUNT; ++i){
 		if(key_states[i].state){
 			logical_keycode l_key = key_states[i].l_key;
@@ -401,7 +400,6 @@ void keystate_run_programs(){
 			}
 		}
 	}
-#endif
 }
 
 void keystate_register_change_hook(keystate_change_hook hook){

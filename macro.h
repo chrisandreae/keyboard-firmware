@@ -48,7 +48,6 @@
 #ifndef __MACRO_H
 #define __MACRO_H
 
-#if USE_EEPROM
 #include <stdint.h>
 
 #include <extrareport.h>
@@ -138,7 +137,5 @@ bool macros_append(hid_keycode event);
  *
  */
 bool macros_fill_next_report(macro_playback* state, KeyboardReport_Data_t* report);
-
-#endif // USE_EEPROM
 
 #endif // __MACRO_H

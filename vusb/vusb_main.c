@@ -167,7 +167,6 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 		transfer_byte:
 			usbMsgPtr = &transfer.byte;
 			return 1;
-#if USE_EEPROM
 		case READ_PROGRAMS_SIZE:
 			transfer.word = PROGRAMS_SIZE;
 			usbMsgPtr = (uint8_t*)&transfer.word;
@@ -212,7 +211,6 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			transfer.state.remaining = rq->wLength.word;
 			return USB_NO_MSG;
 
-#endif
 		case WRITE_CONFIG_FLAGS: {
 			uint8_t b = (rq->wValue.word & 0xff);
 			config_save_flags(*(configuration_flags*)&b);
@@ -252,7 +250,6 @@ uchar usbFunctionWrite(uchar *data, uchar len) {
 	uint8_t ret = 1;
 
 	switch(transfer.state.type){
-#if USE_EEPROM
 	case WRITE_EEEXT: {
 		serial_eeprom_err r = serial_eeprom_write_step(transfer.state.addr, data, write_sz,
 													   transfer.state.remaining == write_sz);
@@ -262,7 +259,6 @@ uchar usbFunctionWrite(uchar *data, uchar len) {
 		}
 	}
 		goto end_write_step;
-#endif
 	case WRITE_EEPROM:
 		eeprom_update_block(data, transfer.state.addr, write_sz);
 	end_write_step:
@@ -293,12 +289,10 @@ uchar usbFunctionRead(uchar* data, uchar len) {
 	int16_t r;
 
 	switch(transfer.state.type){
-#if USE_EEPROM
 	case READ_EEEXT:
 		r = serial_eeprom_read(transfer.state.addr, data, read_sz);
 		if(r == -1) return 0; // no bytes sent, error
 		goto end_read_step;
-#endif
 	case READ_PROGMEM:
 		for(int i = 0; i < read_sz; ++i){
 			data[i] = pgm_read_byte_near(&transfer.state.addr[i]);

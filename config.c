@@ -88,8 +88,6 @@ struct { uint8_t start; uint8_t end; } saved_key_mapping_indices[NUM_KEY_MAPPING
 #define SAVED_KEY_MAPPINGS_BUFFER_SIZE 256
 struct { logical_keycode l_key; hid_keycode h_key; } saved_key_mappings[SAVED_KEY_MAPPINGS_BUFFER_SIZE] EEMEM;
 
-#if USE_EEPROM
-
 // Programs are stored in external eeprom.
 static uint8_t programs[PROGRAMS_SIZE] EEEXT;
 
@@ -101,8 +99,6 @@ static uint8_t *const programs_data = programs + (NUM_PROGRAMS * sizeof(program_
 uint8_t* config_get_programs(){
 	return &programs[0];
 }
-
-#endif // USE_EEPROM
 
 hid_keycode config_get_definition(logical_keycode l_key){
 	return eeprom_read_byte(&logical_to_hid_map[l_key]);
@@ -148,13 +144,11 @@ void config_reset_fully(void){
 		USB_KeepAlive(true);
 	}
 
-#if USE_EEPROM
 	// reset program
 	config_reset_program_defaults();
 
 	// and macros
 	macros_reset_defaults();
-#endif // USE_EEPROM
 
 	// now reset the layout and configuration defaults
 	config_reset_defaults();
@@ -323,8 +317,6 @@ uint8_t config_load_layout(uint8_t num){
 	return true;
 }
 
-#if USE_EEPROM
-
 const program* config_get_program(uint8_t idx){
 	//index range is not checked as this can't be called from user input
 	uint16_t program_offset;
@@ -355,8 +347,6 @@ void config_reset_program_defaults(){
 		sz -= step;
 	}
 }
-
-#endif // USE_EEPROM
 
 void config_init(void){
 	uint8_t sentinel = eeprom_read_byte(&eeprom_sentinel_byte);

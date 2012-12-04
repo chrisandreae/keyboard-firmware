@@ -50,7 +50,6 @@
 
 #include "hardware.h"
 
-#if USE_EEPROM
 #include "twi.h"
 
 #define EEEXT __attribute__((section(".eeexternal")))
@@ -107,8 +106,6 @@ serial_eeprom_err serial_eeprom_memmove(uint8_t* dst, uint8_t* src, size_t count
 // test code (not normally linked)
 uint8_t serial_eeprom_test_read(void);
 uint8_t serial_eeprom_test_write(void);
-#endif
-
 #endif
 
 #endif // __SERIAL_EEPROM_H

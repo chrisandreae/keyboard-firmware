@@ -265,7 +265,6 @@ void ports_init(void){
 	BUZZER_DDR  |= BUZZER;
 #endif
 
-#if USE_EEPROM
 #ifdef BITBANG_TWI
 	// Serial eeprom lines have external pull-ups, so 0 = output-low(1,0) / 1 = input-highz(0,0)
 	EEPROM_PORT &= ~(EEPROM_SCL | EEPROM_SDA); // initially leave floating
@@ -279,7 +278,6 @@ void ports_init(void){
 	//enable TWI
 	TWCR = (1<<TWEN);
 #endif // bitbang
-#endif
 
 }
 

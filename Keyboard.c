@@ -77,8 +77,6 @@ MouseReport_Data_t PrevMouseHIDReportBuffer;
 volatile uint32_t _uptimems;
 
 // Messages
-const char MSG_NO_MACRO[] PROGMEM = "no macro support yet";
-
 static state current_state = STATE_NORMAL;
 // state to transition to when next action is complete:
 // used for STATE_WAITING, STATE_PRINTING and STATE_EEWRITE which might transition into multiple states
@@ -108,9 +106,7 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 	ports_init();
 	keystate_init();
 	config_init();
-#if USE_EEPROM
 	vm_init();
-#endif
 
 	sei();
 
@@ -177,11 +173,9 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 		}
 		}
 
-#if USE_EEPROM
 		if(current_state == STATE_NORMAL){
 			vm_step_all();
 		}
-#endif
 
 		/* Limit frequency of mouse reports. Unlike keyboard reports,
 		   identical reports won't be ignored by the class driver, so
@@ -457,9 +451,7 @@ void Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
 	switch(current_state){
 	case STATE_NORMAL:
 		keystate_Fill_KeyboardReport(KeyboardReport);
-#if USE_EEPROM
 		vm_append_KeyboardReport(KeyboardReport);
-#endif
 		return;
 	case STATE_PRINTING:
 		printing_Fill_KeyboardReport(KeyboardReport);
@@ -488,9 +480,7 @@ void Fill_MouseReport(MouseReport_Data_t* MouseReport){
 	switch(current_state){
 	case STATE_NORMAL:{
 		keystate_Fill_MouseReport(MouseReport);
-#if USE_EEPROM
 		vm_append_MouseReport(MouseReport);
-#endif
 		return;
 	}
 	case STATE_MACRO_RECORD: {

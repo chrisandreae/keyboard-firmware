@@ -54,8 +54,6 @@
 
 #include <util/delay.h>     /* for _delay_ms() */
 
-#if USE_EEPROM
-
 /* Serial eeprom support */
 
 serial_eeprom_err serial_eeprom_errno = SUCCESS;
@@ -351,5 +349,3 @@ uint8_t serial_eeprom_test_write(void){
 	}
 }
 #endif // DEBUG
-
-#endif

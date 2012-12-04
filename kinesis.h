@@ -170,7 +170,7 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 
 
 //////////////////////////////////////////////////////////////////////////////////////
-// Kinesis board and uC Port Layout (for AT90USB162)
+// Kinesis board layout
 
 // 74LS138 demultiplexer matrix select output:
 //  A-C connect to the address pins 1-3 of the LS138s, externally pulled up.
@@ -178,37 +178,31 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 //  to select between them, also externally pulled up.
 //  The opposing pins are tied to VCC and ground respectively.
 //  Pin 10 ("WP") is connected to pin 5 of both demultiplexers, and must be pulled low to enable them.
-//    A (pin 39) = C2
-//    B (pin 38) = C4
-//    C (pin 37) = C5
-//    P138SEL (pin 36) = C6
+//    A (pin 39)
+//    B (pin 38)
+//    C (pin 37)
+//    P138SEL (pin 36)
 
 // Key input:
 //  Pressing the key pulls low. I don't think there's an external pull-up, so am using internal pull-ups.
-//    keypad (pin 5) - D4,
-//    program (pin 6) - C7,
-//    matrix output (pins 21-28) - all of port B
-//    foot switch 1 (pin 11) - NC
-//    foot switch 2 (pin 17) - NC (note that these are likely to differ on the 3-foot-switch Advantage models)
+//    keypad (pin 5)
+//    program (pin 6)
+//    matrix output (pins 21-28)
+//    foot switch 1 (pin 11)
+//    foot switch 2 (pin 17) - (note that these may differ on the 3-foot-switch Advantage models)
 
 // output:
-//    4 LEDs (pins 1-4, sink current to enable) - D0-D3 (num=1, scrolllock=2, kpd=3, caps=4)
-//    buzzer (pin 32) = NC
+//    4 LEDs (pins 1-4, sink current to enable) (num=1, scrolllock=2, kpd=3, caps=4)
+//    buzzer (pin 32)
 
 // EEPROM access:
 //  have access to up to two AT24C164 2kb serial eeproms via pins 7 and
 //  8, connected to SCL and SDA respectively with external pull-ups.
 //  The eeproms have their addresse lines tied to 000 and 001 respectively.
 //         WP  (write protect) (pin10) = connected to WP pin of eeprom, must be low to enable.
-//                                       (note that this is also connected to the demultiplexers)
-//         SCL (serial eeprom clock line) (pin7) = NC
-//         SDA (serial eeprom data line) (pin8) =  NC
-
-// unavailable-ish ports on uC:
-//   d5 and d6 overlap onboard LEDB and A on my AT90USB162 dev board,
-//   which means they're pulled up extremely strongly. I don't know
-//   whether I can sink enough current to make a device I'm talking to
-//   detect a 0.
+//                                       (Note that this is also connected to the demultiplexers: most convenient to just tie it permanently to ground)
+//         SCL (serial eeprom clock line) (pin7)
+//         SDA (serial eeprom data line) (pin8)
 
 // static configuration:
 //   pin 20 - GND
@@ -219,57 +213,7 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 //   pin 13 - PS/2 data
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__AVR_AT90USB162__)
-
-#define MATRIX_PORT PORTC
-#define MATRIX_DDR  DDRC
-#define MATRIX_SELECT_A (1<<2)
-#define MATRIX_SELECT_B (1<<4)
-#define MATRIX_SELECT_C (1<<5)
-#define MATRIX_SELECT_P138SEL (1<<6)
-#define MATRIX_MASK (MATRIX_SELECT_A | MATRIX_SELECT_B | MATRIX_SELECT_C | MATRIX_SELECT_P138SEL)
-
-#define INPUT_PIN5_PIN  PIND
-#define INPUT_PIN5_PORT PORTD
-#define INPUT_PIN5_DDR  DDRD
-
-#define INPUT_PIN6_PIN  PINC
-#define INPUT_PIN6_PORT PORTC
-#define INPUT_PIN6_DDR  DDRC
-
-#define INPUT_REST_PIN  PINB
-#define INPUT_REST_PORT PORTB
-#define INPUT_REST_DDR  DDRB
-
-#define INPUT_PIN5 (1<<4)
-#define INPUT_PIN6 (1<<7)
-#define INPUT_REST (0xFF)
-
-#define LED_PORT PORTD
-#define LED_DDR  DDRD
-#define LED_CAPS      (1)
-#define LED_NUMLOCK   (1<<1)
-#define LED_SCROLLLOCK (1<<2)
-#define LED_KEYPAD    (1<<3)
-#define INT_LED1 (1<<5)
-#define INT_LED2 (1<<6)
-#define ALL_LEDS (LED_CAPS | LED_NUMLOCK | LED_SCROLLLOCK | LED_KEYPAD | INT_LED1 | INT_LED2)
-
-#define USE_BUZZER 0
-#define USE_EEPROM 0
-
-/*
-#define BUZZER_PORT PORTD
-#define BUZZER_DDR DDRD
-#define BUZZER (1<<4)
-
-#define EEPROM_PORT PORTD
-#define EEPROM_DDR  DDRD
-#define EEPROM_SCL (1<<6)
-#define EEPROM_SDA (1<<7)
-*/
-
-#elif defined(__AVR_ATmega16A__)
+#if defined(__AVR_ATmega16A__)
 // Original board layout (v1)
 
 // PD4 = USB D-
@@ -316,7 +260,6 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 #define BUZZER_DDR DDRC
 #define BUZZER (1<<3)
 
-#define USE_EEPROM 1
 #define BITBANG_TWI // original board bitbangs TWI, doesn't use hardware I2C pins
 
 #define EEPROM_PORT PORTC
@@ -367,7 +310,6 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 #define ALL_LEDS (LED_CAPS | LED_NUMLOCK | LED_SCROLLLOCK | LED_KEYPAD)
 
 #define USE_BUZZER 1
-#define USE_EEPROM 1
 
 #define BUZZER_PORT PORTD
 #define BUZZER_DDR DDRD

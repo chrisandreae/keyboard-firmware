@@ -48,8 +48,6 @@
 #include <util/delay.h>
 #include "twi.h"
 
-#if USE_EEPROM
-
 #ifndef BITBANG_TWI
 #include <util/twi.h>
 
@@ -195,5 +193,3 @@ uint8_t twi_read_byte(twi_ack ack){
 }
 
 #endif // BITBANG_TWI
-
-#endif // USE_EEPROM
