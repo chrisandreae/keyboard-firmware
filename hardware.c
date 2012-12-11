@@ -43,5 +43,5 @@
   this software.
 */
 
-#include "kinesis.c"
-// #include "kinesis110.c"
+#include "hardware/kinesis.c"
+// #include "hardware/kinesis110.c"
