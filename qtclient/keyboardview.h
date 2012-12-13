@@ -11,6 +11,7 @@ class QComboBox;
 class QStringList;
 class QToolButton;
 class QAction;
+class QStackedWidget;
 
 class KeyboardView : public QMainWindow {
 	Q_OBJECT
@@ -18,6 +19,7 @@ class KeyboardView : public QMainWindow {
 	KeyboardValues *mKeyboardValues;
 	QComboBox *mKeyboardSelection;
 	QAction *mRefreshAction;
+	QStackedWidget *mWidgetStack;
     KeyboardPresenter *mPresenter;
 
 public:
@@ -33,6 +35,9 @@ public:
 					uint16_t mProgramSpace,
 					uint16_t mMacroIndexSize,
 					uint16_t mMacroStorageSize);
+
+	void showNoKeyboard();
+	void showKeyboard();
 };
 
 #endif

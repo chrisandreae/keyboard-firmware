@@ -2,7 +2,10 @@
 
 #include <Qt>
 #include <QToolBar>
+#include <QBoxLayout>
+#include <QLabel>
 #include <QToolButton>
+#include <QStackedWidget>
 #include <QComboBox>
 #include <QLineEdit>
 #include <QAction>
@@ -25,9 +28,20 @@ KeyboardView::KeyboardView(KeyboardPresenter *presenter) {
 	toolBar->addWidget(mKeyboardSelection);
 	toolBar->addAction(mRefreshAction);
 
-	setCentralWidget(mKeyboardValues = new KeyboardValues);
+	QStackedWidget *widgetStack = new QStackedWidget;
+
+	QLabel *noKeyboardsLabel =
+		new QLabel(tr("No Keyboards Found\nAttach keyboard and refresh"));
+	noKeyboardsLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+	widgetStack->addWidget(noKeyboardsLabel);
+
+	widgetStack->addWidget(mKeyboardValues = new KeyboardValues);
+	mWidgetStack = widgetStack;
+
+	setCentralWidget(widgetStack);
 
 	setUnifiedTitleAndToolBarOnMac(true);
+	setWindowTitle(tr("Keyboard Client"));
 
 	setPresenter(presenter);
 }
@@ -54,6 +68,15 @@ void KeyboardView::updateDevices(const QStringList& names) {
 	{
 		mKeyboardSelection->addItem(*it);
 	}
+}
+
+void KeyboardView::showNoKeyboard() {
+	mWidgetStack->setCurrentIndex(0);
+}
+
+void KeyboardView::showKeyboard() {
+	if (mWidgetStack->currentIndex() != 1)
+		mWidgetStack->setCurrentIndex(1);
 }
 
 void KeyboardView::showValues(uint8_t layoutID,

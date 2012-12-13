@@ -52,7 +52,12 @@ void KeyboardPresenter::setKeyboardModel(KeyboardModel *newModel) {
 
 void KeyboardPresenter::selectDeviceAction(int index) {
 	if (index == -1) {
+		mView.showNoKeyboard();
 		return;
+	}
+	else
+	{
+		mView.showKeyboard();
 	}
 
 	USBDevice dev = mDevices.at(index);
