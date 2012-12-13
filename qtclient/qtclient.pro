@@ -2,8 +2,8 @@ TEMPLATE = app
 TARGET = KeyboardClient
 CONFIG += debug
 
-HEADERS += mainwindow.h libusb_wrappers.h keyboard.h keyboardvalues.h keyboardcomm.h
-SOURCES +=  main.cc mainwindow.cc keyboardcomm.cc keyboardvalues.cc
+HEADERS += keyboardview.h libusb_wrappers.h keyboard.h keyboardvalues.h keyboardcomm.h keyboardpresenter.h keyboardmodel.h
+SOURCES +=  main.cc keyboardview.cc keyboardcomm.cc keyboardvalues.cc keyboardpresenter.cc keyboardmodel.cc
 
 unix {
 	CONFIG += link_pkgconfig

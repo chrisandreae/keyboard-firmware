@@ -2,6 +2,9 @@
 #ifndef KEYBOARDCOMM_H
 #define KEYBOARDCOMM_H
 
+#include <stdint.h>
+#include <QList>
+#include "libusb_wrappers.h"
 #include "keyboard.h"
 
 class KeyboardComm {

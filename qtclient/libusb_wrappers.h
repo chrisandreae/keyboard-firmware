@@ -1,8 +1,9 @@
 // -*- c++ -*-
-
-#include <QMetaType>
+#ifndef LIBUSB_WRAPPERS_H
+#define LIBUSB_WRAPPERS_H
 
 #include <libusb.h>
+#include <exception>
 
 class LIBUSBError : public std::exception {
 public:
@@ -54,7 +55,8 @@ public:
 	}
 
 	virtual ~USBDevice() {
-		libusb_unref_device(mDevice);
+		if (mDevice)
+			libusb_unref_device(mDevice);
 	}
 
 	USBDevice(const USBDevice& other)
@@ -65,9 +67,6 @@ public:
 		return mDevice;
 	}
 };
-
-Q_DECLARE_METATYPE(USBDevice)
-
 
 class USBDeviceHandle {
 	libusb_device_handle *mDeviceHandle;
@@ -89,3 +88,4 @@ public:
 	}
 };
 
+#endif
