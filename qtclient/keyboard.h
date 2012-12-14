@@ -26,3 +26,4 @@ typedef enum _vendor_request {
 	WRITE_OATH_STORAGE, READ_OATH_STORAGE, READ_OATH_STORAGE_SIZE,
 	OATH_SET_TIME,
 } vendor_request;
+

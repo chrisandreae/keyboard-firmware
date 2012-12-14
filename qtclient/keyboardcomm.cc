@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include <QList>
+#include <QByteArray>
 
 #include <libusb.h>
 #include "libusb_wrappers.h"
@@ -43,6 +44,31 @@ QList<USBDevice> KeyboardComm::enumerate(libusb_context *context) {
 	}
 	libusb_free_device_list(deviceList, 1);
 	return keyboardDevices;
+}
+
+void KeyboardComm::doVendorRequest(uint8_t request, Direction dir,
+                                  char *buf, int bufLen,
+                                  uint16_t wValue, uint16_t wIndex)
+	throw (LIBUSBError)
+{
+	LIBUSBCheckResult(
+	    libusb_control_transfer(
+	        mDeviceHandle,
+	        LIBUSB_REQUEST_TYPE_VENDOR
+	        | LIBUSB_RECIPIENT_DEVICE
+	        | (dir == Read ? LIBUSB_ENDPOINT_IN : LIBUSB_ENDPOINT_OUT),
+	        request,
+	        wValue,
+	        wIndex,
+	        (unsigned char*) buf, bufLen,
+	        mTimeout));
+}
+
+
+QByteArray KeyboardComm::getMapping() throw (LIBUSBError) {
+	QByteArray mapping(getMappingSize(), 0);
+	doVendorRequest(READ_MAPPING, Read, mapping.data(), mapping.length());
+	return mapping;
 }
 
 #if 0

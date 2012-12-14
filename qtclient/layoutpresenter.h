@@ -3,6 +3,7 @@
 #define LAYOUTPRESENTER_H
 
 #include <QObject>
+#include <QScopedPointer>
 
 #include "layoutview.h"
 
@@ -13,7 +14,10 @@ class LayoutPresenter : public QObject {
 
 	LayoutView *mView;
 	KeyboardModel *mModel;
+	QScopedPointer<Layout> mLayout;
+	QScopedPointer<Mapping> mMapping;
 
+	bool mShowingKeypad;
 public:
 	LayoutPresenter();
 	~LayoutPresenter();
@@ -21,6 +25,7 @@ public:
 
 public slots:
 	void setModel(KeyboardModel *model);
+	void handleButton(int index, QString name);
 };
 
 #endif

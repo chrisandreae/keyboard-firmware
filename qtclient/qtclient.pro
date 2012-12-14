@@ -19,9 +19,12 @@ HEADERS += \
 	keyboardpresenter.h \
 	keyboardvalues.h \
 	keyboardview.h \
+	layout.h \
 	layoutpresenter.h \
 	layoutview.h \
 	libusb_wrappers.h \
+	hidtables.h \
+	mapping.h \
 
 SOURCES += \
 	keyboardcomm.cc \
@@ -32,6 +35,7 @@ SOURCES += \
 	layoutpresenter.cc \
 	layoutview.cc \
 	main.cc \
+	hidtables.cc \
 
 unix {
 	CONFIG += link_pkgconfig

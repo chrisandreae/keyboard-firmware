@@ -4,12 +4,16 @@
 #include <QXmlSimpleReader>
 
 #include "layoutpresenter.h"
+#include "layout.h"
 #include "keyboardmodel.h"
 
 LayoutPresenter::LayoutPresenter()
 	: mModel(NULL)
+	, mShowingKeypad(false)
 {
 	mView = new LayoutView(this);
+	connect(mView, SIGNAL(buttonClicked(int, QString)),
+			this, SLOT(handleButton(int, QString)));
 }
 
 LayoutPresenter::~LayoutPresenter() {
@@ -19,16 +23,9 @@ LayoutPresenter::~LayoutPresenter() {
 }
 
 namespace {
-class Layout {
-	QString mImageName;
-
-	friend class XMLLayoutHandler;
-public:
-	QString imageName() { return mImageName; }
-};
-
 class XMLLayoutHandler : public QXmlDefaultHandler {
 	Layout& mLayout;
+
 public:
 	XMLLayoutHandler(Layout& layout)
 		: mLayout(layout)
@@ -40,8 +37,22 @@ public:
 	                          const QXmlAttributes& atts)
 	{
 		if (localName == "keyboard") {
-			qDebug() << "setting mImageName";
-			mLayout.mImageName = atts.value("image");
+			mLayout.layout = atts.value("layout");
+			mLayout.imageName = atts.value("image");
+		}
+		else if (localName == "keypad") {
+			mLayout.keypad.keyIndex = atts.value("keyindex").toInt();
+			mLayout.keypad.layerStart = atts.value("layerstart").toInt();
+			mLayout.keypad.layerSize = atts.value("layersize").toInt();
+		}
+		else if (localName == "key") {
+			Layout::Key k = { atts.value("name"),
+							  QRect(atts.value("x").toInt(),
+									atts.value("y").toInt(),
+									atts.value("w").toInt(),
+									atts.value("h").toInt())
+			};
+			mLayout.keys.push_back(k);
 		}
 		return true;
 	}
@@ -49,6 +60,7 @@ public:
 };
 
 void LayoutPresenter::setModel(KeyboardModel *model) {
+	mShowingKeypad = false;
 	mModel = model;
 
 #ifdef Q_OS_MAC
@@ -64,8 +76,8 @@ void LayoutPresenter::setModel(KeyboardModel *model) {
 
 	qDebug() << "Loading layout from xml " << layoutXml;
 
-	Layout layout;
-	XMLLayoutHandler handler(layout);
+	mLayout.reset(new Layout);
+	XMLLayoutHandler handler(*mLayout);
 	QXmlSimpleReader xmlReader;
 	QFile layoutXmlFile(layoutXml);
 	QXmlInputSource source(&layoutXmlFile);
@@ -75,6 +87,22 @@ void LayoutPresenter::setModel(KeyboardModel *model) {
 		return;
 	}
 
-	qDebug() << "layout.imageName = " << layout.imageName();
-	mView->setKeyboardImage(QPixmap(resourceDir + layout.imageName()));
+	mMapping.reset(new Mapping(*mLayout, *model->getMapping()));
+	qDebug() << "layout.imageName = " << mLayout->imageName;
+	mView->setKeyboard(mLayout.data(),
+	                   QPixmap(resourceDir + mLayout->imageName));
+	mView->setKeyUsages(mMapping->getRegularLayer(), NULL);
+}
+
+void LayoutPresenter::handleButton(int index, QString name) {
+	qDebug() << "Button clicked! index=" << index << " name=" << name;
+	if (name == "LOGICAL_KEY_KEYPAD") {
+		if (mShowingKeypad = !mShowingKeypad) {
+			QColor c = QColor::fromRgbF(0, 0, 1, 0.2);
+			mView->setKeyUsages(mMapping->getKeypadLayer(), &c);
+		}
+		else {
+			mView->setKeyUsages(mMapping->getRegularLayer(), NULL);
+		}
+	}
 }

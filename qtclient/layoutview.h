@@ -5,6 +5,8 @@
 #include <QLabel>
 #include <QPixmap>
 
+class Mapping;
+class Layout;
 class LayoutPresenter;
 
 class LayoutView : public QLabel {
@@ -12,12 +14,20 @@ class LayoutView : public QLabel {
 	Q_DISABLE_COPY(LayoutView)
 
 	LayoutPresenter *mPresenter;
+	QList<uint8_t> mKeyUsages;
+	const Layout *mLayout;
+	QColor *mBackgroundColor;
 
 public:
 	LayoutView(LayoutPresenter *presenter);
 
-	void setKeyboardImage(const QPixmap& pixmap);
-	// void setKeyboardInfo(uint8_t layoutID);
+	void setKeyboard(const Layout *layout, const QPixmap& pixmap);
+	void setKeyUsages(const QList<uint8_t>& usages, QColor* backgroundColor);
+	virtual void paintEvent(QPaintEvent* e);
+	virtual void mousePressEvent(QMouseEvent* e);
+
+signals:
+	void buttonClicked(int index, QString name);
 };
 
 #endif

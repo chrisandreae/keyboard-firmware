@@ -21,19 +21,14 @@ class KeyboardComm {
 		throw (LIBUSBError)
 	{
 		T result;
-		LIBUSBCheckResult(
-		    libusb_control_transfer(
-		        mDeviceHandle,
-		        LIBUSB_REQUEST_TYPE_VENDOR
-		        | LIBUSB_RECIPIENT_DEVICE
-		        | (dir == Read ? LIBUSB_ENDPOINT_IN : LIBUSB_ENDPOINT_OUT),
-		        request,
-		        wValue,
-		        wIndex,
-		        (unsigned char*) &result, sizeof(result),
-		        mTimeout));
+		doVendorRequest(request, dir, (char*) &result, sizeof(result), wValue, wIndex);
 		return result;
 	}
+
+	void doVendorRequest(uint8_t request, Direction dir,
+	                     char *buf, int bufLen,
+	                     uint16_t wValue = 0, uint16_t wIndex = 0)
+		throw (LIBUSBError);
 
 public:
 	static QList<USBDevice> enumerate(libusb_context *context = NULL);
@@ -71,6 +66,8 @@ public:
 	uint16_t getMacroStorageSize() throw (LIBUSBError) {
 		return doSimpleVendorRequest<uint16_t>(READ_MACRO_STORAGE_SIZE, Read);
 	}
+
+	QByteArray getMapping() throw (LIBUSBError);
 };
 
 #endif

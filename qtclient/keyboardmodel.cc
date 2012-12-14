@@ -11,5 +11,6 @@ KeyboardModel::KeyboardModel(KeyboardComm& keyboard)
 	, mProgramSpace(keyboard.getProgramSpace())
 	, mMacroIndexSize(keyboard.getMacroIndexSize())
 	, mMacroStorageSize(keyboard.getMacroStorageSize())
+	, mMapping(keyboard.getMapping())
 {
 }

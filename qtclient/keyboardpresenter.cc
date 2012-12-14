@@ -27,7 +27,7 @@ KeyboardPresenter::~KeyboardPresenter()
 }
 
 void KeyboardPresenter::showAction() {
-	// updateDeviceListAction();
+	updateDeviceListAction();
 	mView->show();
 }
 
