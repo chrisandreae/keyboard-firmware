@@ -40,16 +40,6 @@ void KeyboardPresenter::updateDeviceListAction() {
 	mView.updateDevices(names);
 }
 
-void KeyboardPresenter::setKeyboardModel(KeyboardModel *newModel) {
-	// std::cout << "setKeyboardModel: " << mKeyboardModel << " -> " << newModel << std::endl;
-	// TODO: wtb unique_ptr
-	if (mKeyboardModel == newModel)
-		return;
-	if (mKeyboardModel)
-		delete mKeyboardModel;
-	mKeyboardModel = newModel;
-}
-
 void KeyboardPresenter::selectDeviceAction(int index) {
 	if (index == -1) {
 		mView.showNoKeyboard();
@@ -63,7 +53,7 @@ void KeyboardPresenter::selectDeviceAction(int index) {
 	USBDevice dev = mDevices.at(index);
 	KeyboardComm comm(dev);
 	KeyboardModel *m = new KeyboardModel(comm);
-	setKeyboardModel(m);
+	mKeyboardModel.reset(m);
 	mView.showValues(m->getLayoutID(),
 					 m->getMappingSize(),
 					 m->getNumPrograms(),
@@ -73,6 +63,3 @@ void KeyboardPresenter::selectDeviceAction(int index) {
 					 m->getMacroStorageSize());
 }
 
-KeyboardPresenter::~KeyboardPresenter() {
-	setKeyboardModel(NULL);
-}

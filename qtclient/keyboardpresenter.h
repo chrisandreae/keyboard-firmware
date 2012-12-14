@@ -4,20 +4,18 @@
 
 #include <QObject>
 #include <QList>
+#include <QScopedPointer>
 
 #include "keyboardview.h"
+#include "keyboardmodel.h"
 
-class KeyboardModel;
 
 class KeyboardPresenter : public QObject {
 	Q_OBJECT
 
 	QList<USBDevice> mDevices;
 	KeyboardView mView;
-	KeyboardModel *mKeyboardModel;
-
-	void setKeyboardModel(KeyboardModel *model);
-
+	QScopedPointer<KeyboardModel> mKeyboardModel;
 
 	KeyboardPresenter(const KeyboardPresenter& other);
 	KeyboardPresenter& operator=(const KeyboardPresenter& other);
@@ -26,7 +24,6 @@ public:
 		: mView(this)
 		, mKeyboardModel(NULL)
 	{}
-	virtual ~KeyboardPresenter();
 
 public slots:
 	void showAction();
