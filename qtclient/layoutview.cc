@@ -16,9 +16,14 @@ void LayoutView::setKeyboard(const Layout *layout, const QPixmap& pixmap) {
 	setPixmap(pixmap);
 }
 
-void LayoutView::setKeyUsages(const QList<uint8_t>& usages, QColor* backgroundColor) {
+void LayoutView::setKeyUsages(const QList<uint8_t>& usages, const QColor* backgroundColor) {
 	mKeyUsages = usages;
-	mBackgroundColor = backgroundColor;
+	if (backgroundColor) {
+		mBackgroundColor.reset(new QColor(*backgroundColor));
+	}
+	else {
+		mBackgroundColor.reset();
+	}
 	update();
 }
 

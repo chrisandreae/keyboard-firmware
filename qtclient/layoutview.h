@@ -14,13 +14,13 @@ class LayoutView : public QLabel {
 
 	QList<uint8_t> mKeyUsages;
 	const Layout *mLayout;
-	QColor *mBackgroundColor;
+	QScopedPointer<QColor> mBackgroundColor;
 
 public:
 	LayoutView();
 
 	void setKeyboard(const Layout *layout, const QPixmap& pixmap);
-	void setKeyUsages(const QList<uint8_t>& usages, QColor* backgroundColor);
+	void setKeyUsages(const QList<uint8_t>& usages, const QColor* backgroundColor);
 	virtual void paintEvent(QPaintEvent* e);
 	virtual void mousePressEvent(QMouseEvent* e);
 
