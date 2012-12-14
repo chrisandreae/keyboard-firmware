@@ -8,7 +8,6 @@
 #include "libusb_wrappers.h"
 
 class KeyboardValues;
-class KeyboardPresenter;
 class QComboBox;
 class QStringList;
 class QToolButton;
@@ -24,11 +23,9 @@ class KeyboardView : public QMainWindow {
 
 	QStackedWidget *mSelectionStack;
 	QStackedWidget *mSubviewStack;
-	void configurePresenter(KeyboardPresenter *presenter);
 
 public:
-	KeyboardView(KeyboardPresenter *presenter,
-				 QList<QPair<QString, QWidget*> > subviews);
+	KeyboardView(QList<QPair<QString, QWidget*> > subviews);
 
     void updateDevices(const QStringList& names);
 	void showValues(uint8_t mLayoutID,
@@ -41,6 +38,10 @@ public:
 
 	void showNoKeyboard();
 	void showKeyboard();
+
+signals:
+	void updateDeviceListAction();
+	void selectDeviceAction(int index);
 };
 
 #endif

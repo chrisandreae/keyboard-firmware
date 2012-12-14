@@ -5,8 +5,7 @@
 #include "layout.h"
 #include "hidtables.h"
 
-LayoutView::LayoutView(LayoutPresenter *presenter)
-	: mPresenter(presenter)
+LayoutView::LayoutView()
 {
 	setAlignment(Qt::AlignLeft | Qt::AlignTop);
 	setMargin(0);

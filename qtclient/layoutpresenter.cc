@@ -11,7 +11,8 @@ LayoutPresenter::LayoutPresenter()
 	: mModel(NULL)
 	, mShowingKeypad(false)
 {
-	mView = new LayoutView(this);
+	mView = new LayoutView;
+
 	connect(mView, SIGNAL(buttonClicked(int, QString)),
 			this, SLOT(handleButton(int, QString)));
 }

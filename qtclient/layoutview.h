@@ -7,19 +7,17 @@
 
 class Mapping;
 class Layout;
-class LayoutPresenter;
 
 class LayoutView : public QLabel {
 	Q_OBJECT
 	Q_DISABLE_COPY(LayoutView)
 
-	LayoutPresenter *mPresenter;
 	QList<uint8_t> mKeyUsages;
 	const Layout *mLayout;
 	QColor *mBackgroundColor;
 
 public:
-	LayoutView(LayoutPresenter *presenter);
+	LayoutView();
 
 	void setKeyboard(const Layout *layout, const QPixmap& pixmap);
 	void setKeyUsages(const QList<uint8_t>& usages, QColor* backgroundColor);

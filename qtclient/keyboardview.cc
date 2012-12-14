@@ -22,8 +22,7 @@ enum MyRoles {
 	USBDeviceRole = Qt::UserRole + 1,
 };
 
-KeyboardView::KeyboardView(KeyboardPresenter *presenter,
-                           QList<QPair<QString, QWidget*> > subviews)
+KeyboardView::KeyboardView(QList<QPair<QString, QWidget*> > subviews)
 {
 	QToolBar *toolBar = addToolBar(tr("Keyboard Selection"));
 
@@ -77,14 +76,11 @@ KeyboardView::KeyboardView(KeyboardPresenter *presenter,
 	setUnifiedTitleAndToolBarOnMac(true);
 	setWindowTitle(tr("Keyboard Client"));
 
-	configurePresenter(presenter);
-}
-
-void KeyboardView::configurePresenter(KeyboardPresenter *presenter) {
 	connect(mKeyboardSelection, SIGNAL(currentIndexChanged(int)),
-	        presenter, SLOT(selectDeviceAction(int)));
+	        this, SIGNAL(selectDeviceAction(int)));
+
 	connect(mRefreshAction, SIGNAL(triggered()),
-	        presenter, SLOT(updateDeviceListAction()));
+	        this, SIGNAL(updateDeviceListAction()));
 }
 
 void KeyboardView::updateDevices(const QStringList& names) {

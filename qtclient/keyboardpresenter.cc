@@ -2,11 +2,20 @@
 #include "keyboardpresenter.h"
 #include "keyboardcomm.h"
 #include "keyboardmodel.h"
+#include "keyboardview.h"
 
 KeyboardPresenter::KeyboardPresenter()
 	: mKeyboardModel(NULL)
 {
-	mView.reset(new KeyboardView(this, createSubviewList()));
+	mView.reset(new KeyboardView(createSubviewList()));
+
+	connect(mView.data(), SIGNAL(updateDeviceListAction()),
+	        this, SLOT(updateDeviceListAction()));
+
+	connect(mView.data(), SIGNAL(selectDeviceAction(int)),
+	        this, SLOT(selectDeviceAction(int)));
+
+	// distribute model to sub-presenters
 	connect(this, SIGNAL(modelChanged(KeyboardModel*)),
 			&mLayoutPresenter, SLOT(setModel(KeyboardModel*)));
 }
