@@ -1,14 +1,17 @@
 #include <iostream>
 
 #include <Qt>
-#include <QToolBar>
-#include <QBoxLayout>
-#include <QLabel>
-#include <QToolButton>
-#include <QStackedWidget>
-#include <QComboBox>
-#include <QLineEdit>
 #include <QAction>
+#include <QBoxLayout>
+#include <QComboBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QSplitter>
+#include <QStackedWidget>
+#include <QToolBar>
+#include <QToolButton>
+#include <QPair>
 
 #include "keyboardview.h"
 #include "keyboardcomm.h"
@@ -19,7 +22,9 @@ enum MyRoles {
 	USBDeviceRole = Qt::UserRole + 1,
 };
 
-KeyboardView::KeyboardView(KeyboardPresenter *presenter) {
+KeyboardView::KeyboardView(KeyboardPresenter *presenter,
+                           QList<QPair<QString, QWidget*> > subviews)
+{
 	QToolBar *toolBar = addToolBar(tr("Keyboard Selection"));
 
 	mRefreshAction = new QAction(tr("Refresh"), this);
@@ -28,36 +33,58 @@ KeyboardView::KeyboardView(KeyboardPresenter *presenter) {
 	toolBar->addWidget(mKeyboardSelection);
 	toolBar->addAction(mRefreshAction);
 
-	QStackedWidget *widgetStack = new QStackedWidget;
+	QStackedWidget *selectionStack =
+	    mSelectionStack = new QStackedWidget;
 
 	QLabel *noKeyboardsLabel =
-		new QLabel(tr("No Keyboards Found\nAttach keyboard and refresh"));
+	    new QLabel(tr("No Keyboards Selected"));
 	noKeyboardsLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-	widgetStack->addWidget(noKeyboardsLabel);
+	selectionStack->addWidget(noKeyboardsLabel);
 
-	widgetStack->addWidget(mKeyboardValues = new KeyboardValues);
-	mWidgetStack = widgetStack;
+	QListWidget *subviewList = new QListWidget;
+	QStackedWidget *subviewStack = new QStackedWidget;
 
-	setCentralWidget(widgetStack);
+	subviewList->addItem(tr("Values"));
+	subviewStack->addWidget(mKeyboardValues = new KeyboardValues);
+
+	if (!subviews.empty()) {
+		for (QList<QPair<QString, QWidget*> >::iterator it = subviews.begin();
+			 it != subviews.end();
+			 ++it)
+		{
+			const QPair<QString, QWidget*>& sv = *it;
+			subviewList->addItem(sv.first);
+			subviewStack->addWidget(sv.second);
+		}
+	}
+
+	subviewList->addItem(tr("About"));
+	subviewStack->addWidget(new QLabel(tr("About")));
+
+	subviewList->setCurrentRow(0);
+
+	connect(subviewList, SIGNAL(currentRowChanged(int)),
+	        subviewStack, SLOT(setCurrentIndex(int)));
+
+	QSplitter *splitter = new QSplitter(Qt::Horizontal);
+	splitter->addWidget(subviewList);
+	splitter->addWidget(subviewStack);
+	splitter->setSizes(QList<int>() << 10 << 20);
+	selectionStack->addWidget(splitter);
+
+	setCentralWidget(selectionStack);
 
 	setUnifiedTitleAndToolBarOnMac(true);
 	setWindowTitle(tr("Keyboard Client"));
 
-	setPresenter(presenter);
+	configurePresenter(presenter);
 }
 
-void KeyboardView::setPresenter(KeyboardPresenter *presenter) {
-	if (mPresenter) {
-		disconnect(mKeyboardSelection, NULL,
-				   mPresenter, NULL);
-		disconnect(mRefreshAction, NULL,
-				   mPresenter, NULL);
-	}
+void KeyboardView::configurePresenter(KeyboardPresenter *presenter) {
 	connect(mKeyboardSelection, SIGNAL(currentIndexChanged(int)),
-			presenter, SLOT(selectDeviceAction(int)));
+	        presenter, SLOT(selectDeviceAction(int)));
 	connect(mRefreshAction, SIGNAL(triggered()),
-			presenter, SLOT(updateDeviceListAction()));
-		
+	        presenter, SLOT(updateDeviceListAction()));
 }
 
 void KeyboardView::updateDevices(const QStringList& names) {
@@ -71,21 +98,21 @@ void KeyboardView::updateDevices(const QStringList& names) {
 }
 
 void KeyboardView::showNoKeyboard() {
-	mWidgetStack->setCurrentIndex(0);
+	mSelectionStack->setCurrentIndex(0);
 }
 
 void KeyboardView::showKeyboard() {
-	if (mWidgetStack->currentIndex() != 1)
-		mWidgetStack->setCurrentIndex(1);
+	if (mSelectionStack->currentIndex() != 1)
+		mSelectionStack->setCurrentIndex(1);
 }
 
 void KeyboardView::showValues(uint8_t layoutID,
-							  uint8_t mappingSize,
-							  uint8_t numPrograms,
-							  uint16_t programSpaceRaw,
-							  uint16_t programSpace,
-							  uint16_t macroIndexSize,
-							  uint16_t macroStorageSize)
+                              uint8_t mappingSize,
+                              uint8_t numPrograms,
+                              uint16_t programSpaceRaw,
+                              uint16_t programSpace,
+                              uint16_t macroIndexSize,
+                              uint16_t macroStorageSize)
 {
 	mKeyboardValues->layoutID->setText(QString::number(layoutID));
 	mKeyboardValues->mappingSize->setText(QString::number(mappingSize));

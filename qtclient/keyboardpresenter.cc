@@ -3,9 +3,32 @@
 #include "keyboardcomm.h"
 #include "keyboardmodel.h"
 
+KeyboardPresenter::KeyboardPresenter()
+	: mKeyboardModel(NULL)
+{
+	mView.reset(new KeyboardView(this, createSubviewList()));
+	connect(this, SIGNAL(modelChanged(KeyboardModel*)),
+			&mLayoutPresenter, SLOT(setModel(KeyboardModel*)));
+}
+
+QList<QPair<QString, QWidget*> > KeyboardPresenter::createSubviewList() {
+	QList<QPair<QString, QWidget*> > subviews;
+	subviews.push_back(
+		QPair<QString, QWidget*>(
+			tr("Layout"), mLayoutPresenter.getWidget()));
+	return subviews;
+}
+
+
+// required to use a QScopedPointer with a forward decl (destructor
+// must have full type available)
+KeyboardPresenter::~KeyboardPresenter()
+{
+}
+
 void KeyboardPresenter::showAction() {
-	updateDeviceListAction();
-	mView.show();
+	// updateDeviceListAction();
+	mView->show();
 }
 
 void KeyboardPresenter::updateDeviceListAction() {
@@ -37,29 +60,30 @@ void KeyboardPresenter::updateDeviceListAction() {
 		}
 	}
 
-	mView.updateDevices(names);
+	mView->updateDevices(names);
 }
 
 void KeyboardPresenter::selectDeviceAction(int index) {
 	if (index == -1) {
-		mView.showNoKeyboard();
+		mView->showNoKeyboard();
 		return;
 	}
 	else
 	{
-		mView.showKeyboard();
+		mView->showKeyboard();
 	}
 
 	USBDevice dev = mDevices.at(index);
 	KeyboardComm comm(dev);
 	KeyboardModel *m = new KeyboardModel(comm);
 	mKeyboardModel.reset(m);
-	mView.showValues(m->getLayoutID(),
-					 m->getMappingSize(),
-					 m->getNumPrograms(),
-					 m->getProgramSpaceRaw(),
-					 m->getProgramSpace(),
-					 m->getMacroIndexSize(),
-					 m->getMacroStorageSize());
+	emit modelChanged(m);
+	mView->showValues(m->getLayoutID(),
+					  m->getMappingSize(),
+					  m->getNumPrograms(),
+					  m->getProgramSpaceRaw(),
+					  m->getProgramSpace(),
+					  m->getMacroIndexSize(),
+					  m->getMacroStorageSize());
 }
 

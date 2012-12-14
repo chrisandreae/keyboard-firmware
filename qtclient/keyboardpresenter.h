@@ -7,23 +7,28 @@
 #include <QScopedPointer>
 
 #include "keyboardview.h"
-#include "keyboardmodel.h"
+#include "layoutpresenter.h"
 
+class KeyboardModel;
 
 class KeyboardPresenter : public QObject {
 	Q_OBJECT
+	Q_DISABLE_COPY(KeyboardPresenter)
 
 	QList<USBDevice> mDevices;
-	KeyboardView mView;
+	QScopedPointer<KeyboardView> mView;
 	QScopedPointer<KeyboardModel> mKeyboardModel;
 
-	KeyboardPresenter(const KeyboardPresenter& other);
-	KeyboardPresenter& operator=(const KeyboardPresenter& other);
+	LayoutPresenter mLayoutPresenter;
+
+	QList<QPair<QString, QWidget*> > createSubviewList();
+
 public:
-	KeyboardPresenter()
-		: mView(this)
-		, mKeyboardModel(NULL)
-	{}
+	KeyboardPresenter();
+	~KeyboardPresenter();
+
+signals:
+	void modelChanged(KeyboardModel*);
 
 public slots:
 	void showAction();

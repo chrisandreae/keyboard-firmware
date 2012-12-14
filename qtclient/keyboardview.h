@@ -3,6 +3,8 @@
 #define KEYBOARDVIEW_H
 
 #include <QMainWindow>
+#include <QList>
+#include <QPair>
 #include "libusb_wrappers.h"
 
 class KeyboardValues;
@@ -19,13 +21,14 @@ class KeyboardView : public QMainWindow {
 	KeyboardValues *mKeyboardValues;
 	QComboBox *mKeyboardSelection;
 	QAction *mRefreshAction;
-	QStackedWidget *mWidgetStack;
-    KeyboardPresenter *mPresenter;
+
+	QStackedWidget *mSelectionStack;
+	QStackedWidget *mSubviewStack;
+	void configurePresenter(KeyboardPresenter *presenter);
 
 public:
-	KeyboardView(KeyboardPresenter *presenter);
-
-	void setPresenter(KeyboardPresenter *presenter);
+	KeyboardView(KeyboardPresenter *presenter,
+				 QList<QPair<QString, QWidget*> > subviews);
 
     void updateDevices(const QStringList& names);
 	void showValues(uint8_t mLayoutID,
