@@ -2,11 +2,12 @@
 #ifndef LAYOUTVIEW_H
 #define LAYOUTVIEW_H
 
-#include <QWidget>
+#include <QLabel>
+#include <QPixmap>
 
 class LayoutPresenter;
 
-class LayoutView : public QWidget {
+class LayoutView : public QLabel {
 	Q_OBJECT
 	Q_DISABLE_COPY(LayoutView)
 
@@ -15,7 +16,8 @@ class LayoutView : public QWidget {
 public:
 	LayoutView(LayoutPresenter *presenter);
 
-	void setKeyboardInfo(uint8_t layoutID);
+	void setKeyboardImage(const QPixmap& pixmap);
+	// void setKeyboardInfo(uint8_t layoutID);
 };
 
 #endif

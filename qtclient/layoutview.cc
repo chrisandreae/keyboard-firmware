@@ -5,6 +5,6 @@ LayoutView::LayoutView(LayoutPresenter *presenter)
 {
 }
 
-void LayoutView::setKeyboardInfo(uint8_t layoutID) {
-	
+void LayoutView::setKeyboardImage(const QPixmap& pixmap) {
+	setPixmap(pixmap);
 }
