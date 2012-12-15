@@ -35,6 +35,7 @@ SRCS = vusb/usbdrv/usbdrv.o    \
 	   leds.o				   \
 	   hardware.o			   \
 	   interpreter.o		   \
+	   macro_index.o		   \
 	   macro.o				   \
 	   extrareport.o		   \
 	   sort.o

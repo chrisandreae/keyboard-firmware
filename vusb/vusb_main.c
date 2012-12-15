@@ -25,6 +25,7 @@
 #include "config.h"
 #include "buzzer.h"
 #include "serial_eeprom.h"
+#include "macro_index.h"
 #include "macro.h"
 
 // Use GCC built-in memory operations
@@ -197,7 +198,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 		case READ_MACRO_INDEX:
 			transfer.state.type = READ_EEPROM;
 		macro_index_rw:
-			transfer.state.addr = macros_get_index();
+			transfer.state.addr = macro_idx_get_storage();
 			transfer.state.remaining = rq->wLength.word;
 			return USB_NO_MSG;
 

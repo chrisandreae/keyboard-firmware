@@ -56,6 +56,7 @@
 
 #include "serial_eeprom.h"
 #include "interpreter.h"
+#include "macro_index.h"
 #include "macro.h"
 
 #include "sort.h"
@@ -79,9 +80,6 @@ static state current_state = STATE_NORMAL;
 // state to transition to when next action is complete:
 // used for STATE_WAITING, STATE_PRINTING and STATE_EEWRITE which might transition into multiple states
 static state next_state;
-
-// Macro playback state
-static macro_playback macro_playback_state;
 
 // Predeclarations
 static void handle_state_normal(void);
@@ -295,32 +293,34 @@ static void handle_state_normal(void){
 
 	}
 
-	// otherwise, check macro triggers
+	// otherwise, check macro/program triggers
 	if(key_press_count && key_press_count <= MACRO_MAX_KEYS){
 		// Read keys
-		macro_key key;
+		macro_idx_key key;
 		keystate_get_keys(key.keys, LOGICAL);
 		insertionsort_uint8(key.keys, key_press_count);
 		for(uint8_t i = key_press_count; i < MACRO_MAX_KEYS; ++i){
 			key.keys[i] = NO_KEY;
 		}
-		macro_data* m = macros_lookup(&key);
-		if(m != NO_MACRO){
-			ExtraKeyboardReport_clear(&macro_playback_state.report);
-			macro_playback_state.cursor = &m->events[0];
-			if(serial_eeprom_read((uint8_t*)&m->length, (uint8_t*)&macro_playback_state.remaining, sizeof(macro_playback_state.remaining))){
-				current_state = STATE_MACRO_PLAY;
+		macro_idx_entry* h = macro_idx_lookup(&key);
+		if(h){
+			macro_idx_entry_data md = macro_idx_get_data(h);
+			switch(md.type){
+			case PROGRAM: {
+				vm_start(md.data, key.keys[0]); // TODO: l_key is no longer relevant, is not great to use just the first.
+				break;
 			}
-			else{
-				// failure to read macro data
-				buzzer_start_f(200, BUZZER_FAILURE_TONE);
+			case MACRO: {
+				if(macros_start_playback(md.data)){
+					current_state = STATE_MACRO_PLAY;
+				}
+				else{
+					buzzer_start_f(200, BUZZER_FAILURE_TONE);
+				}
+				break;
+			}
 			}
 		}
-	}
-
-	// If we are still in state normal, handle programs
-	if(current_state == STATE_NORMAL){
-		keystate_run_programs();
 	}
 }
 
@@ -360,7 +360,7 @@ static void handle_state_programming(void){
 }
 
 static void handle_state_macro_record_trigger(){
-	static macro_key key;
+	static macro_idx_key key;
 	static uint8_t last_count = 0;
 	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F11)){
 		current_state = STATE_WAITING;
@@ -458,12 +458,11 @@ void Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
 		keystate_Fill_KeyboardReport(KeyboardReport);
 		return;
 	case STATE_MACRO_PLAY:
-		if(!macros_fill_next_report(&macro_playback_state, KeyboardReport)){
+		if(!macros_fill_next_report(KeyboardReport)){
 			current_state = STATE_WAITING;
 			next_state = STATE_NORMAL;
 		}
 		return;
-		// TODO: Fetch the next report from the macro buffer and replay it
 	case STATE_PROGRAMMING_SRC:
 	case STATE_PROGRAMMING_DST:
 	default:

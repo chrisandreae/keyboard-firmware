@@ -54,6 +54,7 @@
 #include "serial_eeprom.h"
 #include "interpreter.h"
 #include "buzzer.h"
+#include "macro_index.h"
 #include "macro.h"
 
 #include <stdlib.h>
@@ -140,6 +141,7 @@ void config_reset_fully(void){
 	config_reset_program_defaults();
 
 	// and macros
+	macro_idx_reset_defaults();
 	macros_reset_defaults();
 
 	// now reset the layout and configuration defaults

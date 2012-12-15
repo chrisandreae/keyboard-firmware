@@ -94,16 +94,6 @@ enum SPECIAL_HID_KEYS{
 	SPECIAL_HID_KEY_MOUSE_BACK,
 	SPECIAL_HID_KEY_MOUSE_LEFT,
 	SPECIAL_HID_KEY_MOUSE_RIGHT,
-	// We'll want placeholder special keys for "look up a macro or
-	// program to execute" - if a lkey maps to them, look up that lkey
-	// in the macros/programs table
-	SPECIAL_HID_KEY_EXEC_PROGRAM1, // 0xF1
-	SPECIAL_HID_KEY_EXEC_PROGRAM2,
-	SPECIAL_HID_KEY_EXEC_PROGRAM3,
-	SPECIAL_HID_KEY_EXEC_PROGRAM4,
-	SPECIAL_HID_KEY_EXEC_PROGRAM5,
-	SPECIAL_HID_KEY_EXEC_PROGRAM6, // Must have NUM_PROGRAMS keys
-	SPECIAL_HID_KEY_EXEC_MACRO,
 	// And the extra-special non-remappable program and keypad keys
 	SPECIAL_HID_KEY_PROGRAM = 0xFD,
 	SPECIAL_HID_KEY_KEYPAD,
