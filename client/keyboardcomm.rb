@@ -23,18 +23,28 @@ class ConfigurationFlags
   end
 end
 
-USBRQ_DIR_DEVICE_TO_HOST = (1 << 7)
-USBRQ_DIR_HOST_TO_DEVICE = 0
+class MacroEntry
+  attr :key, :type, :data
 
-USBRQ_TYPE_CLASS  = (1 << 5)
-USBRQ_TYPE_VENDOR = (2 << 5)
-
-USBRQ_RCPT_DEVICE    = 0
-USBRQ_RCPT_INTERFACE = 1
-USBRQ_RCPT_ENDPOINT  = 2
-
+  def initialize(key, type, data)
+    @key = key
+    @type = type
+    @data = data
+  end
+end
 
 class KeyboardComm
+
+  USBRQ_DIR_DEVICE_TO_HOST = (1 << 7)
+  USBRQ_DIR_HOST_TO_DEVICE = 0
+
+  USBRQ_TYPE_CLASS  = (1 << 5)
+  USBRQ_TYPE_VENDOR = (2 << 5)
+
+  USBRQ_RCPT_DEVICE    = 0
+  USBRQ_RCPT_INTERFACE = 1
+  USBRQ_RCPT_ENDPOINT  = 2
+
   # Vendor request constants
   VRQ_READ_LAYOUT_ID       = 0
   VRQ_READ_MAPPING_SIZE    = 1
@@ -55,8 +65,11 @@ class KeyboardComm
   VRQ_READ_MACRO_STORAGE_SIZE = 16
   VRQ_WRITE_MACRO_STORAGE     = 17
   VRQ_READ_MACRO_STORAGE      = 18
+  VRQ_READ_MACRO_MAX_KEYS     = 19
 
   SERIAL_VENDOR_PREFIX = "andreae.gen.nz:";
+
+  NO_KEY = 0xFF
 
   def self.enumerate()
     usb = LIBUSB::Context.new
@@ -153,14 +166,113 @@ class KeyboardComm
     vendor_read_short(VRQ_READ_MACRO_STORAGE_SIZE)
   end
 
-  def get_macro_index
+  def get_macro_max_keys
+    vendor_read_char(VRQ_READ_MACRO_MAX_KEYS)
+  end
+
+  def get_macros
+    index_sz = get_macro_index_size
+    storage_sz = get_macro_storage_size
+    key_len = get_macro_max_keys
+
+    index_data = vendor_read_request(VRQ_READ_MACRO_INDEX, index_sz)
+    macro_data = vendor_read_request(VRQ_READ_MACRO_STORAGE, storage_sz)
+    macro_data.slice!(0, 2) # the first two bytes are the end offset, which we don't need to parse
+
+    macros = []
+    # Read index entries
+    while index_data.length > 0
+      entry = index_data.slice!(0, key_len+2).unpack("C#{key_len}S<")
+      val = entry.pop
+      key = entry
+      next if key[0] == NO_KEY
+      key.delete_if { |lkey| lkey == 0xff }
+      # print "key: #{key} val: #{val}\n"
+
+      macros <<
+        if (val & 0x8000) > 0
+          MacroEntry.new(key, :program, val & 0x7fff)
+        else
+          length = macro_data[val, 2].unpack("S<")[0]
+          data = macro_data[val+2, length].unpack("C*")
+          MacroEntry.new(key, :macro, data)
+        end
+    end
+    macros
+  end
+
+  def set_macros(macros)
+    index_sz = get_macro_index_size
+    key_len = get_macro_max_keys
+    index_len = index_sz / (key_len + 2)
+    storage_sz = get_macro_storage_size
+
+    # check index limits
+    if macros.length > index_len
+      raise "Cannot write #{macros.length} macros, device only supports #{index_len}"
+    end
+
+    # check storage limits
+    macro_data_sz = macros.inject(2) do |a, m|
+      a + ( m.type == :macro ? (2 + m.data.length) : 0 )
+    end
+    if macro_data_sz > storage_sz
+      raise "Cannot write #{macro_data_sz} bytes of macro data, device only supports #{storage_sz}"
+    end
+
+    # pad and sort macro keys
+    macros.each do |m|
+      m.key.concat Array.new(key_len - m.key.length, 0xff)
+      m.key.sort!
+    end
+
+    # sort macros by their keys
+    macros.sort! { |a, b| a.key <=> b.key }
+
+    # Iterate macros and build binary structures
+    index = [].pack("C*") # force appropriate binary string encoding
+    data  = [].pack("C*")
+    data_len = 0
+
+    macros.each do |m|
+      index << m.key.pack("C*")
+      if m.key[0] == 0xff
+        # Dummy macro, store 0 in data field
+        index << [0].pack("S<");
+      elsif m.type == :program
+        # store the program index with flag in the data field
+        index << [m.data | 0x8000].pack("S<");
+      elsif m.type == :macro
+        # Store the macro data
+        index << [data_len].pack("S<")
+        data_len += m.data.length + 2
+        data << [m.data.length].pack("S<")
+        data << m.data.pack("C*")
+      else
+        raise "Unexpected error: bad macro type '#{m.type}'"
+      end
+    end
+    data = ([data_len].pack("S<") << data);
+
+    # Pad remainder of index
+    dummy = Array.new(key_len, 0xff).push(0).pack("C#{key_len}S<")
+    (index_len - macros.size).times do
+      index << dummy
+    end
+
+    # print "Index:\n#{to_hex index.unpack("C*")}\n";
+    # print "Data:\n#{to_hex data.unpack("C*")}\n";
+    vendor_write_request(VRQ_WRITE_MACRO_INDEX, index)
+    vendor_write_request(VRQ_WRITE_MACRO_STORAGE, data)
+  end
+
+  def get_macro_index_raw
     sz = get_macro_index_size
     data = vendor_read_request(VRQ_READ_MACRO_INDEX, sz)
     data.unpack("C*")
-    # todo: unpack into sensible data structure
   end
 
-  def get_macro_storage
+  def get_macro_storage_raw
     sz = get_macro_storage_size
     data = vendor_read_request(VRQ_READ_MACRO_STORAGE, sz)
     data.unpack("C*")
