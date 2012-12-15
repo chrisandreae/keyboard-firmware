@@ -4,8 +4,8 @@ require 'json'
 require_relative "keyboardcomm"
 
 class KeyboardModel
-  attr_reader :defaultMapping, :currentMapping, :programs_count, :programs_space, :programs, :keyboardImage, :keyLayout, :keypad
-  attr_writer :currentMapping, :programs
+  attr_reader :defaultMapping, :programs_count, :programs_space, :keyboardImage, :keyLayout, :keypad
+  attr :currentMapping, :programs, :macros
 
   class Keypad
     attr_reader :key, :layerStart, :layerSize
@@ -35,6 +35,7 @@ class KeyboardModel
     @programs_space = comm.get_program_space
 
     @programs = comm.get_programs
+    @macros = comm.get_macros
 
     layoutFile = File.new("layout/#{@layoutId}.xml", "r")
     xmldata = REXML::Document.new(layoutFile) # todo: use schema to avoid in-code validation, throw if not present

@@ -21,11 +21,16 @@ class KeyboardView
     @refreshButton = builder.get_object("refresh")
 
     @devCombo = builder.get_object("devices")
-    @devList = Gtk::ListStore.new(String);
-    @devCombo.model= @devList
+    @devList = builder.get_object("devices_liststore")
+
     comboRenderer = Gtk::CellRendererText.new
     @devCombo.pack_start(comboRenderer, true)
     @devCombo.add_attribute(comboRenderer, 'text', 0)
+
+    @macrosView = builder.get_object("macros_view")
+    @macrosModel = Gtk::ListStore.new(Object) # can't create with ruby types in builder?
+    @macrosView.model = @macrosModel
+    initializeMacrosView
 
     @remapButton = builder.get_object("remap")
 
@@ -59,6 +64,58 @@ class KeyboardView
     @window.show()
   end
 
+  def initializeMacrosView
+    # @macrosView.selection.mode = Gtk::SELECTION_NONE
+
+    # Key column
+    renderer = Gtk::CellRendererText.new
+    col = Gtk::TreeViewColumn.new("Trigger", renderer)
+    @macrosView.append_column(col)
+    col.set_cell_data_func(renderer) do |col, renderer, model, iter|
+      # Display key by reversing and joining with " + "
+      keyDescr = if @layout == nil
+                   "Layout not loaded"
+                 else
+                   iter[0].key.sort{|a,b| b <=> a}.collect{|h| @layout[h]["name"] }.join("+");
+                 end
+      renderer.text = keyDescr
+    end
+
+    # Type column
+    renderer = Gtk::CellRendererText.new
+    col = Gtk::TreeViewColumn.new("Type", renderer)
+    col.set_cell_data_func(renderer) do |col, renderer, model, iter|
+      renderer.text = iter[0].type.to_s
+    end
+    @macrosView.append_column(col)
+
+    # Value column
+    renderer = Gtk::CellRendererText.new
+    col = Gtk::TreeViewColumn.new("Data", renderer)
+    @macrosView.append_column(col)
+    col.set_cell_data_func(renderer) do |col, renderer, model, iter|
+      m = iter[0]
+      case m.type
+      when :program
+        display = "Program %s" % (m.data + 1)
+      when :macro
+        down = Set.new
+        seq = m.data.collect do |x|
+          if down.include? x
+            down.delete(x)
+            "-#{HID_NAMES[x]}"
+          else
+            down.add(x)
+            "+#{HID_NAMES[x]}"
+          end
+        end
+        display = seq.join(" ")
+      else
+        raise "Unexpected macro entry type #{iter[1]}"
+      end
+      renderer.text = display
+    end
+  end
 
   ## Presenter interface
   def setPresenter(p)
@@ -82,6 +139,13 @@ class KeyboardView
     count = vsizes.length
     total = vsizes.inject(0, &:+)
     @programSummaryLabel.text = "#{count} program(s): #{total}/#{space} bytes used"
+  end
+
+  def setMacros(macros)
+    macros.each do |m|
+      row = @macrosModel.append
+      row[0] = m
+    end
   end
 
   def updateDeviceList(names)
@@ -178,6 +242,18 @@ class KeyboardView
   def program_clicked_cb(x)
     i = @programButtons.index(x)
     @presenter.handleProgramClick(i)
+  end
+
+  def macro_remove_clicked_cb(x)
+    print "remove macro #{x}\n"
+  end
+
+  def macro_add_clicked_cb(x)
+    print "add macro #{x}\n"
+  end
+
+  def macro_edit_clicked_cb(x)
+    print "edit macro #{x}\n"
   end
 
   def keyboardDrawing_click_cb(area, event)

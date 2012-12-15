@@ -46,6 +46,8 @@ class KeyboardPresenter
     @view.setKeyboard(@model.keyboardImage, @model.keyLayout, @model.keypad, @model.currentMapping)
     @view.setProgramSizes(@model.programs.map {|x| x == nil ? nil : x.length },
                           @model.programs_space)
+
+    @view.setMacros(@model.macros)
   end
   def displayDefault
       @view.setKeyboard(@model.keyboardImage, @model.keyLayout, @model.keypad, @model.defaultMapping)
