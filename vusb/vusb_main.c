@@ -67,6 +67,7 @@ typedef enum _vendor_request {
 	WRITE_MACRO_INDEX, READ_MACRO_INDEX,
 	READ_MACRO_STORAGE_SIZE,
 	WRITE_MACRO_STORAGE, READ_MACRO_STORAGE,
+	READ_MACRO_MAX_KEYS
 
 } vendor_request;
 
@@ -152,6 +153,9 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 	}else{
 		/* Vendor requests: */
 		switch(rq->bRequest){
+
+		/* byte sized transfers */
+
 		case READ_NUM_PROGRAMS:
 			transfer.byte = NUM_PROGRAMS;
 			goto transfer_byte;
@@ -164,14 +168,32 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 		case READ_CONFIG_FLAGS: {
 			configuration_flags fs = config_get_flags();
 			transfer.byte = *((uint8_t*)&fs);
+			goto transfer_byte;
 		}
+		case READ_MACRO_MAX_KEYS:
+			transfer.byte = MACRO_MAX_KEYS;
+			goto transfer_byte;
 		transfer_byte:
 			usbMsgPtr = &transfer.byte;
 			return 1;
+
+			/* Word sized transfers */
+
 		case READ_PROGRAMS_SIZE:
 			transfer.word = PROGRAMS_SIZE;
+			goto transfer_word;
+		case READ_MACRO_INDEX_SIZE:
+			transfer.word = MACRO_INDEX_SIZE;
+			goto transfer_word;
+		case READ_MACRO_STORAGE_SIZE:
+			transfer.word = MACROS_SIZE;
+			goto transfer_word;
+		transfer_word:
 			usbMsgPtr = (uint8_t*)&transfer.word;
 			return 2;
+
+			/* callback transfers */
+
 		case WRITE_PROGRAMS:
 			transfer.state.type = WRITE_EEEXT;
 			transfer_callback = &vm_init;
@@ -183,14 +205,6 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			transfer.state.remaining = rq->wLength.word;
 			return USB_NO_MSG;
 
-		case READ_MACRO_INDEX_SIZE:
-			transfer.word = MACRO_INDEX_SIZE;
-			usbMsgPtr = (uint8_t*)&transfer.word;
-			return 2;
-		case READ_MACRO_STORAGE_SIZE:
-			transfer.word = MACROS_SIZE;
-			usbMsgPtr = (uint8_t*)&transfer.word;
-			return 2;
 
 		case WRITE_MACRO_INDEX:
 			transfer.state.type = WRITE_EEPROM;
@@ -231,9 +245,11 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 		mapping_rw2:
 			transfer.state.remaining = min_u16(NUM_LOGICAL_KEYS, rq->wLength.word);
 			return USB_NO_MSG;
+
 		case RESET_DEFAULTS:
 			config_reset_defaults();
 			break;
+
 		case RESET_FULLY:
 			config_reset_fully();
 			break;

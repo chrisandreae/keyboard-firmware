@@ -53,7 +53,6 @@
  */
 #define MACRO_INDEX_SIZE 300 // 50 x 6-byte entries
 
-#define NO_MACRO ((void*)0xffff)
 #define MACRO_MAX_KEYS 4
 
 // Macro indices
