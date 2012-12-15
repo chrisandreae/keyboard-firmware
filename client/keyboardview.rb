@@ -65,7 +65,7 @@ class KeyboardView
   end
 
   def initializeMacrosView
-    # @macrosView.selection.mode = Gtk::SELECTION_NONE
+    @macrosView.selection.mode = Gtk::SELECTION_BROWSE
 
     # Key column
     renderer = Gtk::CellRendererText.new
@@ -245,15 +245,15 @@ class KeyboardView
   end
 
   def macro_remove_clicked_cb(x)
-    print "remove macro #{x}\n"
+    print "TODO: remove macro #{@macrosView.selection.selected[0].inspect}\n"
   end
 
   def macro_add_clicked_cb(x)
-    print "add macro #{x}\n"
+    print "TODO: add macro\n"
   end
 
   def macro_edit_clicked_cb(x)
-    print "edit macro #{x}\n"
+    print "TODO: edit macro #{@macrosView.selection.selected[0].inspect}#{x}\n"
   end
 
   def keyboardDrawing_click_cb(area, event)
@@ -327,7 +327,7 @@ class KeyboardView
         # get dimensions
         kx, ky, kw, kh = key_dimensions(lkey)
 
-        #If we're in keypard mode, provide visual indication by highlighting:
+        #If we're in keypad mode, provide visual indication by highlighting:
         if @keypadMode
           cr.set_source_rgba 0, 0, 1, 0.2
           cr.rectangle @pictureOriginX+kx, @pictureOriginY+ky, kw, kh
