@@ -65,6 +65,7 @@ class KeyboardPresenter
     begin
       @kbComm.set_mapping @model.currentMapping
       @kbComm.set_programs @model.programs
+      @kbComm.set_macros @model.macros
       @view.setStatusLine "Uploaded"
     rescue Exception => e
       errorDialog "Error uploading settings: #{e.message}"
@@ -86,7 +87,7 @@ class KeyboardPresenter
   end
 
   def errorDialog(msg)
-    md = Gtk::MessageDialog.new(@view.window, Gtk::Dialog::MODAL |
+    md = Gtk::MessageDialog.new(@view.keyboardWindow, Gtk::Dialog::MODAL |
                                     Gtk::Dialog::DESTROY_WITH_PARENT, Gtk::MessageDialog::ERROR,
                                     Gtk::MessageDialog::BUTTONS_CLOSE, msg)
     md.run
@@ -95,7 +96,7 @@ class KeyboardPresenter
 
   def saveSettingsAction
     dialog = Gtk::FileChooserDialog.new("Save Settings",
-                                     @view.window,
+                                     @view.keyboardWindow,
                                      Gtk::FileChooser::ACTION_SAVE,
                                      nil,
                                      [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
@@ -115,7 +116,7 @@ class KeyboardPresenter
 
   def loadSettingsAction
     dialog = Gtk::FileChooserDialog.new("Open Settings File",
-                                        @view.window,
+                                        @view.keyboardWindow,
                                         Gtk::FileChooser::ACTION_OPEN,
                                         nil,
                                         [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
@@ -132,7 +133,7 @@ class KeyboardPresenter
     dialog.destroy
   end
 
-  def handleProgramClick(idx)
+  def alterProgramAction(idx)
     if @model.programs[idx] != nil
       # if there is a program, remove it
       @model.programs[idx] = nil
@@ -140,7 +141,7 @@ class KeyboardPresenter
     else
       #open a file chooser to pick a program
       dialog = Gtk::FileChooserDialog.new("Open Program File",
-                                     @view.window,
+                                     @view.keyboardWindow,
                                      Gtk::FileChooser::ACTION_OPEN,
                                      nil,
                                      [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
@@ -172,8 +173,17 @@ class KeyboardPresenter
     @view.setPresenter(remapPres)
     remapPres.updateDisplay
   end
-end
 
+  def deleteMacroAction(macroentry)
+    @model.macros.delete(macroentry)
+  end
+
+  def addNewMacroAction
+    newmacro = MacroEntry.new([], :macro, [])
+    @model.macros << newmacro
+    newmacro
+  end
+end
 
 class RemapPresenter
   def initialize(appPresenter, model, view)
@@ -203,14 +213,6 @@ class RemapPresenter
     end
     @source = !@source
     updateDisplay
-  end
-
-  def handleProgramClick(pid)
-    if @source
-      @skey = SPECIAL_KEYS_PROGRAM_START + pid
-      @source = !@source
-      updateDisplay
-    end
   end
 
   def remapAction

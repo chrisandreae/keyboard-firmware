@@ -7,7 +7,7 @@ require_relative "keyboardpresenter"
 
 class KeyboardView
   attr :glade
-  attr_reader :window
+  attr_reader :keyboardWindow
 
   def initialize(presenter)
     @presenter = presenter
@@ -16,7 +16,14 @@ class KeyboardView
     builder = Gtk::Builder::new
     builder.add_from_file("gui.xml")
     builder.connect_signals{ |handler| method(handler) }
-    @window = builder.get_object("window1")
+
+    init_keyboard_window(builder)
+
+    @keyboardWindow.show()
+  end
+
+  def init_keyboard_window(builder)
+    @keyboardWindow = builder.get_object("keyboard_window")
 
     @refreshButton = builder.get_object("refresh")
 
@@ -27,11 +34,29 @@ class KeyboardView
     @devCombo.pack_start(comboRenderer, true)
     @devCombo.add_attribute(comboRenderer, 'text', 0)
 
+    # Macro view
     @macrosView = builder.get_object("macros_view")
     @macrosModel = Gtk::ListStore.new(Object) # can't create with ruby types in builder?
     @macrosView.model = @macrosModel
     initializeMacrosView
 
+    # Macro edit
+    @macroEditFrame = builder.get_object("macro_edit_frame")
+    @macroTypes = Hash[builder.get_object("macro_type_macro") => :macro,
+                       builder.get_object("macro_type_program") => :program]
+    @macroContentsTabs = builder.get_object("macro_contents_tabs")
+
+    @macroProgramCombo = builder.get_object("macro_program_combo")
+    macroProgramListStore = builder.get_object("macro_program_liststore")
+    macroComboRenderer = Gtk::CellRendererText.new
+    @macroProgramCombo.pack_start(macroComboRenderer, true)
+    @macroProgramCombo.set_cell_data_func(macroComboRenderer) do |col, renderer, model, iter|
+      renderer.text = "Program #{iter[0]+1}"
+    end
+
+    @macroRecordingEntry = builder.get_object("macro_recording_entry")
+
+    #remapping
     @remapButton = builder.get_object("remap")
 
     # TODO: rather than fixed program buttons, add them programmatically
@@ -61,11 +86,14 @@ class KeyboardView
     # to decide which part of the provided mapping to display on the picture
     @keypadMode = false
 
-    @window.show()
   end
 
   def initializeMacrosView
     @macrosView.selection.mode = Gtk::SELECTION_BROWSE
+    @macrosView.selection.signal_connect("changed") do |sel|
+      macros_view_select(sel.selected)
+    end
+
 
     # Key column
     renderer = Gtk::CellRendererText.new
@@ -73,7 +101,10 @@ class KeyboardView
     @macrosView.append_column(col)
     col.set_cell_data_func(renderer) do |col, renderer, model, iter|
       # Display key by reversing and joining with " + "
-      keyDescr = if @layout == nil
+      key = iter[0].key
+      keyDescr = if key.length == 0
+                   "Undefined"
+                 elsif @layout == nil
                    "Layout not loaded"
                  else
                    iter[0].key.sort{|a,b| b <=> a}.collect{|h| @layout[h]["name"] }.join("+");
@@ -85,13 +116,13 @@ class KeyboardView
     renderer = Gtk::CellRendererText.new
     col = Gtk::TreeViewColumn.new("Type", renderer)
     col.set_cell_data_func(renderer) do |col, renderer, model, iter|
-      renderer.text = iter[0].type.to_s
+      renderer.text = iter[0].type.to_s.capitalize
     end
     @macrosView.append_column(col)
 
     # Value column
     renderer = Gtk::CellRendererText.new
-    col = Gtk::TreeViewColumn.new("Data", renderer)
+    col = Gtk::TreeViewColumn.new("Contents", renderer)
     @macrosView.append_column(col)
     col.set_cell_data_func(renderer) do |col, renderer, model, iter|
       m = iter[0]
@@ -142,6 +173,7 @@ class KeyboardView
   end
 
   def setMacros(macros)
+    @macrosModel.clear
     macros.each do |m|
       row = @macrosModel.append
       row[0] = m
@@ -180,7 +212,7 @@ class KeyboardView
     @devCombo.set_sensitive(false)
     @remapButton.set_sensitive(true)
     @remapButton.label = "End Remap"
-    @programButtons.each { |b| b.set_sensitive(source) }
+    @programButtons.each { |b| b.set_sensitive(false) }
   end
 
   def setStatusLine(str)
@@ -241,20 +273,81 @@ class KeyboardView
 
   def program_clicked_cb(x)
     i = @programButtons.index(x)
-    @presenter.handleProgramClick(i)
+    @presenter.alterProgramAction(i)
   end
 
+
+############ macro editing ##############
+
   def macro_remove_clicked_cb(x)
-    print "TODO: remove macro #{@macrosView.selection.selected[0].inspect}\n"
+    selIter = @macrosView.selection.selected
+    @presenter.deleteMacroAction(selIter[0])
+    @macrosModel.remove(selIter)
   end
 
   def macro_add_clicked_cb(x)
-    print "TODO: add macro\n"
+    newmacro = @presenter.addNewMacroAction
+    newrow = @macrosModel.append
+    newrow[0] = newmacro
   end
 
-  def macro_edit_clicked_cb(x)
-    print "TODO: edit macro #{@macrosView.selection.selected[0].inspect}#{x}\n"
+  def macros_update_editor_frame
+    iter = @macrosView.selection.selected
+    if iter.nil?
+      # disable editor!
+    else
+      #enable editor!
+      currentMacro = iter[0]
+      type = currentMacro.type
+
+      #select correct radio
+      @macroTypes.invert[type].active = true
+
+      # fill out edit box
+      case type
+      when :macro
+        @macroContentsTabs.page = 0
+        @macroRecordingEntry.text = currentMacro.data.inspect
+      when :program
+        @macroContentsTabs.page = 1
+        @macroProgramCombo.active = currentMacro.data
+      end
+    end
   end
+
+  def macros_view_select(iter)
+    macros_update_editor_frame
+  end
+
+  def macro_type_changed_cb(typeRadio)
+    iter = @macrosView.selection.selected
+    if typeRadio.active? && !iter.nil?
+      currentMacro = iter[0]
+      oldType = currentMacro.type
+      newType = @macroTypes[typeRadio]
+      if oldType != newType
+        currentMacro.data = case newType
+                             when :macro; []
+                             when :program; 0
+                             end
+        currentMacro.type = newType
+        @macrosModel.row_changed(nil, iter)
+      end
+      macros_update_editor_frame
+    end
+  end
+
+  def macro_change_trigger_toggled_cb(x)
+    print "Toggled trigger #{x}\n"
+  end
+
+  def macro_program_combo_changed_cb(combo)
+    iter = @macrosView.selection.selected
+    iter[0].data = combo.active_iter[0]
+    @macrosModel.row_changed(nil, iter)
+  end
+
+############### Keyboard image ###############
 
   def keyboardDrawing_click_cb(area, event)
     x = event.x
@@ -283,9 +376,6 @@ class KeyboardView
       # otherwise pass on to the presenter
       @presenter.handleKeyclick(lkeyid)
     end
-  end
-
-  def keyboardDrawing_realize_cb(area)
   end
 
   def key_dimensions(lkey_entry)

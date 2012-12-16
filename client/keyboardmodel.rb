@@ -5,7 +5,7 @@ require_relative "keyboardcomm"
 
 class KeyboardModel
   attr_reader :defaultMapping, :programs_count, :programs_space, :keyboardImage, :keyLayout, :keypad
-  attr :currentMapping, :programs, :macros
+  attr_accessor :currentMapping, :programs, :macros
 
   class Keypad
     attr_reader :key, :layerStart, :layerSize
@@ -61,7 +61,8 @@ class KeyboardModel
     data = {
       :layoutId => @layoutId,
       :mapping => @currentMapping,
-      :programs => @programs
+      :programs => @programs,
+      :macros => @macros
     }
     File.open(filename, "w") do |fh|
       JSON.dump(data, fh);
@@ -71,15 +72,17 @@ class KeyboardModel
   def load_settings(filename)
     File.open(filename, "r") do |fh|
       data = JSON.load(fh)
-      raise "Corrputed settings file" unless data.is_a?(Hash)
+      raise "Corrupted settings file" unless data.is_a?(Hash)
       raise "Corrupted settings file, does not include layout id" unless data.include?("layoutId")
       raise "Corrupted settings file, does not include mapping" unless data.include?("mapping")
       raise "Corrupted settings file, does not include programs" unless data.include?("programs")
+      raise "Corrupted settings file, does not include macros" unless data.include?("macros")
       raise "Settings file does not match this keyboard" unless data["layoutId"] == @layoutId
       raise "Corrupted mapping data, bad length" unless data["mapping"].length == @mappingSize
       raise "Settings file contains invalid number of programs for this keyboard" unless data["programs"].length == @programs_count
       @currentMapping = data["mapping"]
       @programs = data["programs"]
+      @macros = data["macros"]
     end
   end
 end

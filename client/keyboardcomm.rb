@@ -24,7 +24,7 @@ class ConfigurationFlags
 end
 
 class MacroEntry
-  attr :key, :type, :data
+  attr_accessor :key, :type, :data
 
   def initialize(key, type, data)
     @key = key
