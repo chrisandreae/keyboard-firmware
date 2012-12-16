@@ -8,6 +8,7 @@ class HIDUsageProxyModel;
 class QListView;
 class QLineEdit;
 class QModelIndex;
+class QHideEvent;
 
 class KeySelectionView : public QWidget {
 	Q_OBJECT
@@ -25,9 +26,11 @@ public:
 	KeySelectionView(QWidget *parent = NULL);
 	bool eventFilter(QObject *obj, QEvent *event);
 	virtual void show();
+	virtual void hideEvent(QHideEvent *e);
 
 signals:
 	void usageSelected(QString name, uint8_t usage);
+	void dismissed();
 
 public slots:
 	void filterChanged(QString);

@@ -86,4 +86,10 @@ void KeySelectionView::sendUsageSelected(const QModelIndex& idx) {
 		mHidUsageModelProxy->data(idx, HIDTables::UsageCode).toInt();
 	emit usageSelected(name, usage);
 	hide();
+	emit dismissed();
+}
+
+
+void KeySelectionView::hideEvent(QHideEvent *e) {
+	emit dismissed();
 }

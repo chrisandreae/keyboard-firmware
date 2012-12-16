@@ -41,6 +41,7 @@ signals:
 
 private slots:
 	void usageSelected(QString name, uint8_t usage);
+	void keySelectionFinished();
 };
 
 #endif

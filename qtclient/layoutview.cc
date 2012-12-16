@@ -83,7 +83,8 @@ void LayoutView::mousePressEvent(QMouseEvent *ev) {
 							SIGNAL(usageSelected(QString, uint8_t)),
 							this,
 							SLOT(usageSelected(QString, uint8_t)));
-					// TODO track mKeySelection hide
+					connect(mKeySelectionView, SIGNAL(dismissed()),
+							this, SLOT(keySelectionFinished()));
 				}
 				mKeySelectionView->show();
 				mUpdatingKeyIndex = it - mLayout->keys.constBegin();
@@ -99,6 +100,9 @@ void LayoutView::usageSelected(QString name, uint8_t usage) {
 		return;
 	}
 	mPresenter->setUsage(mShowingMainLayer, mUpdatingKeyIndex, usage);
+}
+
+void LayoutView::keySelectionFinished() {
 	mUpdatingKeyIndex = -1;
 	update();
 }
