@@ -93,6 +93,8 @@ KeyboardView::KeyboardView(KeyboardPresenter *p,
 
 	connect(mUploadAction, SIGNAL(triggered()),
 	        mPresenter, SLOT(uploadAction()));
+
+	layout()->activate();
 }
 
 void KeyboardView::updateDevices(const QStringList& names) {

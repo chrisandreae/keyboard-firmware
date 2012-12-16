@@ -86,6 +86,7 @@ void LayoutView::mousePressEvent(QMouseEvent *ev) {
 					connect(mKeySelectionView, SIGNAL(dismissed()),
 							this, SLOT(keySelectionFinished()));
 				}
+				mKeySelectionView->move(ev->globalPos());
 				mKeySelectionView->show();
 				mUpdatingKeyIndex = it - mLayout->keys.constBegin();
 				update();
