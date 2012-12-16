@@ -77,6 +77,12 @@ void KeyboardComm::setMapping(const QByteArray& mapping)
 	doVendorRequest(WRITE_MAPPING, Write, const_cast<QByteArray&>(mapping));
 }
 
+QByteArray KeyboardComm::getDefaultMapping() throw (LIBUSBError) {
+	QByteArray mapping(getMappingSize(), 0);
+	doVendorRequest(READ_DEFAULT_MAPPING, Read, mapping);
+	return mapping;
+}
+
 QByteArray KeyboardComm::getPrograms() throw (LIBUSBError) {
 	QByteArray programs(getProgramSpace(), 0);
 	doVendorRequest(READ_PROGRAMS, Read, programs);

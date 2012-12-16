@@ -17,9 +17,6 @@ QList<Program> Program::readPrograms(const QByteArray& programData, int nProgram
 		reinterpret_cast<const char*>(idx + nPrograms);
 
 	for (; idx < idxEnd; idx++) {
-		qDebug() << "idx = " << idx
-				 << " nPrograms=" << nPrograms
-				 << " idx + nPrograms" << (idx + nPrograms);
 		if (idx->offset == 0xffff) {
 			programs << Program();
 		}

@@ -8,13 +8,15 @@
 class Mapping;
 class Layout;
 class LayoutPresenter;
+class LayoutWidget;
 class KeySelectionView;
 
-class LayoutView : public QLabel {
+class LayoutView : public QWidget {
 	Q_OBJECT
 	Q_DISABLE_COPY(LayoutView)
 
 	LayoutPresenter *mPresenter;
+	LayoutWidget *mLayoutWidget;
 
 	const Layout *mLayout;
 	Mapping *mMapping;
@@ -33,8 +35,6 @@ public:
 	void setKeyboard(const Layout *layout, const QPixmap& pixmap);
 
 	void setMapping(Mapping *m);
-	virtual void paintEvent(QPaintEvent* e);
-	virtual void mousePressEvent(QMouseEvent* e);
 
 signals:
 	void buttonClicked(int index, QString name);
@@ -42,6 +42,7 @@ signals:
 private slots:
 	void usageSelected(QString name, uint8_t usage);
 	void keySelectionFinished();
+	void handleKey(int keyIndex);
 };
 
 #endif

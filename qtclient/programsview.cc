@@ -19,9 +19,9 @@ ProgramsView::ProgramsView(ProgramsPresenter *presenter)
 	, mProgramSelectDialog(NULL)
 {
 	QGridLayout *layout = new QGridLayout;
-	layout->addWidget(mProgramsSize = new QLabel, 0, 0);
-	layout->addWidget(mProgramsTable = new QTableView, 1, 0);
-	layout->addWidget(mProgramDump = new QTextEdit, 1, 1, 3, 1);
+	layout->addWidget(mProgramsSize = new QLabel, 0, 0, 1, 2);
+	layout->addWidget(mProgramsTable = new QTableView, 1, 0, 1, 2);
+	layout->addWidget(mProgramDump = new QTextEdit, 1, 3, 2, 1);
 
 	mProgramDump->setReadOnly(true);
 
@@ -33,6 +33,11 @@ ProgramsView::ProgramsView(ProgramsPresenter *presenter)
 	connect(mLoadButton, SIGNAL(clicked()),
 	        this, SLOT(loadProgram()));
 	layout->addWidget(mLoadButton, 2, 0);
+
+	mClearButton = new QPushButton(tr("Clear Program"), this);
+	connect(mClearButton, SIGNAL(clicked()),
+	        this, SLOT(clearProgram()));
+	layout->addWidget(mClearButton, 2, 1);
 
 	setLayout(layout);
 }
@@ -86,6 +91,8 @@ void ProgramsView::selectedProgram(const QModelIndex& index) {
 	}
 
 	mLoadButton->setEnabled(index.isValid());
+	mClearButton->setEnabled(index.isValid() &&
+	                         mPrograms->at(index.row()).getByteCode().length() != 0);
 }
 
 
@@ -122,6 +129,15 @@ void ProgramsView::loadProgram() {
 	}
 	mProgramSelectDialog->setNameFilter("*.k");
 	mProgramSelectDialog->open(this, SLOT(fileSelected(const QString&)));
+}
+
+void ProgramsView::clearProgram() {
+	if (!mProgramsSelection->hasSelection()) {
+		qDebug() << "requested clear with no selection";
+		return;
+	}
+	mPresenter->setProgram(mProgramsSelection->currentIndex().row(),
+	                       QByteArray());
 }
 
 void ProgramsView::fileSelected(const QString& filename) {

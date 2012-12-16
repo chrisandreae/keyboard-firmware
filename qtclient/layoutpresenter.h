@@ -30,6 +30,7 @@ public:
 
 public slots:
 	void setModel(KeyboardModel *model);
+	void loadDefaults();
 };
 
 #endif

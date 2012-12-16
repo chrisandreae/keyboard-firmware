@@ -1,99 +1,78 @@
 #include <Qt>
-#include <QPainter>
-#include <QMouseEvent>
+#include <QCursor>
 #include <QDebug>
+#include <QLayout>
+#include <QPushButton>
 #include "layoutview.h"
 #include "layoutpresenter.h"
 #include "layout.h"
+#include "layoutwidget.h"
 #include "mapping.h"
 #include "keyselectionview.h"
 #include "hidtables.h"
 
 LayoutView::LayoutView(LayoutPresenter *presenter)
 	: mPresenter(presenter)
+	, mLayoutWidget(new LayoutWidget)
 	, mKeySelectionView(NULL)
 	, mShowingMainLayer(true)
 {
-	setAlignment(Qt::AlignLeft | Qt::AlignTop);
-	setMargin(0);
+	QPushButton *loadDefaults;
+
+	QVBoxLayout *layout = new QVBoxLayout;
+	layout->addWidget(loadDefaults = new QPushButton(tr("Load Defaults")));
+	layout->addWidget(mLayoutWidget);
+	setLayout(layout);
 
 	mKeypadColor = QColor::fromRgbF(0, 0, 1, 0.2);
-	mSelectedColor = QColor::fromRgbF(1, 0, 0, 0.2);
 	mUpdatingKeyIndex = -1;
+
+	connect(mLayoutWidget, SIGNAL(buttonClicked(int)),
+	        this, SLOT(handleKey(int)));
+
+	connect(loadDefaults, SIGNAL(clicked()),
+	        mPresenter, SLOT(loadDefaults()));
 }
 
 void LayoutView::setKeyboard(const Layout *layout, const QPixmap& pixmap) {
 	mLayout = layout;
-	setPixmap(pixmap);
+	mLayoutWidget->setKeyboard(layout, pixmap);
 }
 
 void LayoutView::setMapping(Mapping *m) {
 	mMapping = m;
-	update();
+	mLayoutWidget->setUsages(mShowingMainLayer
+	                         ? mMapping->getMainLayer()
+	                         : mMapping->getKeypadLayer());
 }
 
-void LayoutView::paintEvent(QPaintEvent *ev) {
-	QLabel::paintEvent(ev);
-
-	const QList<uint8_t>& usages = mShowingMainLayer ?
-		mMapping->getMainLayer() : mMapping->getKeypadLayer();
-
-	if (!mLayout || usages.empty()) return;
-
-	QPainter painter(this);
-	QTextOption buttonTextOption;
-	buttonTextOption.setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
-	buttonTextOption.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
-
-	for (QList<Layout::Key>::const_iterator it = mLayout->keys.constBegin();
-	     it != mLayout->keys.constEnd();
-	     ++it)
-	{
-		int offset = it - mLayout->keys.constBegin();
-		if (!mShowingMainLayer) {
-			painter.fillRect(it->rect, mKeypadColor);
+void LayoutView::handleKey(int keyIndex) {
+	const Layout::Key& key = mLayout->keys[keyIndex];
+	if (key.name == "LOGICAL_KEY_KEYPAD") {
+		mShowingMainLayer = !mShowingMainLayer;
+		mLayoutWidget->setBackgroundColor(
+		    mShowingMainLayer ? Qt::transparent : mKeypadColor);
+		mLayoutWidget->setUsages(mShowingMainLayer
+		                         ? mMapping->getMainLayer()
+		                         : mMapping->getKeypadLayer());
+	}
+	else {
+		if (!mKeySelectionView) {
+			mKeySelectionView = new KeySelectionView(this);
+			connect(mKeySelectionView,
+					SIGNAL(usageSelected(QString, uint8_t)),
+					this,
+					SLOT(usageSelected(QString, uint8_t)));
+			connect(mKeySelectionView, SIGNAL(dismissed()),
+					this, SLOT(keySelectionFinished()));
 		}
-		if (offset == mUpdatingKeyIndex) {
-			painter.fillRect(it->rect, mSelectedColor);
-		}
-		painter.drawText(it->rect,
-		                 HIDTables::nameUsage(usages[offset]),
-		                 buttonTextOption);
+		mKeySelectionView->move(QCursor::pos());
+		mKeySelectionView->show();
+		mUpdatingKeyIndex = keyIndex;
+		mLayoutWidget->setSelection(mUpdatingKeyIndex);
 	}
 }
 
-
-void LayoutView::mousePressEvent(QMouseEvent *ev) {
-	QLabel::mousePressEvent(ev);
-	if (!mLayout) return;
-
-	for (QList<Layout::Key>::const_iterator it = mLayout->keys.constBegin();
-	     it != mLayout->keys.constEnd();
-	     ++it)
-	{
-		if (it->rect.contains(ev->pos())) {
-			if (it->name == "LOGICAL_KEY_KEYPAD") {
-				mShowingMainLayer = !mShowingMainLayer;
-				update();
-			}
-			else {
-				if (!mKeySelectionView) {
-					mKeySelectionView = new KeySelectionView(this);
-					connect(mKeySelectionView,
-							SIGNAL(usageSelected(QString, uint8_t)),
-							this,
-							SLOT(usageSelected(QString, uint8_t)));
-					connect(mKeySelectionView, SIGNAL(dismissed()),
-							this, SLOT(keySelectionFinished()));
-				}
-				mKeySelectionView->move(ev->globalPos());
-				mKeySelectionView->show();
-				mUpdatingKeyIndex = it - mLayout->keys.constBegin();
-				update();
-			}
-		}
-	}
-}
 
 void LayoutView::usageSelected(QString name, uint8_t usage) {
 	Q_UNUSED(name);
@@ -105,6 +84,5 @@ void LayoutView::usageSelected(QString name, uint8_t usage) {
 }
 
 void LayoutView::keySelectionFinished() {
-	mUpdatingKeyIndex = -1;
-	update();
+	mLayoutWidget->setSelection(QSet<uint8_t>());
 }

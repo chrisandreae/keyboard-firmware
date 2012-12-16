@@ -105,7 +105,14 @@ void LayoutPresenter::setUsage(bool mainLayer, int offset, uint8_t usage) {
 	}
 	mModel->getMapping()->data()[offset] = usage;
 
-	// // since the view has a pointer directly to the model, this is
-	// // redundant. is this poor decomposition?
-	// mView->setMapping(&mMapping);
+	// since the view has a pointer directly to the model, this is
+	// redundant, but used to trigger the repaint. is this poor
+	// decomposition?
+	mView->setMapping(mMapping.data());
+}
+
+void LayoutPresenter::loadDefaults() {
+	*mModel->getMapping() = mModel->getDefaultMapping();
+	mMapping.reset(new Mapping(*mLayout, *mModel->getMapping()));
+	mView->setMapping(mMapping.data());
 }

@@ -80,6 +80,7 @@ public:
 
 	QByteArray getMapping() throw (LIBUSBError);
 	void setMapping(const QByteArray& mapping) throw (LIBUSBError);
+	QByteArray getDefaultMapping() throw (LIBUSBError);
 
 	QByteArray getPrograms() throw (LIBUSBError);
 	void setPrograms(const QByteArray& programs) throw (LIBUSBError);

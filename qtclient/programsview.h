@@ -31,6 +31,7 @@ class ProgramsView : public QWidget {
 	QItemSelectionModel *mProgramsSelection;
 
 	QPushButton *mLoadButton;
+	QPushButton *mClearButton;
 	QFileDialog *mProgramSelectDialog;
 
 public:
@@ -42,6 +43,7 @@ public slots:
 	void updatePrograms();
 	void selectedProgram(const QModelIndex& index);
 	void loadProgram();
+	void clearProgram();
 	void fileSelected(const QString& filename);
 	void programChanged(int idx);
 

@@ -31,6 +31,8 @@ HEADERS += \
 	programsview.h \
 	programsitemmodel.h \
 	programspresenter.h \
+	vm.h \
+	layoutwidget.h \
 
 SOURCES += \
 	keyboardcomm.cc \
@@ -48,6 +50,7 @@ SOURCES += \
 	programsview.cc \
 	programsitemmodel.cc \
 	programspresenter.cc \
+	layoutwidget.cc \
 
 unix {
 	CONFIG += link_pkgconfig

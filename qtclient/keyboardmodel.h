@@ -19,6 +19,7 @@ class KeyboardModel {
 	uint16_t mMacroStorageSize;
 
 	QByteArray mMapping;
+	QByteArray mDefaultMapping;
 	QList<Program> mPrograms;
 
 public:
@@ -32,6 +33,7 @@ public:
 	uint16_t getMacroIndexSize() { return mMacroIndexSize; }
 	uint16_t getMacroStorageSize() { return mMacroStorageSize; }
 	QByteArray *getMapping() { return &mMapping; }
+	QByteArray getDefaultMapping() { return mDefaultMapping; }
 	QList<Program> *getPrograms() { return &mPrograms; }
 
 };
