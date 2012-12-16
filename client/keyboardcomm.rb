@@ -31,6 +31,12 @@ class MacroEntry
     @type = type
     @data = data
   end
+
+  def self.macros_size(macros)
+    macros.inject(2) do |a, m|
+      a + ( m.type == :macro ? (2 + m.data.length) : 0 )
+    end
+  end
 end
 
 class KeyboardComm
@@ -211,6 +217,11 @@ class KeyboardComm
     if macros.length > index_len
       raise "Cannot write #{macros.length} macros, device only supports #{index_len}"
     end
+
+    if MacroEntry.macros_size(macros) > storage_sz
+      raise "Cannot write #{macro_data_sz} bytes of macro data, device only supports #{storage_sz}"
+    end
+
 
     # check storage limits
     macro_data_sz = macros.inject(2) do |a, m|

@@ -629,7 +629,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="macrolabel">
+                  <object class="GtkLabel" id="macro_summary_label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">0/n macros: 0/0 bytes used</property>
@@ -755,12 +755,16 @@
                                       <object class="GtkEntry" id="macro_recording_entry">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
+                                        <property name="events">GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
                                         <property name="editable">False</property>
                                         <property name="invisible_char">•</property>
                                         <property name="primary_icon_activatable">False</property>
                                         <property name="secondary_icon_activatable">False</property>
                                         <property name="primary_icon_sensitive">True</property>
                                         <property name="secondary_icon_sensitive">True</property>
+                                        <signal name="key-release-event" handler="macro_record_key_release_cb" swapped="no"/>
+                                        <signal name="key-press-event" handler="macro_record_key_press_cb" swapped="no"/>
+                                        <signal name="button-release-event" handler="macro_record_clicked_cb" swapped="no"/>
                                       </object>
                                     </child>
                                   </object>

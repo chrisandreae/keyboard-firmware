@@ -56,6 +56,8 @@ class KeyboardView
 
     @macroRecordingEntry = builder.get_object("macro_recording_entry")
 
+    @macroSummaryLabel = builder.get_object("macro_summary_label")
+
     #remapping
     @remapButton = builder.get_object("remap")
 
@@ -130,22 +132,25 @@ class KeyboardView
       when :program
         display = "Program %s" % (m.data + 1)
       when :macro
-        down = Set.new
-        seq = m.data.collect do |x|
-          if down.include? x
-            down.delete(x)
-            "-#{HID_NAMES[x]}"
-          else
-            down.add(x)
-            "+#{HID_NAMES[x]}"
-          end
-        end
-        display = seq.join(" ")
+        display = render_macro_sequence(m.data)
       else
         raise "Unexpected macro entry type #{iter[1]}"
       end
       renderer.text = display
     end
+  end
+
+  def render_macro_sequence(data)
+    down = Set.new
+    data.collect do |x|
+      if down.include? x
+        down.delete(x)
+        "-#{HID_NAMES[x]}"
+      else
+        down.add(x)
+        "+#{HID_NAMES[x]}"
+      end
+    end.join(" ")
   end
 
   ## Presenter interface
@@ -178,6 +183,11 @@ class KeyboardView
       row = @macrosModel.append
       row[0] = m
     end
+    @presenter.updateMacroSizes
+  end
+
+  def setMacroSizes(macroCount, macroMax, macroSize, maxSize)
+    @macroSummaryLabel.text = "#{macroCount}/#{macroMax} macro(s): #{macroSize}/#{maxSize} bytes used"
   end
 
   def updateDeviceList(names)
@@ -283,12 +293,14 @@ class KeyboardView
     selIter = @macrosView.selection.selected
     @presenter.deleteMacroAction(selIter[0])
     @macrosModel.remove(selIter)
+    @presenter.updateMacroSize
   end
 
   def macro_add_clicked_cb(x)
     newmacro = @presenter.addNewMacroAction
     newrow = @macrosModel.append
     newrow[0] = newmacro
+    @presenter.updateMacroSize
   end
 
   def macros_update_editor_frame
@@ -307,7 +319,7 @@ class KeyboardView
       case type
       when :macro
         @macroContentsTabs.page = 0
-        @macroRecordingEntry.text = currentMacro.data.inspect
+        @macroRecordingEntry.text = render_macro_sequence(currentMacro.data)
       when :program
         @macroContentsTabs.page = 1
         @macroProgramCombo.active = currentMacro.data
@@ -334,6 +346,7 @@ class KeyboardView
         @macrosModel.row_changed(nil, iter)
       end
       macros_update_editor_frame
+      @presenter.updateMacroSize
     end
   end
 
@@ -345,6 +358,21 @@ class KeyboardView
     iter = @macrosView.selection.selected
     iter[0].data = combo.active_iter[0]
     @macrosModel.row_changed(nil, iter)
+  end
+
+  def macro_record_key_press_cb(entry, key)
+    kc = Gdk::Keymap.default.translate_keyboard_state(key.hardware_keycode, 0, 0)[0]
+    n = Gdk::Keyval.to_name(kc)
+    print "Press 0x%x (%s)\n" % [kc, n]
+  end
+  def macro_record_key_release_cb(entry, key)
+    hk = key.hardware_keycode
+    sk = key.keyval
+    rk = Gdk::Keymap.default.translate_keyboard_state(hk, 0, 0)
+    print "Release h: 0x%x s: 0x%x r: 0x%x\n" % [hk, sk, rk[0]]
+  end
+  def macro_record_clicked_cb(x, y)
+    print "#{x.inspect} #{y.inspect}\n"
   end
 
 ############### Keyboard image ###############

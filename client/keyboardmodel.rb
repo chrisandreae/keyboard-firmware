@@ -5,7 +5,7 @@ require_relative "keyboardcomm"
 
 class KeyboardModel
   attr_reader :defaultMapping, :programs_count, :programs_space, :keyboardImage, :keyLayout, :keypad
-  attr_accessor :currentMapping, :programs, :macros
+  attr_accessor :currentMapping, :programs, :macros, :macros_index_space, :macros_storage_space, :macros_max_trigger_keys
 
   class Keypad
     attr_reader :key, :layerStart, :layerSize
@@ -37,6 +37,10 @@ class KeyboardModel
     @programs = comm.get_programs
     @macros = comm.get_macros
 
+    @macros_index_space = comm.get_macro_index_size
+    @macros_storage_space = comm.get_macro_storage_size
+    @macros_max_trigger_keys = comm.get_macro_max_keys
+
     layoutFile = File.new("layout/#{@layoutId}.xml", "r")
     xmldata = REXML::Document.new(layoutFile) # todo: use schema to avoid in-code validation, throw if not present
 
@@ -54,6 +58,10 @@ class KeyboardModel
     if keypad != nil
       @keypad = Keypad.new(keypad.attributes["keyindex"].to_i, keypad.attributes["layerstart"].to_i, keypad.attributes["layersize"].to_i)
     end
+  end
+
+  def macrosMax
+    @macros_index_space / (@macros_max_trigger_keys + 2)
   end
 
   # save the current layout and program to a file

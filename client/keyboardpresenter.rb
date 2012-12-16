@@ -49,6 +49,12 @@ class KeyboardPresenter
 
     @view.setMacros(@model.macros)
   end
+
+  def updateMacroSizes
+    @view.setMacroSizes(@model.macros.length, @model.macrosMax,
+                        MacroEntry.macros_size(@model.macros), @model.macros_storage_space)
+  end
+
   def displayDefault
       @view.setKeyboard(@model.keyboardImage, @model.keyLayout, @model.keypad, @model.defaultMapping)
   end
