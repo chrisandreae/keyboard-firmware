@@ -25,6 +25,8 @@ HEADERS += \
 	libusb_wrappers.h \
 	hidtables.h \
 	mapping.h \
+	keyselectionview.h \
+	hidusageproxymodel.h \
 
 SOURCES += \
 	keyboardcomm.cc \
@@ -36,6 +38,8 @@ SOURCES += \
 	layoutview.cc \
 	main.cc \
 	hidtables.cc \
+	keyselectionview.cc \
+	hidusageproxymodel.cc \
 
 unix {
 	CONFIG += link_pkgconfig

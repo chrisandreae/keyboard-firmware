@@ -1,4 +1,5 @@
 #include <iostream>
+#include <QDebug>
 #include "keyboardpresenter.h"
 #include "keyboardcomm.h"
 #include "keyboardmodel.h"
@@ -7,13 +8,7 @@
 KeyboardPresenter::KeyboardPresenter()
 	: mKeyboardModel(NULL)
 {
-	mView.reset(new KeyboardView(createSubviewList()));
-
-	connect(mView.data(), SIGNAL(updateDeviceListAction()),
-	        this, SLOT(updateDeviceListAction()));
-
-	connect(mView.data(), SIGNAL(selectDeviceAction(int)),
-	        this, SLOT(selectDeviceAction(int)));
+	mView.reset(new KeyboardView(this, createSubviewList()));
 
 	// distribute model to sub-presenters
 	connect(this, SIGNAL(modelChanged(KeyboardModel*)),
@@ -23,8 +18,8 @@ KeyboardPresenter::KeyboardPresenter()
 QList<QPair<QString, QWidget*> > KeyboardPresenter::createSubviewList() {
 	QList<QPair<QString, QWidget*> > subviews;
 	subviews.push_back(
-		QPair<QString, QWidget*>(
-			tr("Layout"), mLayoutPresenter.getWidget()));
+	    QPair<QString, QWidget*>(
+	        tr("Layout"), mLayoutPresenter.getWidget()));
 	return subviews;
 }
 
@@ -83,16 +78,33 @@ void KeyboardPresenter::selectDeviceAction(int index) {
 	}
 
 	USBDevice dev = mDevices.at(index);
-	KeyboardComm comm(dev);
-	KeyboardModel *m = new KeyboardModel(comm);
+	mKeyboardComm.reset(new KeyboardComm(dev));
+	downloadAction();
+}
+
+void KeyboardPresenter::downloadAction() {
+	if (!mKeyboardComm) return;
+
+	KeyboardModel *m = new KeyboardModel(*mKeyboardComm);
 	mKeyboardModel.reset(m);
 	emit modelChanged(m);
 	mView->showValues(m->getLayoutID(),
-					  m->getMappingSize(),
-					  m->getNumPrograms(),
-					  m->getProgramSpaceRaw(),
-					  m->getProgramSpace(),
-					  m->getMacroIndexSize(),
-					  m->getMacroStorageSize());
+	                  m->getMappingSize(),
+	                  m->getNumPrograms(),
+	                  m->getProgramSpaceRaw(),
+	                  m->getProgramSpace(),
+	                  m->getMacroIndexSize(),
+	                  m->getMacroStorageSize());
 }
 
+
+void KeyboardPresenter::uploadAction() {
+	if (!mKeyboardComm) return;
+
+	try {
+		mKeyboardComm->setMapping(*mKeyboardModel->getMapping());
+	}
+	catch (LIBUSBError& e) {
+		qDebug() << "LIBUSBError setting mapping: " << e.what();
+	}
+}

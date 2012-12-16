@@ -7,7 +7,7 @@
 
 
 class Mapping {
-	QList<uint8_t> mRegularLayer;
+	QList<uint8_t> mMainLayer;
 	QList<uint8_t> mKeypadLayer;
 
 public:
@@ -17,10 +17,10 @@ public:
 			 it != layout.keys.constEnd();
 			 ++it, ++i)
 		{
-			mRegularLayer.push_back(rawMapping.at(i));
+			mMainLayer.push_back(rawMapping.at(i));
 		}
 
-		mKeypadLayer = mRegularLayer;
+		mKeypadLayer = mMainLayer;
 
 		QList<Layout::Key>::const_iterator keypadStart =
 			layout.keys.constBegin() + layout.keypad.layerStart;
@@ -36,8 +36,8 @@ public:
 		}
 	}
 
-	QList<uint8_t> getRegularLayer() { return mRegularLayer; }
-	QList<uint8_t> getKeypadLayer() { return mKeypadLayer; }
+	QList<uint8_t>& getMainLayer() { return mMainLayer; }
+	QList<uint8_t>& getKeypadLayer() { return mKeypadLayer; }
 };
 
 #endif

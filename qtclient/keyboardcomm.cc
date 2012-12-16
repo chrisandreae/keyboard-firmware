@@ -67,8 +67,14 @@ void KeyboardComm::doVendorRequest(uint8_t request, Direction dir,
 
 QByteArray KeyboardComm::getMapping() throw (LIBUSBError) {
 	QByteArray mapping(getMappingSize(), 0);
-	doVendorRequest(READ_MAPPING, Read, mapping.data(), mapping.length());
+	doVendorRequest(READ_MAPPING, Read, mapping);
 	return mapping;
+}
+
+void KeyboardComm::setMapping(const QByteArray& mapping)
+	throw (LIBUSBError)
+{
+	doVendorRequest(WRITE_MAPPING, Write, const_cast<QByteArray&>(mapping));
 }
 
 #if 0

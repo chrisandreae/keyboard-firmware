@@ -10,6 +10,7 @@
 #include "layoutpresenter.h"
 
 class KeyboardModel;
+class KeyboardComm;
 
 class KeyboardPresenter : public QObject {
 	Q_OBJECT
@@ -18,6 +19,7 @@ class KeyboardPresenter : public QObject {
 	QList<USBDevice> mDevices;
 	QScopedPointer<KeyboardView> mView;
 	QScopedPointer<KeyboardModel> mKeyboardModel;
+	QScopedPointer<KeyboardComm> mKeyboardComm;
 
 	LayoutPresenter mLayoutPresenter;
 
@@ -34,6 +36,8 @@ public slots:
 	void showAction();
 	void selectDeviceAction(int index);
 	void updateDeviceListAction();
+	void uploadAction();
+	void downloadAction();
 };
 
 #endif

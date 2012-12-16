@@ -7,25 +7,40 @@
 
 class Mapping;
 class Layout;
+class LayoutPresenter;
+class KeySelectionView;
 
 class LayoutView : public QLabel {
 	Q_OBJECT
 	Q_DISABLE_COPY(LayoutView)
 
-	QList<uint8_t> mKeyUsages;
+	LayoutPresenter *mPresenter;
+
 	const Layout *mLayout;
-	QScopedPointer<QColor> mBackgroundColor;
+	Mapping *mMapping;
+
+	KeySelectionView *mKeySelectionView;
+
+	QColor mKeypadColor;
+	QColor mSelectedColor;
+	bool mShowingMainLayer;
+
+	int mUpdatingKeyIndex;
 
 public:
-	LayoutView();
+	LayoutView(LayoutPresenter *presenter);
 
 	void setKeyboard(const Layout *layout, const QPixmap& pixmap);
-	void setKeyUsages(const QList<uint8_t>& usages, const QColor* backgroundColor);
+
+	void setMapping(Mapping *m);
 	virtual void paintEvent(QPaintEvent* e);
 	virtual void mousePressEvent(QMouseEvent* e);
 
 signals:
 	void buttonClicked(int index, QString name);
+
+private slots:
+	void usageSelected(QString name, uint8_t usage);
 };
 
 #endif

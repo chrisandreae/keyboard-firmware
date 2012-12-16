@@ -1,3 +1,6 @@
+#include <QStandardItemModel>
+#include <QStandardItem>
+
 #include "hidtables.h"
 
 static const char *usages[] = {
@@ -247,4 +250,18 @@ static const char *usages[] = {
 
 const char *HIDTables::nameUsage(uint8_t usage) {
 	return usages[usage];
+}
+
+QStandardItemModel *HIDTables::newUsageModel(QObject *parent) {
+	QStandardItemModel *model = new QStandardItemModel(parent);
+	const int nUsages = sizeof(usages) / sizeof(*usages);
+	for (int i = 0; i < nUsages; ++i) {
+		if (*usages[i] != '\0') {
+			QStandardItem *item = new QStandardItem;
+			item->setText(QString(usages[i]));
+			item->setData(QVariant(i), UsageCode);
+			model->appendRow(item);
+		}
+	}
+	return model;
 }

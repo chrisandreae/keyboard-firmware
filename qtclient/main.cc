@@ -7,9 +7,11 @@ int main(int argc, char **argv) {
 
 	libusb_init(NULL);
 
-	KeyboardPresenter mainPresenter;
-	mainPresenter.showAction();
+	{
+		KeyboardPresenter mainPresenter;
+		mainPresenter.showAction();
+		app.exec();
+	}
 
-	app.exec();
 	libusb_exit(NULL);
 }

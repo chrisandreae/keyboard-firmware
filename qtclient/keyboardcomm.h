@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <QList>
+#include <QByteArray>
 #include "libusb_wrappers.h"
 #include "keyboard.h"
 
@@ -29,6 +30,16 @@ class KeyboardComm {
 	                     char *buf, int bufLen,
 	                     uint16_t wValue = 0, uint16_t wIndex = 0)
 		throw (LIBUSBError);
+
+	void doVendorRequest(uint8_t request, Direction dir,
+						 QByteArray& buf,
+	                     uint16_t wValue = 0, uint16_t wIndex = 0)
+		throw (LIBUSBError)
+	{
+		doVendorRequest(request, dir,
+						buf.data(), buf.length(),
+						wValue, wIndex);
+	}
 
 public:
 	static QList<USBDevice> enumerate(libusb_context *context = NULL);
@@ -68,6 +79,7 @@ public:
 	}
 
 	QByteArray getMapping() throw (LIBUSBError);
+	void setMapping(const QByteArray& mapping) throw (LIBUSBError);
 };
 
 #endif

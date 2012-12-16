@@ -11,10 +11,7 @@ LayoutPresenter::LayoutPresenter()
 	: mModel(NULL)
 	, mShowingKeypad(false)
 {
-	mView = new LayoutView;
-
-	connect(mView, SIGNAL(buttonClicked(int, QString)),
-			this, SLOT(handleButton(int, QString)));
+	mView = new LayoutView(this);
 }
 
 LayoutPresenter::~LayoutPresenter() {
@@ -92,18 +89,20 @@ void LayoutPresenter::setModel(KeyboardModel *model) {
 	qDebug() << "layout.imageName = " << mLayout->imageName;
 	mView->setKeyboard(mLayout.data(),
 	                   QPixmap(resourceDir + mLayout->imageName));
-	mView->setKeyUsages(mMapping->getRegularLayer(), NULL);
+	mView->setMapping(mMapping.data());
 }
 
-void LayoutPresenter::handleButton(int index, QString name) {
-	qDebug() << "Button clicked! index=" << index << " name=" << name;
-	if (name == "LOGICAL_KEY_KEYPAD") {
-		if (mShowingKeypad = !mShowingKeypad) {
-			QColor c = QColor::fromRgbF(0, 0, 1, 0.2);
-			mView->setKeyUsages(mMapping->getKeypadLayer(), &c);
-		}
-		else {
-			mView->setKeyUsages(mMapping->getRegularLayer(), NULL);
-		}
+void LayoutPresenter::setUsage(bool mainLayer, int offset, uint8_t usage) {
+	QList<uint8_t>& layer = mainLayer ?
+		mMapping->getMainLayer() : mMapping->getKeypadLayer();
+	layer[offset] = usage;
+
+	if (!mainLayer) {
+		offset += mLayout->keys.count() - mLayout->keypad.layerStart;
 	}
+	mModel->getMapping()->data()[offset] = usage;
+
+	// // since the view has a pointer directly to the model, this is
+	// // redundant. is this poor decomposition?
+	// mView->setMapping(&mMapping);
 }

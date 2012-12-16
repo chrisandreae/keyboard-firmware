@@ -22,15 +22,21 @@ enum MyRoles {
 	USBDeviceRole = Qt::UserRole + 1,
 };
 
-KeyboardView::KeyboardView(QList<QPair<QString, QWidget*> > subviews)
+KeyboardView::KeyboardView(KeyboardPresenter *p,
+                           QList<QPair<QString, QWidget*> > subviews)
 {
+	mPresenter = p;
 	QToolBar *toolBar = addToolBar(tr("Keyboard Selection"));
 
 	mRefreshAction = new QAction(tr("Refresh"), this);
+	mDownloadAction = new QAction(tr("Download"), this);
+	mUploadAction = new QAction(tr("Upload"), this);
 
 	mKeyboardSelection = new QComboBox;
 	toolBar->addWidget(mKeyboardSelection);
 	toolBar->addAction(mRefreshAction);
+	toolBar->addAction(mDownloadAction);
+	toolBar->addAction(mUploadAction);
 
 	QStackedWidget *selectionStack =
 	    mSelectionStack = new QStackedWidget;
@@ -77,10 +83,16 @@ KeyboardView::KeyboardView(QList<QPair<QString, QWidget*> > subviews)
 	setWindowTitle(tr("Keyboard Client"));
 
 	connect(mKeyboardSelection, SIGNAL(currentIndexChanged(int)),
-	        this, SIGNAL(selectDeviceAction(int)));
+	        mPresenter, SLOT(selectDeviceAction(int)));
 
 	connect(mRefreshAction, SIGNAL(triggered()),
-	        this, SIGNAL(updateDeviceListAction()));
+	        mPresenter, SLOT(updateDeviceListAction()));
+
+	connect(mDownloadAction, SIGNAL(triggered()),
+	        mPresenter, SLOT(downloadAction()));
+
+	connect(mUploadAction, SIGNAL(triggered()),
+	        mPresenter, SLOT(uploadAction()));
 }
 
 void KeyboardView::updateDevices(const QStringList& names) {

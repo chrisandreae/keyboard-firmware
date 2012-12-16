@@ -29,7 +29,7 @@ public:
 	uint16_t getProgramSpace() { return mProgramSpace; }
 	uint16_t getMacroIndexSize() { return mMacroIndexSize; }
 	uint16_t getMacroStorageSize() { return mMacroStorageSize; }
-	const QByteArray *getMapping() { return &mMapping; }
+	QByteArray *getMapping() { return &mMapping; }
 };
 
 #endif
