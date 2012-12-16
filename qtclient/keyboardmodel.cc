@@ -21,8 +21,9 @@ KeyboardModel::KeyboardModel(KeyboardComm& keyboard)
 	     it != progs.constEnd();
 	     ++it)
 	{
-		qDebug() << "Read program, length=" << it->length() <<
-			" bytecode=[" << it->getByteCode() << "]";
+		qDebug() << "Read program, length=" << it->length();
+		if (it->length() != 0) 
+			qDebug() << "bytecode=[" << (int) it->getByteCode().at(2) << "]";
 	}
 }
 

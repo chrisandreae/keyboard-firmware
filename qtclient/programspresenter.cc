@@ -13,6 +13,11 @@ ProgramsPresenter::~ProgramsPresenter() {
 }
 
 void ProgramsPresenter::setModel(KeyboardModel *model) {
-	mItemModel.reset(new ProgramsItemModel(*model->getPrograms(), model->getProgramSpace()));
-	mView->setModel(mItemModel.data());
+	mKeyboardModel = model;
+	mView->setPrograms(model->getPrograms(), model->getProgramSpace());
+}
+
+void ProgramsPresenter::setProgram(int program, QByteArray newContents) {
+	(*mKeyboardModel->getPrograms())[program].setByteCode(newContents);
+	mView->programChanged(program);
 }

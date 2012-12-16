@@ -107,6 +107,10 @@ void KeyboardPresenter::uploadAction() {
 
 	try {
 		mKeyboardComm->setMapping(*mKeyboardModel->getMapping());
+		mKeyboardComm->setPrograms(
+			Program::encodePrograms(*mKeyboardModel->getPrograms(),
+									mKeyboardModel->getNumPrograms(),
+									mKeyboardModel->getProgramSpaceRaw()));
 	}
 	catch (LIBUSBError& e) {
 		qDebug() << "LIBUSBError setting mapping: " << e.what();

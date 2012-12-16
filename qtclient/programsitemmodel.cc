@@ -11,7 +11,7 @@ QModelIndex ProgramsItemModel::index(int row, int column, const QModelIndex& par
 	if (column < 0 || column > 2 || row < 0 || row > mPrograms.count())
 		return QModelIndex();
 
-	return createIndex(row, column, &mPrograms[row]);
+	return createIndex(row, column, (void*) &mPrograms[row]);
 }
 
 QModelIndex ProgramsItemModel::parent(const QModelIndex& index) const {
@@ -36,8 +36,6 @@ QVariant ProgramsItemModel::data(const QModelIndex& index, int role) const {
 	case SizeColumn:
 		if (role == Qt::DisplayRole)
 			return QString("%1 bytes").arg(p->length());
-		else if (role == ProgramsItemModel::RawData)
-			return p->length();
 		break;
 	}
 	return QVariant();
@@ -52,4 +50,8 @@ QVariant ProgramsItemModel::headerData(int section, Qt::Orientation orientation,
 		}
 	}
 	return QAbstractItemModel::headerData(section, orientation, role);
+}
+
+void ProgramsItemModel::sendChanged(int row) {
+	emit dataChanged(index(row, NameColumn), index(row, SizeColumn));
 }

@@ -8,14 +8,12 @@
 class ProgramsItemModel : public QAbstractItemModel {
 	Q_DISABLE_COPY(ProgramsItemModel)
 
-	QList<Program>& mPrograms;
-	const int mProgramSpace;
+	const QList<Program>& mPrograms;
 
 public:
-	ProgramsItemModel(QList<Program>& programs, int programSpace, QObject *parent = NULL)
+	ProgramsItemModel(const QList<Program>& programs, QObject *parent = NULL)
 		: QAbstractItemModel(parent)
 		, mPrograms(programs)
-		, mProgramSpace(programSpace)
 	{}
 
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const;
@@ -26,11 +24,7 @@ public:
 
 	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
 
-	int getProgramSpace() { return mProgramSpace; }
-
-	enum Roles {
-		RawData = Qt::UserRole + 1
-	};
+	void sendChanged(int row);
 
 	enum Columns {
 		NameColumn, SizeColumn,

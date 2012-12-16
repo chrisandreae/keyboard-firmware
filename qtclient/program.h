@@ -22,7 +22,9 @@ public:
 
 
 	static QList<Program> readPrograms(const QByteArray& programData, int nPrograms);
-	QByteArray encodePrograms();
+	static QByteArray encodePrograms(const QList<Program>& programs, int nPrograms, int maxSize);
+
+	static QString prettyPrintInstruction(const char **p);
 
 	int length() const {
 		return mByteCode.length();
@@ -30,6 +32,10 @@ public:
 
 	QByteArray getByteCode() const {
 		return mByteCode;
+	}
+
+	void setByteCode(QByteArray& bytecode) {
+		mByteCode = bytecode;
 	}
 };
 

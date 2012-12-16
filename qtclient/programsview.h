@@ -12,24 +12,38 @@ class QTableView;
 class QLabel;
 class QTextEdit;
 class QModelIndex;
+class QFileDialog;
+class QItemSelectionModel;
+class QPushButton;
 
 class ProgramsView : public QWidget {
 	Q_OBJECT
 
 	ProgramsPresenter *mPresenter;
-	ProgramsItemModel *mPrograms;
+
+	const QList<Program> *mPrograms;
+	int mProgramSpace;
 
 	QTableView *mProgramsTable;
 	QLabel *mProgramsSize;
-	QLabel *mProgramDump;
+	QTextEdit *mProgramDump;
+	QScopedPointer<ProgramsItemModel> mProgramsModel;
+	QItemSelectionModel *mProgramsSelection;
+
+	QPushButton *mLoadButton;
+	QFileDialog *mProgramSelectDialog;
 
 public:
-	ProgramsView(ProgramsPresenter *p, ProgramsItemModel *programs = NULL);
-	void setModel(ProgramsItemModel *programs);
+	ProgramsView(ProgramsPresenter *p);
+	~ProgramsView();
+	void setPrograms(const QList<Program> *programs, int programSpace);
 
 public slots:
-	void updateProgramsSize();
+	void updatePrograms();
 	void selectedProgram(const QModelIndex& index);
+	void loadProgram();
+	void fileSelected(const QString& filename);
+	void programChanged(int idx);
 
 };
 
