@@ -223,3 +223,52 @@ QString Program::prettyPrintInstruction(const char **p) {
 
 	return result;
 }
+
+QString Program::disassemble(const QByteArray& programData) {
+	QString programDump;
+	const char *p = programData.constData();
+	const VM::program *programHeader =
+		reinterpret_cast<const VM::program *>(p);
+	const char *codeBase = reinterpret_cast<const char*>(
+		&programHeader->methods[programHeader->nmethods]);
+
+	programDump += QString("# Program: nglobals=%1 nmethods=%2\n")
+		.arg(programHeader->nglobals)
+		.arg(programHeader->nmethods);
+
+	for (int mi = 0; mi < programHeader->nmethods; mi++) {
+		const VM::method *methodHeader = &programHeader->methods[mi];
+
+		programDump += QString("# method: args=%1 locals=%2 code_offset=%3\n")
+			.arg(methodHeader->nargs)
+			.arg(methodHeader->nlocals)
+			.arg(methodHeader->code_offset);
+
+		const char *codeEnd;
+		if (mi + 1 == programHeader->nmethods) {
+			codeEnd = p + programData.length();
+		}
+		else {
+			codeEnd = codeBase + reinterpret_cast<const VM::method *>(
+				&programHeader->methods[mi+1])->code_offset;
+		}
+
+		const char *codeStart = codeBase + methodHeader->code_offset;
+		const char *codePtr = codeStart;
+		while (codePtr < codeEnd) {
+			const char *nextInstruction = codePtr;
+			QString prettyInstruction = Program::prettyPrintInstruction(&nextInstruction);
+			QString bytes;
+			for (const char *p = codePtr; p < nextInstruction; ++p) {
+				bytes += QString("%1 ").arg((uint8_t) *p, 2, 16, QLatin1Char('0'));
+			}
+			programDump += QString("%1: %2 %3\n")
+				.arg(codePtr - codeStart, 8, 16, QLatin1Char('0'))
+				.arg(bytes, -15)
+				.arg(prettyInstruction);
+
+			codePtr = nextInstruction;
+		}
+	}
+	return programDump;
+}

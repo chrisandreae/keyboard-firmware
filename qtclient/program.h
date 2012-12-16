@@ -25,6 +25,7 @@ public:
 	static QByteArray encodePrograms(const QList<Program>& programs, int nPrograms, int maxSize);
 
 	static QString prettyPrintInstruction(const char **p);
+	static QString disassemble(const QByteArray& programData);
 
 	int length() const {
 		return mByteCode.length();

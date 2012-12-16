@@ -157,6 +157,20 @@ enum ByteCode {
 	// has been sent.
 	RELEASEMOUSEBUTTONS = 102,
 };
+
+
+typedef struct __attribute__((__packed__)) _method { // Lives in EEEXT
+	uint8_t nargs;
+	uint8_t nlocals;
+	uint16_t code_offset;
+} method;
+
+typedef struct __attribute__((__packed__)) _program { // lives in EEEXT
+	uint8_t nglobals;
+	uint8_t nmethods;
+	method methods[0]; // ...
+} program;
 };
 
 #endif
+

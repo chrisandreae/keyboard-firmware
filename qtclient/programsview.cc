@@ -66,25 +66,10 @@ void ProgramsView::updatePrograms() {
 
 void ProgramsView::selectedProgram(const QModelIndex& index) {
 	if (index.isValid()) {
-		// TODO: this hurts me
 		QString programDump = "<pre>";
 		const Program& program = mPrograms->at(index.row());
-		const char *start = program.getByteCode();
-		const char *end = start + program.length();
-		const char *byteCode = start;
-		while (byteCode < end) {
-			const char *nextInstruction = byteCode;
-			QString prettyInstruction = Program::prettyPrintInstruction(&nextInstruction);
-			QString bytes;
-			for (const char *p = byteCode; p < nextInstruction; ++p) {
-				bytes += QString("%1 ").arg((uint8_t) *p, 2, 16, QLatin1Char('0'));
-			}
-			programDump += QString("%1: %2 %3\n")
-				.arg(byteCode - start, 8, 16, QLatin1Char('0'))
-				.arg(bytes, -15)
-				.arg(prettyInstruction);
-
-			byteCode = nextInstruction;
+		if (program.length() != 0) {
+			programDump += Program::disassemble(program.getByteCode());
 		}
 		programDump += "</pre>";
 		mProgramDump->setText(programDump);
