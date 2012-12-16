@@ -55,7 +55,7 @@ void KeySelectionView::filterChanged(QString filter) {
 }
 
 bool KeySelectionView::eventFilter(QObject *obj, QEvent *event) {
-	if (event->type() == QEvent::KeyPress) {
+	if (obj == mFilter && event->type() == QEvent::KeyPress) {
 		QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 		int key = keyEvent->key();
 		if (key == Qt::Key_Down) {
@@ -76,6 +76,10 @@ bool KeySelectionView::eventFilter(QObject *obj, QEvent *event) {
 			if (idx.isValid())
 				sendUsageSelected(idx);
 		}
+		else {
+			return false;
+		}
+		return true;
 	}
 	return QObject::eventFilter(obj, event);
 }
@@ -91,5 +95,6 @@ void KeySelectionView::sendUsageSelected(const QModelIndex& idx) {
 
 
 void KeySelectionView::hideEvent(QHideEvent *e) {
+	Q_UNUSED(e);
 	emit dismissed();
 }

@@ -7,6 +7,7 @@
  */
 
 QModelIndex ProgramsItemModel::index(int row, int column, const QModelIndex& parent) const {
+	Q_UNUSED(parent);
 	if (column < 0 || column > 2 || row < 0 || row > mPrograms.count())
 		return QModelIndex();
 
@@ -14,12 +15,15 @@ QModelIndex ProgramsItemModel::index(int row, int column, const QModelIndex& par
 }
 
 QModelIndex ProgramsItemModel::parent(const QModelIndex& index) const {
+	Q_UNUSED(index);
 	return QModelIndex();
 }
 int ProgramsItemModel::rowCount(const QModelIndex& parent) const {
+	Q_UNUSED(parent);
 	return mPrograms.count();
 }
 int ProgramsItemModel::columnCount(const QModelIndex& parent) const {
+	Q_UNUSED(parent);
 	return 2;
 }
 QVariant ProgramsItemModel::data(const QModelIndex& index, int role) const {

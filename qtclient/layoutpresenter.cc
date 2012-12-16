@@ -34,6 +34,9 @@ public:
 	                          const QString& qName,
 	                          const QXmlAttributes& atts)
 	{
+		Q_UNUSED(namespaceURI);
+		Q_UNUSED(qName);
+
 		if (localName == "keyboard") {
 			mLayout.layout = atts.value("layout");
 			mLayout.imageName = atts.value("image");

@@ -96,6 +96,7 @@ void LayoutView::mousePressEvent(QMouseEvent *ev) {
 }
 
 void LayoutView::usageSelected(QString name, uint8_t usage) {
+	Q_UNUSED(name);
 	if (mUpdatingKeyIndex < 0) {
 		qDebug() << "got key without selection?!";
 		return;
