@@ -33,7 +33,7 @@ KeySelectionView::KeySelectionView(QWidget *parent)
 	connect(mFilter, SIGNAL(textChanged(QString)),
 			this, SLOT(filterChanged(QString)));
 
-	connect(mUsageList, SIGNAL(pressed(const QModelIndex&)),
+	connect(mUsageList, SIGNAL(clicked(const QModelIndex&)),
 			this, SLOT(sendUsageSelected(const QModelIndex&)));
 
 	layout->addWidget(mFilter, 0, 0);
