@@ -13,13 +13,17 @@ KeyboardPresenter::KeyboardPresenter()
 	// distribute model to sub-presenters
 	connect(this, SIGNAL(modelChanged(KeyboardModel*)),
 			&mLayoutPresenter, SLOT(setModel(KeyboardModel*)));
+
+	connect(this, SIGNAL(modelChanged(KeyboardModel*)),
+			&mProgramsPresenter, SLOT(setModel(KeyboardModel*)));
 }
 
 QList<QPair<QString, QWidget*> > KeyboardPresenter::createSubviewList() {
 	QList<QPair<QString, QWidget*> > subviews;
-	subviews.push_back(
-	    QPair<QString, QWidget*>(
-	        tr("Layout"), mLayoutPresenter.getWidget()));
+	subviews << QPair<QString, QWidget*>(
+		tr("Layout"), mLayoutPresenter.getWidget());
+	subviews << QPair<QString, QWidget*>(
+		tr("Programs"), mProgramsPresenter.getWidget());
 	return subviews;
 }
 

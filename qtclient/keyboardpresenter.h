@@ -8,6 +8,7 @@
 
 #include "keyboardview.h"
 #include "layoutpresenter.h"
+#include "programspresenter.h"
 
 class KeyboardModel;
 class KeyboardComm;
@@ -22,6 +23,7 @@ class KeyboardPresenter : public QObject {
 	QScopedPointer<KeyboardComm> mKeyboardComm;
 
 	LayoutPresenter mLayoutPresenter;
+	ProgramsPresenter mProgramsPresenter;
 
 	QList<QPair<QString, QWidget*> > createSubviewList();
 

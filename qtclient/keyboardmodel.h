@@ -3,6 +3,7 @@
 #define MAINWINDOW_H
 
 #include <QObject>
+#include "program.h"
 #include "mapping.h"
 
 class USBDevice;
@@ -18,6 +19,7 @@ class KeyboardModel {
 	uint16_t mMacroStorageSize;
 
 	QByteArray mMapping;
+	QList<Program> mPrograms;
 
 public:
 	KeyboardModel(KeyboardComm& dev);
@@ -30,6 +32,8 @@ public:
 	uint16_t getMacroIndexSize() { return mMacroIndexSize; }
 	uint16_t getMacroStorageSize() { return mMacroStorageSize; }
 	QByteArray *getMapping() { return &mMapping; }
+	QList<Program> *getPrograms() { return &mPrograms; }
+
 };
 
 #endif

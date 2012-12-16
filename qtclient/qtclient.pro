@@ -27,6 +27,10 @@ HEADERS += \
 	mapping.h \
 	keyselectionview.h \
 	hidusageproxymodel.h \
+	program.h \
+	programsview.h \
+	programsitemmodel.h \
+	programspresenter.h \
 
 SOURCES += \
 	keyboardcomm.cc \
@@ -40,6 +44,10 @@ SOURCES += \
 	hidtables.cc \
 	keyselectionview.cc \
 	hidusageproxymodel.cc \
+	program.cc \
+	programsview.cc \
+	programsitemmodel.cc \
+	programspresenter.cc \
 
 unix {
 	CONFIG += link_pkgconfig

@@ -1,3 +1,5 @@
+#include <QDebug>
+
 #include "keyboardmodel.h"
 #include "keyboardcomm.h"
 
@@ -12,5 +14,15 @@ KeyboardModel::KeyboardModel(KeyboardComm& keyboard)
 	, mMacroIndexSize(keyboard.getMacroIndexSize())
 	, mMacroStorageSize(keyboard.getMacroStorageSize())
 	, mMapping(keyboard.getMapping())
+	, mPrograms(Program::readPrograms(keyboard.getPrograms(), keyboard.getNumPrograms()))
 {
+	QList<Program>& progs = mPrograms;
+	for (QList<Program>::const_iterator it = progs.constBegin();
+	     it != progs.constEnd();
+	     ++it)
+	{
+		qDebug() << "Read program, length=" << it->length() <<
+			" bytecode=[" << it->getByteCode() << "]";
+	}
 }
+
