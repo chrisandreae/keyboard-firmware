@@ -1,80 +1,82 @@
+-*- tab-width: 22 -*-
+
 Virtual machine
 
 Instructions:
 
 mnemonic opcode operand description
-BSTORE   0	byte	locals[operand] = POP_BYTE
-BSTORE_n 1+n		locals[n] = POP_BYTE
-SSTORE	 5	byte	locals[operand] = POP_SHORT
-SSTORE_n 6+n		locals[n] = POP_SHORT
-BLOAD	 10	byte	PUSH_BYTE(locals[operand])	
-BLOAD_n	 11+n		PUSH_BYTE(locals[n])
-SLOAD	 15	byte	PUSH_SHORT(AS_SHORT(locals[operand]))	
-SLOAD_n	 16+n		PUSH_SHORT(AS_SHORT(locals[n]))
-GBSTORE	 20	byte	stack[operand] = POP_BYTE
-GBLOAD	 21	byte	PUSH_BYTE(stack[operand])
-GSSTORE	 22	byte	AS_SHORT(vm->stack[operand]) = POP_SHORT
-GSLOAD	 23	byte	PUSH_SHORT(AS_SHORT(stack[operand]))
-BCONST	 24	byte	PUSH_BYTE(operand)
-BCONST_n 25+n		PUSH_BYTE(n)
-SCONST	 29	short	PUSH_SHORT(operand)
-SCONST_n 30+n		PUSH_SHORT(n)
-DUP	 34		PUSH_BYTE(TOP_BYTE)
-DUP2	 35		PUSH_SHORT(TOP_SHORT)
-POP	 36		POP_BYTE
-POP2	 37		POP_BYTE; POP_BYTE
-SWAP	 38		swap(TOP_BYTE, &(TOP_BYTE)[-1]
-BADD	 48		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a+b)
-BSUBTRACT 49		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a-b)
-BMULTIPLY 50		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a*b)
-BDIVIDE	 51		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a/b)
-BMOD	 52		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a%b)
-BAND	 53		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a&b)
-BOR	 54		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a|b)
-BXOR	 55		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a^b)
-BNOT	 56		PUSH_BYTE(~(POP_BYTE))
-BCMP	 57		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE((a > b) ? 1 : (a == b) ? 0 : -1)
-BLSHIFT  58		s=POP_BYTE;v=POP_BYTE;PUSH_BYTE(v<<s)
-BRSHIFT  59		s=POP_BYTE;v=POP_BYTE;PUSH_BYTE(v>>s)
-SADD	 60		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a+b)
-SSUBTRACT 61		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a-b)
-SMULTIPLY 62		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a*b)
-SDIVIDE	 63		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a/b)
-SMOD	 64		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a%b)
-SAND	 65		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a&b)
-SOR	 66		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a|b)
-SXOR	 67		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a^b)
-SNOT	 68		PUSH_SHORT(~(POP_SHORT))
-SCMP	 69		a=POP_SHORT;b=POP_SHORT;PUSH_BYTE((a > b) ? 1 : (a == b) ? 0 : -1)
-SLSHIFT  70		s=POP_SHORT;v=POP_SHORT;PUSH_SHORT(v<<s)
-SRSHIFT  71		s=POP_SHORT;v=POP_SHORT;PUSH_SHORT(v>>s)
-B2S	 72		PUSH_SHORT((vshort)POP_BYTE)
-S2B	 73		PUSH_BYTE((vbyte)POP_SHORT)
-IFEQ	 74	short	if(!(POP_BYTE==0)) GOTO(operand)
-IFNE	 75	short	if(!(POP_BYTE!=0)) GOTO(operand)
-IFLT	 76	short	if(!(POP_BYTE<0)) GOTO(operand)
-IFGT	 77	short	if(!(POP_BYTE>0)) GOTO(operand)
-IFGE	 78	short	if(!(POP_BYTE>=0)) GOTO(operand)
-IFLE	 79	short	if(!(POP_BYTE<=0)) GOTO(operand)
-GOTO	 80	short	ip += operand - 3; // when ip is pointing at next instruction
-NOP	 81		
-CALL	 82	byte	call operand methodid
-BRET	 83		rv = POP_BYTE; vm_do_return; PUSH_BYTE(rv); /* if return addr 0, VMEXIT */
-SRET	 84		rv = POP_SHORT; vm_do_return; PUSH_SHORT(rv); /* if return addr 0, VMEXIT */
-RET	 85		vm_do_return; /* if return addr 0, VMEXIT */
-VMEXIT	 86		vm->state=STOPPED;return;
+BSTORE	0	byte	locals[operand] = POP_BYTE
+BSTORE_n	1+n		locals[n] = POP_BYTE
+SSTORE	5	byte	locals[operand] = POP_SHORT
+SSTORE_n	6+n		locals[n] = POP_SHORT
+BLOAD	10	byte	PUSH_BYTE(locals[operand])	
+BLOAD_n	11+n		PUSH_BYTE(locals[n])
+SLOAD	15	byte	PUSH_SHORT(AS_SHORT(locals[operand]))	
+SLOAD_n	16+n		PUSH_SHORT(AS_SHORT(locals[n]))
+GBSTORE	20	byte	stack[operand] = POP_BYTE
+GBLOAD	21	byte	PUSH_BYTE(stack[operand])
+GSSTORE	22	byte	AS_SHORT(vm->stack[operand]) = POP_SHORT
+GSLOAD	23	byte	PUSH_SHORT(AS_SHORT(stack[operand]))
+BCONST	24	byte	PUSH_BYTE(operand)
+BCONST_n	25+n		PUSH_BYTE(n)
+SCONST	29	short	PUSH_SHORT(operand)
+SCONST_n	30+n		PUSH_SHORT(n)
+DUP	34		PUSH_BYTE(TOP_BYTE)
+DUP2	35		PUSH_SHORT(TOP_SHORT)
+POP	36		POP_BYTE
+POP2	37		POP_BYTE; POP_BYTE
+SWAP	38		swap(TOP_BYTE, &(TOP_BYTE)[-1]
+BADD	48		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a+b)
+BSUBTRACT	49		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a-b)
+BMULTIPLY	50		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a*b)
+BDIVIDE	51		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a/b)
+BMOD	52		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a%b)
+BAND	53		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a&b)
+BOR	54		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a|b)
+BXOR	55		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE(a^b)
+BNOT	56		PUSH_BYTE(~(POP_BYTE))
+BCMP	57		a=POP_BYTE;b=POP_BYTE;PUSH_BYTE((a > b) ? 1 : (a == b) ? 0 : -1)
+BLSHIFT	58		s=POP_BYTE;v=POP_BYTE;PUSH_BYTE(v<<s)
+BRSHIFT	59		s=POP_BYTE;v=POP_BYTE;PUSH_BYTE(v>>s)
+SADD	60		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a+b)
+SSUBTRACT	61		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a-b)
+SMULTIPLY	62		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a*b)
+SDIVIDE	63		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a/b)
+SMOD	64		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a%b)
+SAND	65		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a&b)
+SOR	66		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a|b)
+SXOR	67		a=POP_SHORT;b=POP_SHORT;PUSH_SHORT(a^b)
+SNOT	68		PUSH_SHORT(~(POP_SHORT))
+SCMP	69		a=POP_SHORT;b=POP_SHORT;PUSH_BYTE((a > b) ? 1 : (a == b) ? 0 : -1)
+SLSHIFT	70		s=POP_SHORT;v=POP_SHORT;PUSH_SHORT(v<<s)
+SRSHIFT	71		s=POP_SHORT;v=POP_SHORT;PUSH_SHORT(v>>s)
+B2S	72		PUSH_SHORT((vshort)POP_BYTE)
+S2B	73		PUSH_BYTE((vbyte)POP_SHORT)
+IFEQ	74	short	if(!(POP_BYTE==0)) GOTO(operand)
+IFNE	75	short	if(!(POP_BYTE!=0)) GOTO(operand)
+IFLT	76	short	if(!(POP_BYTE<0)) GOTO(operand)
+IFGT	77	short	if(!(POP_BYTE>0)) GOTO(operand)
+IFGE	78	short	if(!(POP_BYTE>=0)) GOTO(operand)
+IFLE	79	short	if(!(POP_BYTE<=0)) GOTO(operand)
+GOTO	80	short	ip += operand - 3; // when ip is pointing at next instruction
+NOP	81
+CALL	82	byte	call operand methodid
+BRET	83		rv = POP_BYTE; vm_do_return; PUSH_BYTE(rv); /* if return addr 0, VMEXIT */
+SRET	84		rv = POP_SHORT; vm_do_return; PUSH_SHORT(rv); /* if return addr 0, VMEXIT */
+RET	85		vm_do_return; /* if return addr 0, VMEXIT */
+VMEXIT	86		vm->state=STOPPED;return;
 
 
-PRESSKEY 87		pressKey(POP_BYTE) (WAIT)
+PRESSKEY	87		pressKey(POP_BYTE) (WAIT)
 	// void pressKey(byte h_keycode): causes the argument HID (not physical) key to be pressed. Does
 	// not return until a report has been sent
-RELEASEKEY 88		POP_BYTE (WAIT)
+RELEASEKEY	88		POP_BYTE (WAIT)
 	// void releaseKey(byte h_keycode): causes the argument HID key to be released, if it was being
 	// pressed by this program.
-CHECKKEY 89		POP_BYTE
+CHECKKEY	89		POP_BYTE
 	// void checkKey(byte h_keycode): checks the current state for any key mapped to the argument
 	// HID keycode, returns 1/0
-CHECKPHYSKEY 90		POP_BYTE
+CHECKPHYSKEY	90		POP_BYTE
 	// void checkPhysKey(byte p_keycode): checks the current state for the argument physical key. 0
 	// means the the key that triggered the program. returns 1/0
 WAITKEY	 91		POP_SHORT; POP_BYTE; PUSH_BYTE; (WAIT)
@@ -82,17 +84,17 @@ WAITKEY	 91		POP_SHORT; POP_BYTE; PUSH_BYTE; (WAIT)
 	// the argument HID keycode (or 0 for any key) has been pressed, or the argument time has
 	// elapsed (0 for indefinite).  Returns the mapped HID keycode of the first pressed key (not
 	// necessarily the argument) or 0 if timed out.
-WAITPHYSKEY 92		POP_SHORT; POP_BYTE; PUSH_BYTE (WAIT)
+WAITPHYSKEY	92		POP_SHORT; POP_BYTE; PUSH_BYTE (WAIT)
 	// like waitkey, but takes an argument physical keycode or 0 for the key that
 	// triggered the program. Returns 1 if pressed or 0 if timed out.
 
 DELAY	95		delay(POP_SHORT ms)
 
-GETUPTIMEMS 96		PUSH_SHORT(uptime in milliseconds)
-GETUPTIME 97		PUSH_SHORT(uptime in seconds)
-BUZZ	 98		buzzer(POP_SHORT ms,BUZZER_DEFAULT_TONE)
-BUZZAT	 99		freq=POP_BYTE; buzzer(POP_SHORT ms, freq)
-MOVEMOUSE 100		y=POP_BYTE;x=POP_BYTE;movemouse(x,y) (WAIT)
-PRESSMOUSEBUTTONS 101	pressbuttons(POP_BYTE) (WAIT)
-RELEASEMOUSEBUTTONS 102 releasebuttons(POP_BYTE) (WAIT)
+GETUPTIMEMS	96		PUSH_SHORT(uptime in milliseconds)
+GETUPTIME	97		PUSH_SHORT(uptime in seconds)
+BUZZ	98		buzzer(POP_SHORT ms,BUZZER_DEFAULT_TONE)
+BUZZAT	99		freq=POP_BYTE; buzzer(POP_SHORT ms, freq)
+MOVEMOUSE	100		y=POP_BYTE;x=POP_BYTE;movemouse(x,y) (WAIT)
+PRESSMOUSEBUTTONS	101		pressbuttons(POP_BYTE) (WAIT)
+RELEASEMOUSEBUTTONS	102		 releasebuttons(POP_BYTE) (WAIT)
 
