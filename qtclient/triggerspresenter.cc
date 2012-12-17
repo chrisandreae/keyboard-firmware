@@ -23,6 +23,7 @@ const Trigger* TriggersPresenter::getTrigger(int index) {
 }
 
 void TriggersPresenter::setModel(KeyboardModel *m) {
+	mModel = m;
 	mTriggers = m->getTriggers();
 	mView->triggersChanged();
 }
@@ -37,4 +38,8 @@ int TriggersPresenter::getNumTriggers() {
 		return mTriggers->count();
 	else
 		return 0;
+}
+
+const Layout& TriggersPresenter::getLayout() const {
+	return mModel->getLayout();
 }

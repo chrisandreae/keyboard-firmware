@@ -35,7 +35,8 @@ QVariant TriggersItemModel::data(const QModelIndex& index, int role) const {
 			index.internalPointer());
 		switch (index.column()) {
 		case 0:
-			return Trigger::formatTriggerSet(t->triggerSet());
+			return Trigger::formatTriggerSet(
+				mPresenter->getLayout(), t->triggerSet());
 		case 1:
 			return Trigger::nameType(t->type());
 		case 2:

@@ -15,6 +15,9 @@ TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent)
 	QTableView *mTableView = new QTableView;
 	mTableView->setModel(mItemModel.data());
 	mTableView->horizontalHeader()->setStretchLastSection(true);
+	mTableView->setShowGrid(false);
+	mTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+	mTableView->setSelectionMode(QAbstractItemView::SingleSelection);
 
 	layout->addWidget(mTableView, 0, 0);
 

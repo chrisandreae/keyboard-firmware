@@ -7,6 +7,8 @@
 #include <QByteArray>
 #include <QSet>
 
+class Layout;
+
 class Trigger {
 public:
 	enum TriggerType {
@@ -48,7 +50,8 @@ public:
 
 	static QString nameType(TriggerType type);
 	static QString formatMacro(const QByteArray& macro);
-	static QString formatTriggerSet(const QSet<uint8_t>& macro);
+	static QString formatTriggerSet(const Layout& layout,
+	                                const QSet<uint8_t>& macro);
 };
 
 #endif

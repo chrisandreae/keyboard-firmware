@@ -11,6 +11,7 @@ class Layout {
 public:
 	struct Key {
 		QString name;
+		QString friendlyName;
 		QRect rect;
 	};
 
@@ -25,8 +26,10 @@ public:
 
 	static Layout readLayout(int layoutID);
 	int mappingSize() const {
-		return keys.count() + keypad.layerSize ;
+		return keys.count() + keypad.layerSize;
 	};
+
+	QString namePosition(int position) const;
 };
 
 #endif

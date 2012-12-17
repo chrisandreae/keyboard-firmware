@@ -4,91 +4,91 @@
 <!-- definitions  -->
   <keypad keyindex="0" layerstart="2" layersize="84"/>
   <layout>
-	<key name="LOGICAL_KEY_KEYPAD"		  x="685" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_PROGRAM"		  x="720" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_A"			  x="65" y="174" w="48" h="48"/>
-	<key name="LOGICAL_KEY_B"			  x="276" y="213" w="48" h="48"/>
-	<key name="LOGICAL_KEY_C"			  x="171" y="213" w="48" h="48"/>
-	<key name="LOGICAL_KEY_D"			  x="171" y="161" w="48" h="48"/>
-	<key name="LOGICAL_KEY_E"			  x="171" y="108" w="48" h="48"/>
-	<key name="LOGICAL_KEY_F"			  x="223" y="160" w="48" h="48"/>
-	<key name="LOGICAL_KEY_G"			  x="276" y="160" w="48" h="48"/>
-	<key name="LOGICAL_KEY_H"			  x="427" y="160" w="48" h="48"/>
-	<key name="LOGICAL_KEY_I"			  x="532" y="109" w="48" h="48"/>
-	<key name="LOGICAL_KEY_J"			  x="480" y="161" w="48" h="48"/>
-	<key name="LOGICAL_KEY_K"			  x="532" y="161" w="48" h="48"/>
-	<key name="LOGICAL_KEY_L"			  x="585" y="161" w="48" h="48"/>
-	<key name="LOGICAL_KEY_M"			  x="480" y="213" w="48" h="48"/>
-	<key name="LOGICAL_KEY_N"			  x="428" y="213" w="48" h="48"/>
-	<key name="LOGICAL_KEY_O"			  x="585" y="108" w="48" h="48"/>
-	<key name="LOGICAL_KEY_P"			  x="639" y="122" w="48" h="48"/>
-	<key name="LOGICAL_KEY_Q"			  x="66" y="122" w="48" h="48"/>
-	<key name="LOGICAL_KEY_R"			  x="224" y="109" w="48" h="48"/>
-	<key name="LOGICAL_KEY_S"			  x="119" y="161" w="48" h="48"/>
-	<key name="LOGICAL_KEY_T"			  x="276" y="109" w="48" h="48"/>
-	<key name="LOGICAL_KEY_U"			  x="480" y="109" w="48" h="48"/>
-	<key name="LOGICAL_KEY_V"			  x="223" y="214" w="48" h="48"/>
-	<key name="LOGICAL_KEY_W"			  x="118" y="110" w="48" h="48"/>
-	<key name="LOGICAL_KEY_X"			  x="118" y="213" w="48" h="48"/>
-	<key name="LOGICAL_KEY_Y"			  x="428" y="108" w="48" h="48"/>
-	<key name="LOGICAL_KEY_Z"			  x="66" y="227" w="48" h="48"/>
-	<key name="LOGICAL_KEY_1"			  x="65" y="68" w="48" h="48"/>
-	<key name="LOGICAL_KEY_2"			  x="117" y="56" w="48" h="48"/>
-	<key name="LOGICAL_KEY_3"			  x="171" y="56" w="48" h="48"/>
-	<key name="LOGICAL_KEY_4"			  x="222" y="56" w="48" h="48"/>
-	<key name="LOGICAL_KEY_5"			  x="275" y="56" w="48" h="48"/>
-	<key name="LOGICAL_KEY_6"			  x="427" y="56" w="48" h="48"/>
-	<key name="LOGICAL_KEY_7"			  x="480" y="56" w="48" h="48"/>
-	<key name="LOGICAL_KEY_8"			  x="533" y="56" w="48" h="48"/>
-	<key name="LOGICAL_KEY_9"			  x="586" y="56" w="48" h="48"/>
-	<key name="LOGICAL_KEY_0"			  x="638" y="68" w="48" h="48"/>
-	<key name="LOGICAL_KEY_F1"			  x="39" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_F2"			  x="74" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_F3"			  x="108" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_F4"			  x="144" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_F5"			  x="178" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_F6"			  x="215" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_F7"			  x="250" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_F8"			  x="285" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_F9"			  x="440" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_F10"			  x="475" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_F11"			  x="510" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_F12"			  x="545" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_EQUALS"		  x="1" y="63" w="60" h="48"/>
-	<key name="LOGICAL_KEY_TAB"			  x="1" y="116" w="60" h="48"/>
-	<key name="LOGICAL_KEY_ESC"			  x="3" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_CAPSLOCK"	  x="1" y="168" w="60" h="48"/>
-	<key name="LOGICAL_KEY_LSHIFT"		  x="1" y="220" w="60" h="48"/>
-	<key name="LOGICAL_KEY_UP"			  x="480" y="266" w="48" h="48"/>
-	<key name="LOGICAL_KEY_DOWN"		  x="532" y="266" w="48" h="48"/>
-	<key name="LOGICAL_KEY_LEFT"		  x="171" y="266" w="48" h="48"/>
-	<key name="LOGICAL_KEY_RIGHT"		  x="223" y="266" w="48" h="48"/>
-	<key name="LOGICAL_KEY_LSQUARE"		  x="585" y="266" w="48" h="48"/>
-	<key name="LOGICAL_KEY_RSQUARE"		  x="637" y="280" w="48" h="48"/>
-	<key name="LOGICAL_KEY_SCROLLLOCK"	  x="615" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_PRINTSCREEN"   x="580" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_INTERNATIONAL" x="117" y="266" w="48" h="48"/>
-	<key name="LOGICAL_KEY_BACKTICK"	  x="66" y="280" w="48" h="48"/>
-	<key name="LOGICAL_KEY_HYPHEN"		  x="690" y="63" w="60" h="48"/>
-	<key name="LOGICAL_KEY_PAUSE"		  x="650" y="2" w="29" h="38"/>
-	<key name="LOGICAL_KEY_END"			  x="273" y="457" w="44" h="44"/>
-	<key name="LOGICAL_KEY_HOME"		  x="292" y="407" w="44" h="44"/>
-	<key name="LOGICAL_KEY_DELETE"		  x="234" y="398" w="37" h="73"/>
-	<key name="LOGICAL_KEY_BACKSPACE"	  x="187" y="383" w="37" h="73"/>
-	<key name="LOGICAL_KEY_L_ALT"		  x="309" y="356" w="44" h="44"/>
-	<key name="LOGICAL_KEY_L_CTRL"		  x="259" y="338" w="44" h="44"/>
-	<key name="LOGICAL_KEY_BACKSLASH"	  x="690" y="116" w="60" h="48"/>
-	<key name="LOGICAL_KEY_PGDN"		  x="433" y="456" w="44" h="44"/>
-	<key name="LOGICAL_KEY_PGUP"		  x="416" y="407" w="44" h="44"/>
-	<key name="LOGICAL_KEY_ENTER"		  x="478" y="398" w="37" h="73"/>
-	<key name="LOGICAL_KEY_SPACE"		  x="528" y="380" w="37" h="73"/>
-	<key name="LOGICAL_KEY_R_ALT"		  x="397" y="357" w="44" h="44"/>
-	<key name="LOGICAL_KEY_R_CTRL"		  x="447" y="339" w="44" h="44"/>
-	<key name="LOGICAL_KEY_SEMICOLON"	  x="638" y="174" w="48" h="48"/>
-	<key name="LOGICAL_KEY_QUOTE"		  x="690" y="168" w="60" h="48"/>
-	<key name="LOGICAL_KEY_COMMA"		  x="533" y="213" w="48" h="48"/>
-	<key name="LOGICAL_KEY_PERIOD"		  x="585" y="213" w="48" h="48"/>
-	<key name="LOGICAL_KEY_SLASH"		  x="638" y="227" w="48" h="48"/>
-	<key name="LOGICAL_KEY_RSHIFT"		  x="690" y="220" w="60" h="48"/>
+	<key name="LOGICAL_KEY_KEYPAD" friendlyName="KEYPAD"		  x="685" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_PROGRAM" friendlyName="PROGRAM"		  x="720" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_A" friendlyName="A"			  x="65" y="174" w="48" h="48"/>
+	<key name="LOGICAL_KEY_B" friendlyName="B"			  x="276" y="213" w="48" h="48"/>
+	<key name="LOGICAL_KEY_C" friendlyName="C"			  x="171" y="213" w="48" h="48"/>
+	<key name="LOGICAL_KEY_D" friendlyName="D"			  x="171" y="161" w="48" h="48"/>
+	<key name="LOGICAL_KEY_E" friendlyName="E"			  x="171" y="108" w="48" h="48"/>
+	<key name="LOGICAL_KEY_F" friendlyName="F"			  x="223" y="160" w="48" h="48"/>
+	<key name="LOGICAL_KEY_G" friendlyName="G"			  x="276" y="160" w="48" h="48"/>
+	<key name="LOGICAL_KEY_H" friendlyName="H"			  x="427" y="160" w="48" h="48"/>
+	<key name="LOGICAL_KEY_I" friendlyName="I"			  x="532" y="109" w="48" h="48"/>
+	<key name="LOGICAL_KEY_J" friendlyName="J"			  x="480" y="161" w="48" h="48"/>
+	<key name="LOGICAL_KEY_K" friendlyName="K"			  x="532" y="161" w="48" h="48"/>
+	<key name="LOGICAL_KEY_L" friendlyName="L"			  x="585" y="161" w="48" h="48"/>
+	<key name="LOGICAL_KEY_M" friendlyName="M"			  x="480" y="213" w="48" h="48"/>
+	<key name="LOGICAL_KEY_N" friendlyName="N"			  x="428" y="213" w="48" h="48"/>
+	<key name="LOGICAL_KEY_O" friendlyName="O"			  x="585" y="108" w="48" h="48"/>
+	<key name="LOGICAL_KEY_P" friendlyName="P"			  x="639" y="122" w="48" h="48"/>
+	<key name="LOGICAL_KEY_Q" friendlyName="Q"			  x="66" y="122" w="48" h="48"/>
+	<key name="LOGICAL_KEY_R" friendlyName="R"			  x="224" y="109" w="48" h="48"/>
+	<key name="LOGICAL_KEY_S" friendlyName="S"			  x="119" y="161" w="48" h="48"/>
+	<key name="LOGICAL_KEY_T" friendlyName="T"			  x="276" y="109" w="48" h="48"/>
+	<key name="LOGICAL_KEY_U" friendlyName="U"			  x="480" y="109" w="48" h="48"/>
+	<key name="LOGICAL_KEY_V" friendlyName="V"			  x="223" y="214" w="48" h="48"/>
+	<key name="LOGICAL_KEY_W" friendlyName="W"			  x="118" y="110" w="48" h="48"/>
+	<key name="LOGICAL_KEY_X" friendlyName="X"			  x="118" y="213" w="48" h="48"/>
+	<key name="LOGICAL_KEY_Y" friendlyName="Y"			  x="428" y="108" w="48" h="48"/>
+	<key name="LOGICAL_KEY_Z" friendlyName="Z"			  x="66" y="227" w="48" h="48"/>
+	<key name="LOGICAL_KEY_1" friendlyName="1"			  x="65" y="68" w="48" h="48"/>
+	<key name="LOGICAL_KEY_2" friendlyName="2"			  x="117" y="56" w="48" h="48"/>
+	<key name="LOGICAL_KEY_3" friendlyName="3"			  x="171" y="56" w="48" h="48"/>
+	<key name="LOGICAL_KEY_4" friendlyName="4"			  x="222" y="56" w="48" h="48"/>
+	<key name="LOGICAL_KEY_5" friendlyName="5"			  x="275" y="56" w="48" h="48"/>
+	<key name="LOGICAL_KEY_6" friendlyName="6"			  x="427" y="56" w="48" h="48"/>
+	<key name="LOGICAL_KEY_7" friendlyName="7"			  x="480" y="56" w="48" h="48"/>
+	<key name="LOGICAL_KEY_8" friendlyName="8"			  x="533" y="56" w="48" h="48"/>
+	<key name="LOGICAL_KEY_9" friendlyName="9"			  x="586" y="56" w="48" h="48"/>
+	<key name="LOGICAL_KEY_0" friendlyName="0"			  x="638" y="68" w="48" h="48"/>
+	<key name="LOGICAL_KEY_F1" friendlyName="F1"			  x="39" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_F2" friendlyName="F2"			  x="74" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_F3" friendlyName="F3"			  x="108" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_F4" friendlyName="F4"			  x="144" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_F5" friendlyName="F5"			  x="178" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_F6" friendlyName="F6"			  x="215" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_F7" friendlyName="F7"			  x="250" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_F8" friendlyName="F8"			  x="285" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_F9" friendlyName="F9"			  x="440" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_F10" friendlyName="F10"			  x="475" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_F11" friendlyName="F11"			  x="510" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_F12" friendlyName="F12"			  x="545" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_EQUALS" friendlyName="EQUALS"		  x="1" y="63" w="60" h="48"/>
+	<key name="LOGICAL_KEY_TAB" friendlyName="TAB"			  x="1" y="116" w="60" h="48"/>
+	<key name="LOGICAL_KEY_ESC" friendlyName="ESC"			  x="3" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_CAPSLOCK" friendlyName="CAPSLOCK"	  x="1" y="168" w="60" h="48"/>
+	<key name="LOGICAL_KEY_LSHIFT" friendlyName="LSHIFT"		  x="1" y="220" w="60" h="48"/>
+	<key name="LOGICAL_KEY_UP" friendlyName="UP"			  x="480" y="266" w="48" h="48"/>
+	<key name="LOGICAL_KEY_DOWN" friendlyName="DOWN"		  x="532" y="266" w="48" h="48"/>
+	<key name="LOGICAL_KEY_LEFT" friendlyName="LEFT"		  x="171" y="266" w="48" h="48"/>
+	<key name="LOGICAL_KEY_RIGHT" friendlyName="RIGHT"		  x="223" y="266" w="48" h="48"/>
+	<key name="LOGICAL_KEY_LSQUARE" friendlyName="LSQUARE"		  x="585" y="266" w="48" h="48"/>
+	<key name="LOGICAL_KEY_RSQUARE" friendlyName="RSQUARE"		  x="637" y="280" w="48" h="48"/>
+	<key name="LOGICAL_KEY_SCROLLLOCK" friendlyName="SCROLLLOCK"	  x="615" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_PRINTSCREEN" friendlyName="PRINTSCREEN"   x="580" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_INTERNATIONAL" friendlyName="INTERNATIONAL" x="117" y="266" w="48" h="48"/>
+	<key name="LOGICAL_KEY_BACKTICK" friendlyName="BACKTICK"	  x="66" y="280" w="48" h="48"/>
+	<key name="LOGICAL_KEY_HYPHEN" friendlyName="HYPHEN"		  x="690" y="63" w="60" h="48"/>
+	<key name="LOGICAL_KEY_PAUSE" friendlyName="PAUSE"		  x="650" y="2" w="29" h="38"/>
+	<key name="LOGICAL_KEY_END" friendlyName="END"			  x="273" y="457" w="44" h="44"/>
+	<key name="LOGICAL_KEY_HOME" friendlyName="HOME"		  x="292" y="407" w="44" h="44"/>
+	<key name="LOGICAL_KEY_DELETE" friendlyName="DELETE"		  x="234" y="398" w="37" h="73"/>
+	<key name="LOGICAL_KEY_BACKSPACE" friendlyName="BACKSPACE"	  x="187" y="383" w="37" h="73"/>
+	<key name="LOGICAL_KEY_L_ALT" friendlyName="L_ALT"		  x="309" y="356" w="44" h="44"/>
+	<key name="LOGICAL_KEY_L_CTRL" friendlyName="L_CTRL"		  x="259" y="338" w="44" h="44"/>
+	<key name="LOGICAL_KEY_BACKSLASH" friendlyName="BACKSLASH"	  x="690" y="116" w="60" h="48"/>
+	<key name="LOGICAL_KEY_PGDN" friendlyName="PGDN"		  x="433" y="456" w="44" h="44"/>
+	<key name="LOGICAL_KEY_PGUP" friendlyName="PGUP"		  x="416" y="407" w="44" h="44"/>
+	<key name="LOGICAL_KEY_ENTER" friendlyName="ENTER"		  x="478" y="398" w="37" h="73"/>
+	<key name="LOGICAL_KEY_SPACE" friendlyName="SPACE"		  x="528" y="380" w="37" h="73"/>
+	<key name="LOGICAL_KEY_R_ALT" friendlyName="R_ALT"		  x="397" y="357" w="44" h="44"/>
+	<key name="LOGICAL_KEY_R_CTRL" friendlyName="R_CTRL"		  x="447" y="339" w="44" h="44"/>
+	<key name="LOGICAL_KEY_SEMICOLON" friendlyName="SEMICOLON"	  x="638" y="174" w="48" h="48"/>
+	<key name="LOGICAL_KEY_QUOTE" friendlyName="QUOTE"		  x="690" y="168" w="60" h="48"/>
+	<key name="LOGICAL_KEY_COMMA" friendlyName="COMMA"		  x="533" y="213" w="48" h="48"/>
+	<key name="LOGICAL_KEY_PERIOD" friendlyName="PERIOD"		  x="585" y="213" w="48" h="48"/>
+	<key name="LOGICAL_KEY_SLASH" friendlyName="SLASH"		  x="638" y="227" w="48" h="48"/>
+	<key name="LOGICAL_KEY_RSHIFT" friendlyName="RSHIFT"		  x="690" y="220" w="60" h="48"/>
   </layout>
 </keyboard>

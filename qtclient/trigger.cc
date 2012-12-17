@@ -1,4 +1,5 @@
 #include "trigger.h"
+#include "layout.h"
 #include "hidtables.h"
 
 template <typename T>
@@ -82,15 +83,17 @@ QString Trigger::formatMacro(const QByteArray& macro) {
 	return formatted;
 }
 
-QString Trigger::formatTriggerSet(const QSet<uint8_t>& macro) {
+QString Trigger::formatTriggerSet(const Layout& layout,
+                                  const QSet<uint8_t>& keys)
+{
 	QString formatted;
-	for (QSet<uint8_t>::const_iterator it = macro.constBegin();
-		 it != macro.constEnd();
-		 ++it)
+	for (QSet<uint8_t>::const_iterator it = keys.constBegin();
+	     it != keys.constEnd();
+	     ++it)
 	{
 		if (formatted.length() != 0)
 			formatted += " ";
-		formatted += HIDTables::nameUsage(*it);
+		formatted += layout.namePosition(*it);
 	}
 	return formatted;
 }

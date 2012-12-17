@@ -33,10 +33,11 @@ public:
 		}
 		else if (localName == "key") {
 			Layout::Key k = { atts.value("name"),
-							  QRect(atts.value("x").toInt(),
-									atts.value("y").toInt(),
-									atts.value("w").toInt(),
-									atts.value("h").toInt())
+			                  atts.value("friendlyName"),
+			                  QRect(atts.value("x").toInt(),
+			                        atts.value("y").toInt(),
+			                        atts.value("w").toInt(),
+			                        atts.value("h").toInt())
 			};
 			mLayout.keys.push_back(k);
 		}
@@ -60,4 +61,10 @@ Layout Layout::readLayout(int layoutID) {
 	}
 
 	return layout;
+}
+
+QString Layout::namePosition(int position) const {
+	if (position < 0 || position >= keys.count())
+		return QString("Invalid Position");
+	return keys[position].friendlyName;
 }

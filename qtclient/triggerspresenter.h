@@ -3,6 +3,7 @@
 #define TRIGGERSPRESENTER_H
 
 #include <QObject>
+#include "keyboardmodel.h"
 #include "triggersview.h"
 #include "trigger.h"
 
@@ -13,6 +14,7 @@ class TriggersPresenter : public QObject {
 
 	TriggersView *mView;
 	QList<Trigger>* mTriggers;
+	KeyboardModel *mModel;
 
 public:
 	TriggersPresenter();
@@ -22,8 +24,9 @@ public:
 
 	const Trigger *getTrigger(int index);
 	int getNumTriggers();
-	void setTriggerType(int index, Trigger::TriggerType t);
+	const Layout& getLayout() const;
 
+	void setTriggerType(int index, Trigger::TriggerType t);
 
 public slots:
 	void setModel(KeyboardModel *m);
