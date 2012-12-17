@@ -1,9 +1,11 @@
 #ifndef LAYOUT_H
 #define LAYOUT_H
 
+#include <stdint.h>
 #include <QRect>
 
-struct Layout {
+class Layout {
+public:
 	struct Key {
 		QString name;
 		QRect rect;

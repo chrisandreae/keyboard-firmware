@@ -1,6 +1,7 @@
 #include <exception>
 #include <iostream>
 
+#include <QDebug>
 #include <QList>
 #include <QByteArray>
 
@@ -39,7 +40,7 @@ QList<USBDevice> KeyboardComm::enumerate(libusb_context *context) {
 
 			keyboardDevices.push_back(USBDevice(dev));
 		} catch (LIBUSBError& e) {
-			// TODO: warning?
+			qWarning() << "LIBUSBError when enumerating: " << e.what();
 		}
 	}
 	libusb_free_device_list(deviceList, 1);

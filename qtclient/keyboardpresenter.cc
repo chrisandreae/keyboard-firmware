@@ -40,6 +40,8 @@ void KeyboardPresenter::showAction() {
 }
 
 void KeyboardPresenter::updateDeviceListAction() {
+	mKeyboardComm.reset();
+
 	QStringList names;
 
 	mDevices = KeyboardComm::enumerate();
@@ -64,7 +66,7 @@ void KeyboardPresenter::updateDeviceListAction() {
 			names.push_back(QString(productBuf));
 		}
 		catch (LIBUSBError& e) {
-			// TODO: warning?
+			qWarning() << "LIBUSBError during update: " << e.what();
 		}
 	}
 
@@ -74,6 +76,7 @@ void KeyboardPresenter::updateDeviceListAction() {
 void KeyboardPresenter::selectDeviceAction(int index) {
 	if (index == -1) {
 		mView->showNoKeyboard();
+		mKeyboardComm.reset();
 		return;
 	}
 	else

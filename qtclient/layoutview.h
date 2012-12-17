@@ -2,6 +2,7 @@
 #ifndef LAYOUTVIEW_H
 #define LAYOUTVIEW_H
 
+#include <stdint.h>
 #include <QLabel>
 #include <QPixmap>
 

@@ -2,6 +2,7 @@
 #ifndef LAYOUTPRESENTER_H
 #define LAYOUTPRESENTER_H
 
+#include <stdint.h>
 #include <QObject>
 #include <QScopedPointer>
 

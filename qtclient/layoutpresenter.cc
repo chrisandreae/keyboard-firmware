@@ -68,7 +68,7 @@ void LayoutPresenter::setModel(KeyboardModel *model) {
 	QString resourceDir = QString("%1/../../Resources/Layout/")
 		.arg(QApplication::applicationDirPath());
 #else
-	#error This platform does not have a resource location implementation
+	QString resourceDir = QString(":layout/");
 #endif
 
 	QString layoutImagePath = resourceDir + "kinesis.png";

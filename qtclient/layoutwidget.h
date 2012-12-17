@@ -3,6 +3,7 @@
 #ifndef LAYOUTWDIGET_H
 #define LAYOUTWDIGET_H
 
+#include <stdint.h>
 #include <QLabel>
 #include <QColor>
 #include <QSet>

@@ -3,14 +3,25 @@
 #define PROGRAM_H
 
 #include <QByteArray>
+#include <stdint.h>
 
 // not much more than a QByteArray, still useful to have the distinct
 // type.
 class Program {
+#if MSC_VER
+#pragma pack(push, 1)
+#endif
 	struct ProgramIndex {
 		uint16_t offset;
 		uint16_t length;
-	} __attribute__((packed));
+	}
+#if MSC_VER
+#pragma pack(pop)
+#endif
+#ifdef __GNUC__
+	__attribute__((packed))
+#endif
+		;
 
 	QByteArray mByteCode;
 

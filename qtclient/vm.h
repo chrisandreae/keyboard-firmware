@@ -158,18 +158,33 @@ enum ByteCode {
 	RELEASEMOUSEBUTTONS = 102,
 };
 
+#if MSC_VER
+#pragma pack(push, 1)
+#endif
 
-typedef struct __attribute__((__packed__)) _method { // Lives in EEEXT
+struct method { // Lives in EEEXT
 	uint8_t nargs;
 	uint8_t nlocals;
 	uint16_t code_offset;
-} method;
+} 
+#ifdef __GNUC__
+__attribute__((__packed__))
+#endif
+	;
 
-typedef struct __attribute__((__packed__)) _program { // lives in EEEXT
+struct program { // lives in EEEXT
 	uint8_t nglobals;
 	uint8_t nmethods;
 	method methods[0]; // ...
-} program;
+}
+#ifdef __GNUC__
+__attribute__((__packed__))
+#endif
+	;
+
+#if MSC_VER
+#pragma pack(pop)
+#endif
 };
 
 #endif

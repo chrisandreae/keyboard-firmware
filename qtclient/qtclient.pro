@@ -12,6 +12,10 @@ macx {
 	layout.files = layout/1.xml layout/kinesis.png
 }
 
+!macx {
+	RESOURCES += qtclient.rsc
+}
+
 HEADERS += \
 	keyboard.h \
 	keyboardcomm.h \
@@ -56,3 +60,9 @@ unix {
 	CONFIG += link_pkgconfig
 	PKGCONFIG += libusb-1.0
 }
+
+win32 {
+	INCLUDEPATH += c:\\lib\\libusbx-1.0.14-win\\include\\libusbx-1.0
+	LIBS += -Lc:\\lib\\libusbx-1.0.14-win\\MS32\\static -llibusb-1.0
+}
+

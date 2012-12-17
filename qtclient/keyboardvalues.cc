@@ -14,7 +14,7 @@ KeyboardValues::KeyboardValues(QWidget *parent)
 	: QWidget(parent)
 {
 	QGridLayout *layout = new QGridLayout;
-	int row;
+	int row = 0;
 
 	layout->addWidget(new QLabel("Layout ID"), row, 0);
 	layout->addWidget(layoutID = newDisplay(), row, 1);

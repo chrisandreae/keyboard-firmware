@@ -2,6 +2,7 @@
 #ifndef KEYSELECTIONVIEW_H
 #define KEYSELECTIONVIEW_H
 
+#include <stdint.h>
 #include <QWidget>
 class QStandardItemModel;
 class HIDUsageProxyModel;
