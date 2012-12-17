@@ -64,6 +64,7 @@
 		typedef struct
 		{
 			USB_Descriptor_Configuration_Header_t Config;
+			USB_Descriptor_Interface_t            CFG_Interface;
 			USB_Descriptor_Interface_t            HID1_KeyboardInterface;
 			USB_HID_Descriptor_HID_t              HID1_KeyboardHID;
 			USB_Descriptor_Endpoint_t             HID1_ReportINEndpoint;

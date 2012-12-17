@@ -86,7 +86,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 		switch(rq->bRequest){
 
 		case USBRQ_HID_GET_REPORT:
-			if(!rq->wIndex.word){ // wIndex specifies which interface we're talking about: 0 = kbd, 1 = mouse
+			if(rq->wIndex.word == 1){ // wIndex specifies which interface we're talking about: 0 = ctrl, 1 = kbd, 2 = mouse
 				Fill_KeyboardReport(&KeyboardReportData); // We can assume that this isn't happening at the
 														  // same time as interrupt in reports
 
@@ -103,19 +103,19 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			}
 			break;
 		case USBRQ_HID_SET_REPORT:
-			if (!rq->wIndex.word && rq->wLength.word == 1) { /* We expect one byte reports for keyboard LEDs */
+			if (rq->wIndex.word == 1 && rq->wLength.word == 1) { /* We expect one byte reports for keyboard LEDs */
 				transfer.state.type = LED_REPORT;
 				return USB_NO_MSG; /* Call usbFunctionWrite with data */
 			}
 			break;
 		case USBRQ_HID_GET_IDLE:
-			if(rq->wIndex.word)
+			if(rq->wIndex.word == 2)
 				usbMsgPtr = &mouse_idleRate;
 			else
 				usbMsgPtr = &kbd_idleRate;
 			return 1;
 		case USBRQ_HID_SET_IDLE:
-			if(rq->wIndex.word)
+			if(rq->wIndex.word == 2)
 				mouse_idleRate = rq->wValue.bytes[1];
 			else
 				kbd_idleRate = rq->wValue.bytes[1];

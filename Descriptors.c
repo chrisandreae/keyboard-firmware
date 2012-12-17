@@ -152,7 +152,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		.Header                 = {.Size = sizeof(USB_Descriptor_Configuration_Header_t), .Type = DTYPE_Configuration},
 
 		.TotalConfigurationSize = sizeof(USB_Descriptor_Configuration_t),
-		.TotalInterfaces        = 2,
+		.TotalInterfaces        = 3,
 
 		.ConfigurationNumber    = 1,
 		.ConfigurationStrIndex  = NO_DESCRIPTOR,
@@ -162,11 +162,26 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		.MaxPowerConsumption    = USB_CONFIG_POWER_MA(30)
 	},
 
+	.CFG_Interface = {
+		.Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
+
+		.InterfaceNumber        = 0x00,
+		.AlternateSetting       = 0x00,
+
+		.TotalEndpoints         = 0,
+
+		.Class                  = USB_CSCP_VendorSpecificClass,
+		.SubClass               = USB_CSCP_NoDeviceSubclass,
+		.Protocol               = USB_CSCP_NoDeviceProtocol,
+
+		.InterfaceStrIndex      = NO_DESCRIPTOR
+	},
+
 	.HID1_KeyboardInterface =
 	{
 		.Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
 
-		.InterfaceNumber        = 0x00,
+		.InterfaceNumber        = 0x01,
 		.AlternateSetting       = 0x00,
 
 		.TotalEndpoints         = 1,
@@ -203,7 +218,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 	{
 		.Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
 
-		.InterfaceNumber        = 0x01,
+		.InterfaceNumber        = 0x02,
 		.AlternateSetting       = 0x00,
 
 		.TotalEndpoints         = 1,
@@ -234,7 +249,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 		.EndpointSize           = HID_EPSIZE,
 		.PollingIntervalMS      = 0x01
-	}
+	},
 
 };
 
@@ -416,24 +431,24 @@ usbMsgLen_t usbFunctionDescriptor(usbRequest_t* rq)
 
 			break;
 		case HID_DTYPE_HID:
-			if (!(rq->wIndex.word))
+			if (rq->wIndex.word == 1)
 				{
 					Address = &ConfigurationDescriptor.HID1_KeyboardHID;
 					Size    = sizeof(USB_HID_Descriptor_HID_t);
 				}
-			else
+			else if(rq->wIndex.word == 2)
 				{
 					Address = &ConfigurationDescriptor.HID2_MouseHID;
 					Size    = sizeof(USB_HID_Descriptor_HID_t);
 				}
 			break;
 		case HID_DTYPE_Report:
-			if (!(rq->wIndex.word))
+			if (rq->wIndex.word == 1)
 				{
 					Address = &KeyboardReport;
 					Size    = sizeof(KeyboardReport);
 				}
-			else
+			else if(rq->wIndex.word == 2)
 				{
 					Address = &MouseReport;
 					Size    = sizeof(MouseReport);
