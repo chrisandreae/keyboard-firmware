@@ -8,6 +8,26 @@
 #include "libusb_wrappers.h"
 #include "keyboard.h"
 
+class KeyboardCommError : public std::exception {
+public:
+	enum Cause {
+		Underflow,
+	};
+
+private:
+	static const char *nameException(Cause);
+	const Cause mCause;
+
+public:
+	KeyboardCommError(Cause c)
+		: mCause(c)
+	{}
+
+	virtual const char *what() const throw() {
+		return nameException(mCause);
+	};
+};
+
 class KeyboardComm {
 	USBDeviceHandle mDeviceHandle;
 	unsigned int mTimeout;
@@ -17,9 +37,8 @@ class KeyboardComm {
 	};
 
 	template <typename T>
-	int doSimpleVendorRequest(uint8_t request, Direction dir,
-	                          uint16_t wValue = 0, uint16_t wIndex = 0)
-		throw (LIBUSBError)
+	T doSimpleVendorRequest(int8_t request, Direction dir,
+                            uint16_t wValue = 0, uint16_t wIndex = 0)
 	{
 		T result;
 		doVendorRequest(request, dir, (char*) &result, sizeof(result), wValue, wIndex);
@@ -27,18 +46,16 @@ class KeyboardComm {
 	}
 
 	void doVendorRequest(uint8_t request, Direction dir,
-	                     char *buf, int bufLen,
-	                     uint16_t wValue = 0, uint16_t wIndex = 0)
-		throw (LIBUSBError);
+	                    char *buf, int bufLen,
+	                    uint16_t wValue = 0, uint16_t wIndex = 0);
 
 	void doVendorRequest(uint8_t request, Direction dir,
-						 QByteArray& buf,
-	                     uint16_t wValue = 0, uint16_t wIndex = 0)
-		throw (LIBUSBError)
+	                    QByteArray& buf,
+	                    uint16_t wValue = 0, uint16_t wIndex = 0)
 	{
-		doVendorRequest(request, dir,
-						buf.data(), buf.length(),
-						wValue, wIndex);
+		return doVendorRequest(request, dir,
+		                buf.data(), buf.length(),
+		                wValue, wIndex);
 	}
 
 public:
@@ -50,50 +67,50 @@ public:
 	{
 	}
 
-	uint8_t getLayoutID() throw (LIBUSBError) {
+	uint8_t getLayoutID() {
 		return doSimpleVendorRequest<uint8_t>(READ_LAYOUT_ID, Read);
 	}
 
-	uint8_t getMappingSize() throw (LIBUSBError) {
+	uint8_t getMappingSize() {
 		return doSimpleVendorRequest<uint8_t>(READ_MAPPING_SIZE, Read);
 	}
 
-	uint8_t getNumPrograms() throw (LIBUSBError) {
+	uint8_t getNumPrograms() {
 		return doSimpleVendorRequest<uint8_t>(READ_NUM_PROGRAMS, Read);
 	}
 
-	uint16_t getProgramSpaceRaw() throw (LIBUSBError) {
+	uint16_t getProgramSpaceRaw() {
 		return doSimpleVendorRequest<uint16_t>(READ_PROGRAMS_SIZE, Read);
 	}
 
-	uint16_t getProgramSpace() throw (LIBUSBError) {
+	uint16_t getProgramSpace() {
 		return getProgramSpaceRaw() - getNumPrograms() * 4;
 	}
 
-	uint16_t getMacroIndexSize() throw (LIBUSBError) {
+	uint16_t getMacroIndexSize() {
 		return doSimpleVendorRequest<uint16_t>(READ_MACRO_INDEX_SIZE, Read);
 	}
 
-	uint16_t getMacroStorageSize() throw (LIBUSBError) {
+	uint16_t getMacroStorageSize() {
 		return doSimpleVendorRequest<uint16_t>(READ_MACRO_STORAGE_SIZE, Read);
 	}
 
-	uint8_t getMacroMaxKeys() throw (LIBUSBError) {
+	uint8_t getMacroMaxKeys() {
 		return doSimpleVendorRequest<uint8_t>(READ_MACRO_MAX_KEYS, Read);
 	}
 
-	QByteArray getMapping() throw (LIBUSBError);
-	void setMapping(const QByteArray& mapping) throw (LIBUSBError);
-	QByteArray getDefaultMapping() throw (LIBUSBError);
+	QByteArray getMapping();
+	void setMapping(const QByteArray& mapping);
+	QByteArray getDefaultMapping();
 
-	QByteArray getPrograms() throw (LIBUSBError);
-	void setPrograms(const QByteArray& programs) throw (LIBUSBError);
+	QByteArray getPrograms();
+	void setPrograms(const QByteArray& programs);
 
-	QByteArray getMacroIndex() throw (LIBUSBError);
-	void setMacroIndex(const QByteArray& macroindex) throw (LIBUSBError);
+	QByteArray getMacroIndex();
+	void setMacroIndex(const QByteArray& macroindex);
 
-	QByteArray getMacroStorage() throw (LIBUSBError);
-	void setMacroStorage(const QByteArray& macroStorage) throw (LIBUSBError);
+	QByteArray getMacroStorage();
+	void setMacroStorage(const QByteArray& macroStorage);
 };
 
 #endif

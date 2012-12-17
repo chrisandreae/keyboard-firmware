@@ -10,6 +10,15 @@
 
 #include "keyboardcomm.h"
 
+const char *KeyboardCommError::nameException(KeyboardCommError::Cause c) {
+	switch (c) {
+	case KeyboardCommError::Underflow:
+		return "Underflow";
+	default:
+		return "Unknown Error";
+	}
+}
+
 QList<USBDevice> KeyboardComm::enumerate(libusb_context *context) {
 	libusb_device **deviceList = NULL;
 	int cnt = LIBUSBCheckResult(
@@ -50,9 +59,8 @@ QList<USBDevice> KeyboardComm::enumerate(libusb_context *context) {
 void KeyboardComm::doVendorRequest(uint8_t request, Direction dir,
                                   char *buf, int bufLen,
                                   uint16_t wValue, uint16_t wIndex)
-	throw (LIBUSBError)
 {
-	LIBUSBCheckResult(
+	int returnSize =  LIBUSBCheckResult(
 	    libusb_control_transfer(
 	        mDeviceHandle,
 	        LIBUSB_REQUEST_TYPE_VENDOR
@@ -63,54 +71,55 @@ void KeyboardComm::doVendorRequest(uint8_t request, Direction dir,
 	        wIndex,
 	        (unsigned char*) buf, bufLen,
 	        mTimeout));
+	if (returnSize != bufLen)
+		throw KeyboardCommError(KeyboardCommError::Underflow);
 }
 
 
-QByteArray KeyboardComm::getMapping() throw (LIBUSBError) {
+QByteArray KeyboardComm::getMapping() {
 	QByteArray mapping(getMappingSize(), 0);
 	doVendorRequest(READ_MAPPING, Read, mapping);
 	return mapping;
 }
 
 void KeyboardComm::setMapping(const QByteArray& mapping)
-	throw (LIBUSBError)
 {
 	doVendorRequest(WRITE_MAPPING, Write, const_cast<QByteArray&>(mapping));
 }
 
-QByteArray KeyboardComm::getDefaultMapping() throw (LIBUSBError) {
+QByteArray KeyboardComm::getDefaultMapping() {
 	QByteArray mapping(getMappingSize(), 0);
 	doVendorRequest(READ_DEFAULT_MAPPING, Read, mapping);
 	return mapping;
 }
 
-QByteArray KeyboardComm::getPrograms() throw (LIBUSBError) {
+QByteArray KeyboardComm::getPrograms() {
 	QByteArray programs(getProgramSpaceRaw(), 0);
 	doVendorRequest(READ_PROGRAMS, Read, programs);
 	return programs;
 }
 
-void KeyboardComm::setPrograms(const QByteArray& programs) throw (LIBUSBError) {
+void KeyboardComm::setPrograms(const QByteArray& programs) {
 	doVendorRequest(WRITE_PROGRAMS, Write, const_cast<QByteArray&>(programs));
 }
 
-QByteArray KeyboardComm::getMacroIndex() throw (LIBUSBError) {
+QByteArray KeyboardComm::getMacroIndex() {
 	QByteArray macroIndex(getMacroIndexSize(), 0);
 	doVendorRequest(READ_MACRO_INDEX, Read, macroIndex);
 	return macroIndex;
 }
 
-void KeyboardComm::setMacroIndex(const QByteArray& macroIndex) throw (LIBUSBError) {
+void KeyboardComm::setMacroIndex(const QByteArray& macroIndex) {
 	doVendorRequest(WRITE_MACRO_INDEX, Write, const_cast<QByteArray&>(macroIndex));
 }
 
-QByteArray KeyboardComm::getMacroStorage() throw (LIBUSBError) {
+QByteArray KeyboardComm::getMacroStorage() {
 	QByteArray macroStorage(getMacroStorageSize(), 0);
 	doVendorRequest(READ_MACRO_STORAGE, Read, macroStorage);
 	return macroStorage;
 }
 
-void KeyboardComm::setMacroStorage(const QByteArray& macroStorage) throw (LIBUSBError) {
+void KeyboardComm::setMacroStorage(const QByteArray& macroStorage) {
 	doVendorRequest(WRITE_MACRO_STORAGE, Write, const_cast<QByteArray&>(macroStorage));
 }
 
