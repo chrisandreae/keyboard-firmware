@@ -1,3 +1,5 @@
+#include <iterator>
+
 #include "trigger.h"
 #include "layout.h"
 #include "hidtables.h"
@@ -86,9 +88,15 @@ QString Trigger::formatMacro(const QByteArray& macro) {
 QString Trigger::formatTriggerSet(const Layout& layout,
                                   const QSet<uint8_t>& keys)
 {
+	QList<uint8_t> keyList;
+	keyList.reserve(keys.count());
+	qCopy(keys.constBegin(), keys.constEnd(),
+	      std::back_inserter(keyList));
+	qSort(keyList.begin(), keyList.end(), qGreater<uint8_t>());
+
 	QString formatted;
-	for (QSet<uint8_t>::const_iterator it = keys.constBegin();
-	     it != keys.constEnd();
+	for (QList<uint8_t>::const_iterator it = keyList.constBegin();
+	     it != keyList.constEnd();
 	     ++it)
 	{
 		if (formatted.length() != 0)
