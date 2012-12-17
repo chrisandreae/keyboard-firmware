@@ -1,4 +1,4 @@
-#include <QGridLayout>
+#include <QFormLayout>
 #include <QLabel>
 #include <QLineEdit>
 
@@ -13,36 +13,28 @@ static QLineEdit *newDisplay() {
 KeyboardValues::KeyboardValues(QWidget *parent)
 	: QWidget(parent)
 {
-	QGridLayout *layout = new QGridLayout;
-	int row = 0;
+	QFormLayout *layout = new QFormLayout;
 
-	layout->addWidget(new QLabel("Layout ID"), row, 0);
-	layout->addWidget(layoutID = newDisplay(), row, 1);
-	++row;
+	layout->addRow(new QLabel("Layout ID"),
+	               layoutID = newDisplay());
 
-	layout->addWidget(new QLabel("Mapping Size"), row, 0);
-	layout->addWidget(mappingSize = newDisplay(), row, 1);
-	++row;
+	layout->addRow(new QLabel("Mapping Size"),
+	               mappingSize = newDisplay());
 
-	layout->addWidget(new QLabel("Num Programs"), row, 0);
-	layout->addWidget(numPrograms = newDisplay(), row, 1);
-	++row;
+	layout->addRow(new QLabel("Num Programs"),
+	               numPrograms = newDisplay());
 
-	layout->addWidget(new QLabel("Program Space (raw)"), row, 0);
-	layout->addWidget(programSpaceRaw = newDisplay(), row, 1);
-	++row;
+	layout->addRow(new QLabel("Program Space (raw)"),
+	               programSpaceRaw = newDisplay());
 
-	layout->addWidget(new QLabel("Program Space"), row, 0);
-	layout->addWidget(programSpace = newDisplay(), row, 1);
-	++row;
+	layout->addRow(new QLabel("Program Space"),
+	               programSpace = newDisplay());
 
-	layout->addWidget(new QLabel("Macro Index Size"), row, 0);
-	layout->addWidget(macroIndexSize = newDisplay(), row, 1);
-	++row;
+	layout->addRow(new QLabel("Macro Index Size"),
+	               macroIndexSize = newDisplay());
 
-	layout->addWidget(new QLabel("Macro Storage Size"), row, 0);
-	layout->addWidget(macroStorageSize = newDisplay(), row, 1);
-	++row;
+	layout->addRow(new QLabel("Macro Storage Size"),
+	               macroStorageSize = newDisplay());
 
 	setLayout(layout);
 }

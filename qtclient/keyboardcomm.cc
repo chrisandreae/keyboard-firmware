@@ -85,13 +85,33 @@ QByteArray KeyboardComm::getDefaultMapping() throw (LIBUSBError) {
 }
 
 QByteArray KeyboardComm::getPrograms() throw (LIBUSBError) {
-	QByteArray programs(getProgramSpace(), 0);
+	QByteArray programs(getProgramSpaceRaw(), 0);
 	doVendorRequest(READ_PROGRAMS, Read, programs);
 	return programs;
 }
 
 void KeyboardComm::setPrograms(const QByteArray& programs) throw (LIBUSBError) {
 	doVendorRequest(WRITE_PROGRAMS, Write, const_cast<QByteArray&>(programs));
+}
+
+QByteArray KeyboardComm::getMacroIndex() throw (LIBUSBError) {
+	QByteArray macroIndex(getMacroIndexSize(), 0);
+	doVendorRequest(READ_MACRO_INDEX, Read, macroIndex);
+	return macroIndex;
+}
+
+void KeyboardComm::setMacroIndex(const QByteArray& macroIndex) throw (LIBUSBError) {
+	doVendorRequest(WRITE_MACRO_INDEX, Write, const_cast<QByteArray&>(macroIndex));
+}
+
+QByteArray KeyboardComm::getMacroStorage() throw (LIBUSBError) {
+	QByteArray macroStorage(getMacroStorageSize(), 0);
+	doVendorRequest(READ_MACRO_STORAGE, Read, macroStorage);
+	return macroStorage;
+}
+
+void KeyboardComm::setMacroStorage(const QByteArray& macroStorage) throw (LIBUSBError) {
+	doVendorRequest(WRITE_MACRO_STORAGE, Write, const_cast<QByteArray&>(macroStorage));
 }
 
 #if 0

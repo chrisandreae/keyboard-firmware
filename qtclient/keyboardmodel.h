@@ -5,6 +5,7 @@
 #include <QObject>
 #include "program.h"
 #include "mapping.h"
+#include "trigger.h"
 
 class USBDevice;
 class KeyboardComm;
@@ -21,6 +22,7 @@ class KeyboardModel {
 	QByteArray mMapping;
 	QByteArray mDefaultMapping;
 	QList<Program> mPrograms;
+	QList<Trigger> mTriggers;
 
 public:
 	KeyboardModel(KeyboardComm& dev);
@@ -35,6 +37,7 @@ public:
 	QByteArray *getMapping() { return &mMapping; }
 	QByteArray getDefaultMapping() { return mDefaultMapping; }
 	QList<Program> *getPrograms() { return &mPrograms; }
+	QList<Trigger> *getTriggers() { return &mTriggers; }
 
 };
 

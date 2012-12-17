@@ -16,6 +16,9 @@ KeyboardPresenter::KeyboardPresenter()
 
 	connect(this, SIGNAL(modelChanged(KeyboardModel*)),
 			&mProgramsPresenter, SLOT(setModel(KeyboardModel*)));
+
+	connect(this, SIGNAL(modelChanged(KeyboardModel*)),
+			&mTriggersPresenter, SLOT(setModel(KeyboardModel*)));
 }
 
 QList<QPair<QString, QWidget*> > KeyboardPresenter::createSubviewList() {
@@ -24,6 +27,8 @@ QList<QPair<QString, QWidget*> > KeyboardPresenter::createSubviewList() {
 		tr("Layout"), mLayoutPresenter.getWidget());
 	subviews << QPair<QString, QWidget*>(
 		tr("Programs"), mProgramsPresenter.getWidget());
+	subviews << QPair<QString, QWidget*>(
+		tr("Triggers"), mTriggersPresenter.getWidget());
 	return subviews;
 }
 

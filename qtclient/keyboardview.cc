@@ -49,9 +49,6 @@ KeyboardView::KeyboardView(KeyboardPresenter *p,
 	QListWidget *subviewList = new QListWidget;
 	QStackedWidget *subviewStack = new QStackedWidget;
 
-	subviewList->addItem(tr("Values"));
-	subviewStack->addWidget(mKeyboardValues = new KeyboardValues);
-
 	if (!subviews.empty()) {
 		for (QList<QPair<QString, QWidget*> >::iterator it = subviews.begin();
 			 it != subviews.end();
@@ -62,6 +59,9 @@ KeyboardView::KeyboardView(KeyboardPresenter *p,
 			subviewStack->addWidget(sv.second);
 		}
 	}
+
+	subviewList->addItem(tr("Advanced"));
+	subviewStack->addWidget(mKeyboardValues = new KeyboardValues);
 
 	subviewList->addItem(tr("About"));
 	subviewStack->addWidget(new QLabel(tr("About")));

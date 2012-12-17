@@ -2,6 +2,7 @@
 
 #include "keyboardmodel.h"
 #include "keyboardcomm.h"
+#include "trigger.h"
 
 #include "libusb_wrappers.h"
 
@@ -15,6 +16,11 @@ KeyboardModel::KeyboardModel(KeyboardComm& keyboard)
 	, mMacroStorageSize(keyboard.getMacroStorageSize())
 	, mMapping(keyboard.getMapping())
 	, mDefaultMapping(keyboard.getDefaultMapping())
-	, mPrograms(Program::readPrograms(keyboard.getPrograms(), keyboard.getNumPrograms()))
+	, mPrograms(
+	    Program::readPrograms(keyboard.getPrograms(),
+	                          keyboard.getNumPrograms()))
+	, mTriggers(
+	    Trigger::readTriggers(keyboard.getMacroIndex(),
+	                          keyboard.getMacroStorage(),
+	                          keyboard.getMacroMaxKeys()))
 {}
-

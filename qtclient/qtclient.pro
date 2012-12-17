@@ -28,6 +28,10 @@ HEADERS += \
 	programspresenter.h \
 	vm.h \
 	layoutwidget.h \
+	triggersview.h \
+	triggerspresenter.h \
+	triggersitemmodel.h \
+	trigger.h \
 
 SOURCES += \
 	keyboardcomm.cc \
@@ -46,6 +50,10 @@ SOURCES += \
 	programsitemmodel.cc \
 	programspresenter.cc \
 	layoutwidget.cc \
+	triggersview.cc \
+	triggerspresenter.cc \
+	triggersitemmodel.cc \
+	trigger.cc \
 
 unix {
 	CONFIG += link_pkgconfig

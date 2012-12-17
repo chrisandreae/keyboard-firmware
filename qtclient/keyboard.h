@@ -20,6 +20,7 @@ typedef enum _vendor_request {
 	WRITE_MACRO_INDEX, READ_MACRO_INDEX,
 	READ_MACRO_STORAGE_SIZE,
 	WRITE_MACRO_STORAGE, READ_MACRO_STORAGE,
+	READ_MACRO_MAX_KEYS,
 
 	// Not guarded by preprocessor to avoid magic constants changing
 	// due to configuration.

@@ -78,12 +78,22 @@ public:
 		return doSimpleVendorRequest<uint16_t>(READ_MACRO_STORAGE_SIZE, Read);
 	}
 
+	uint8_t getMacroMaxKeys() throw (LIBUSBError) {
+		return doSimpleVendorRequest<uint8_t>(READ_MACRO_MAX_KEYS, Read);
+	}
+
 	QByteArray getMapping() throw (LIBUSBError);
 	void setMapping(const QByteArray& mapping) throw (LIBUSBError);
 	QByteArray getDefaultMapping() throw (LIBUSBError);
 
 	QByteArray getPrograms() throw (LIBUSBError);
 	void setPrograms(const QByteArray& programs) throw (LIBUSBError);
+
+	QByteArray getMacroIndex() throw (LIBUSBError);
+	void setMacroIndex(const QByteArray& macroindex) throw (LIBUSBError);
+
+	QByteArray getMacroStorage() throw (LIBUSBError);
+	void setMacroStorage(const QByteArray& macroStorage) throw (LIBUSBError);
 };
 
 #endif
