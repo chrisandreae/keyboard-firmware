@@ -34,9 +34,9 @@ LayoutView::LayoutView(LayoutPresenter *presenter)
 	        mPresenter, SLOT(loadDefaults()));
 }
 
-void LayoutView::setKeyboard(const Layout *layout, const QPixmap& pixmap) {
+void LayoutView::setKeyboardLayout(const Layout *layout) {
 	mLayout = layout;
-	mLayoutWidget->setKeyboard(layout, pixmap);
+	mLayoutWidget->setKeyboardLayout(layout);
 }
 
 void LayoutView::setMapping(Mapping *m) {

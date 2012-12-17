@@ -1,8 +1,11 @@
+// -*- c++ -*-
 #ifndef LAYOUT_H
 #define LAYOUT_H
 
 #include <stdint.h>
 #include <QRect>
+#include <QString>
+#include <QList>
 
 class Layout {
 public:
@@ -19,6 +22,11 @@ public:
 		uint8_t layerStart;
 		uint8_t layerSize;
 	} keypad;
+
+	static Layout readLayout(int layoutID);
+	int mappingSize() const {
+		return keys.count() + keypad.layerSize ;
+	};
 };
 
 #endif

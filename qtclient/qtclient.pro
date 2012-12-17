@@ -54,6 +54,8 @@ SOURCES += \
 	triggerspresenter.cc \
 	triggersitemmodel.cc \
 	trigger.cc \
+	mapping.cc \
+	layout.cc \
 
 unix {
 	CONFIG += link_pkgconfig

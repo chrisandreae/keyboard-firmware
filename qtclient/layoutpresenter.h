@@ -17,11 +17,13 @@ class LayoutPresenter : public QObject {
 
 	LayoutView *mView;
 	KeyboardModel *mModel;
-	QScopedPointer<Layout> mLayout;
-	QScopedPointer<Mapping> mMapping;
 
 	QScopedPointer<KeySelectionView> mKeySelectionView;
 	bool mShowingKeypad;
+
+	Mapping *mMapping;
+	const Layout* mLayout;
+
 public:
 	LayoutPresenter();
 	~LayoutPresenter();

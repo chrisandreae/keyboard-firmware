@@ -33,7 +33,7 @@ class LayoutView : public QWidget {
 public:
 	LayoutView(LayoutPresenter *presenter);
 
-	void setKeyboard(const Layout *layout, const QPixmap& pixmap);
+	void setKeyboardLayout(const Layout *layout);
 
 	void setMapping(Mapping *m);
 

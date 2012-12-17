@@ -33,13 +33,16 @@ public:
 		mSelectedColor = QColor::fromRgbF(1, 0, 0, 0.2);
 	}
 
-	void setKeyboard(const Layout *layout, const QPixmap& pixmap);
-	void paintEvent(QPaintEvent *ev);
-	void mousePressEvent(QMouseEvent *ev);
-	void setBackgroundColor(const QColor& color);
+	void setKeyboardLayout(const Layout *layout);
+	void setUsages(const QList<uint8_t>& usages);
+
 	void setSelection(const QSet<uint8_t>& selectedKeys);
 	void setSelection(uint8_t selectedKey);
-	void setUsages(const QList<uint8_t>& usages);
+
+	void setBackgroundColor(const QColor& color);
+
+	void paintEvent(QPaintEvent *ev);
+	void mousePressEvent(QMouseEvent *ev);
 
 signals:
 	void buttonClicked(int index);

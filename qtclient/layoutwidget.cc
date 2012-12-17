@@ -30,9 +30,9 @@ void LayoutWidget::paintEvent(QPaintEvent *ev) {
 	}
 }
 
-void LayoutWidget::setKeyboard(const Layout *layout, const QPixmap& pixmap) {
+void LayoutWidget::setKeyboardLayout(const Layout *layout) {
 	mLayout = layout;
-	setPixmap(pixmap);
+	setPixmap(QPixmap(QString(":layout/%1").arg(layout->imageName)));
 }
 
 void LayoutWidget::mousePressEvent(QMouseEvent *ev) {

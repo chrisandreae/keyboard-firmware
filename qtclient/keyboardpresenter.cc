@@ -114,7 +114,9 @@ void KeyboardPresenter::uploadAction() {
 	if (!mKeyboardComm) return;
 
 	try {
-		mKeyboardComm->setMapping(*mKeyboardModel->getMapping());
+		mKeyboardComm->setMapping(
+			mKeyboardModel->getMapping().encodeMapping());
+
 		mKeyboardComm->setPrograms(
 			Program::encodePrograms(*mKeyboardModel->getPrograms(),
 									mKeyboardModel->getNumPrograms(),

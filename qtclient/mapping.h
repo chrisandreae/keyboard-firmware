@@ -7,37 +7,26 @@
 
 
 class Mapping {
+	const Layout& mLayout;
 	QList<uint8_t> mMainLayer;
 	QList<uint8_t> mKeypadLayer;
 
 public:
-	Mapping(const Layout& layout, const QByteArray& rawMapping) {
-		int i = 0;
-		for (QList<Layout::Key>::const_iterator it = layout.keys.constBegin();
-			 it != layout.keys.constEnd();
-			 ++it, ++i)
-		{
-			mMainLayer.push_back(rawMapping.at(i));
-		}
+	Mapping(const Layout& layout)
+		: mLayout(layout)
+	{}
 
-		mKeypadLayer = mMainLayer;
-
-		QList<Layout::Key>::const_iterator keypadStart =
-			layout.keys.constBegin() + layout.keypad.layerStart;
-		QList<Layout::Key>::const_iterator keypadEnd =
-			keypadStart + layout.keypad.layerSize;
-
-		for (QList<Layout::Key>::const_iterator it = keypadStart;
-			 it != keypadEnd;
-			 ++it, ++i)
-		{
-			mKeypadLayer[it - keypadStart + layout.keypad.layerStart]
-				= rawMapping.at(i);
-		}
+	Mapping(const Layout& layout, const QByteArray& rawMapping)
+		: mLayout(layout)
+	{
+		setMapping(rawMapping);
 	}
 
 	QList<uint8_t>& getMainLayer() { return mMainLayer; }
 	QList<uint8_t>& getKeypadLayer() { return mKeypadLayer; }
+
+	void setMapping(const QByteArray& rawMapping);
+	QByteArray encodeMapping() const;
 };
 
 #endif

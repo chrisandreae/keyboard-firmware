@@ -19,10 +19,14 @@ class KeyboardModel {
 	uint16_t mMacroIndexSize;
 	uint16_t mMacroStorageSize;
 
-	QByteArray mMapping;
 	QByteArray mDefaultMapping;
 	QList<Program> mPrograms;
 	QList<Trigger> mTriggers;
+
+	// not strictly part of the model, but useful for interpreting it
+	Layout mLayout;
+
+	Mapping mMapping;
 
 public:
 	KeyboardModel(KeyboardComm& dev);
@@ -34,11 +38,11 @@ public:
 	uint16_t getProgramSpace() { return mProgramSpace; }
 	uint16_t getMacroIndexSize() { return mMacroIndexSize; }
 	uint16_t getMacroStorageSize() { return mMacroStorageSize; }
-	QByteArray *getMapping() { return &mMapping; }
-	QByteArray getDefaultMapping() { return mDefaultMapping; }
+	QByteArray getDefaultRawMapping() { return mDefaultMapping; }
 	QList<Program> *getPrograms() { return &mPrograms; }
 	QList<Trigger> *getTriggers() { return &mTriggers; }
-
+	const Layout& getLayout() { return mLayout; }
+	Mapping& getMapping() { return mMapping; }
 };
 
 #endif
