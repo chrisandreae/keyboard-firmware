@@ -64,13 +64,7 @@ void LayoutPresenter::setModel(KeyboardModel *model) {
 	mShowingKeypad = false;
 	mModel = model;
 
-#ifdef Q_OS_MAC
-	QString resourceDir = QString("%1/../../Resources/Layout/")
-		.arg(QApplication::applicationDirPath());
-#else
 	QString resourceDir = QString(":layout/");
-#endif
-
 	QString layoutImagePath = resourceDir + "kinesis.png";
 	QString layoutXml =
 		resourceDir + QString::number(model->getLayoutID()) + ".xml";

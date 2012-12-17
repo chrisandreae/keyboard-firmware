@@ -5,16 +5,7 @@ TARGET = KeyboardClient
 CONFIG += debug
 QT += xml
 
-QMAKE_BUNDLE_DATA += layout
-
-macx {
-	layout.path = Resources/Layout
-	layout.files = layout/1.xml layout/kinesis.png
-}
-
-!macx {
-	RESOURCES += qtclient.rsc
-}
+RESOURCES += qtclient.rsc
 
 HEADERS += \
 	keyboard.h \
