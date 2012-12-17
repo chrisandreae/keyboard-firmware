@@ -11,9 +11,9 @@ void LayoutWidget::paintEvent(QPaintEvent *ev) {
 	if (!mLayout || mUsages.empty()) return;
 
 	QPainter painter(this);
+	QFont defaultFont = painter.font();
 	QTextOption buttonTextOption;
 	buttonTextOption.setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
-	buttonTextOption.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
 
 	for (QList<Layout::Key>::const_iterator it = mLayout->keys.constBegin();
 	     it != mLayout->keys.constEnd();
@@ -24,9 +24,19 @@ void LayoutWidget::paintEvent(QPaintEvent *ev) {
 		if (mSelection.contains(offset)) {
 			painter.fillRect(it->rect, mSelectedColor);
 		}
-		painter.drawText(it->rect,
-		                 HIDTables::nameUsage(mUsages[offset]),
-		                 buttonTextOption);
+		QString keyLabel =
+			QString(HIDTables::nameUsage(mUsages[offset])).replace('_', '\n');
+		QRectF keyBounds(it->rect);
+		while (!keyBounds.contains(
+		           painter.boundingRect(it->rect, keyLabel, buttonTextOption)))
+		{
+			QFont f = painter.font();
+			f.setPointSize(f.pointSize() - 1);
+			painter.setFont(f);
+		}
+
+		painter.drawText(it->rect, keyLabel, buttonTextOption);
+		painter.setFont(defaultFont);
 	}
 }
 
