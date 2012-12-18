@@ -78,12 +78,16 @@ static void writeLittleEndian(uint8_t*& cursor, T val){
 	cursor += sizeof(val);
 }
 
+bool Trigger::compareKeys(const TriggerWithKeys& left, const TriggerWithKeys& right) {
+	return std::lexicographical_compare(left.second.constBegin(), left.second.constEnd(),
+	                                    right.second.constBegin(), right.second.constEnd());
+}
 
-QPair<QByteArray, QByteArray> Trigger::encodeTriggers(QList<Trigger> triggers, 
-													  int keysPerTrigger,
-													  int indexSize,
-													  int storageSize){
-
+QPair<QByteArray, QByteArray> Trigger::encodeTriggers(QList<Trigger> triggers,
+                                                      int keysPerTrigger,
+                                                      int indexSize,
+                                                      int storageSize)
+{
 	// check index size
 	int indexBytesRequired = triggers.count() * (keysPerTrigger + 2);
 	if (indexBytesRequired > indexSize) {
@@ -92,7 +96,7 @@ QPair<QByteArray, QByteArray> Trigger::encodeTriggers(QList<Trigger> triggers,
 		// macros" than "you can only store 300 bytes of macro index"
 		throw InsufficentStorageException(indexBytesRequired, indexSize, "macro index");
 	}
-	
+
 	// check storage size
 	int storageBytesRequired = 2;
 	foreach (const Trigger& t, triggers) {
@@ -104,8 +108,13 @@ QPair<QByteArray, QByteArray> Trigger::encodeTriggers(QList<Trigger> triggers,
 		throw InsufficentStorageException(storageBytesRequired, storageSize, "macro storage");
 	}
 
-	// Sort the triggers by their padded sorted keys
-	qSort(triggers.begin(), triggers.end(), SortByTriggerKeys());
+	// half-shwartzian transform:
+	//   triggersWithKeys =
+	//      sort (comparing snd) $ map (\f -> (addressOf f, paddedKeys f)) triggers
+	QList<TriggerWithKeys> triggersWithKeys;
+	std::transform(triggers.constBegin(), triggers.constEnd(),
+				   std::back_inserter(triggersWithKeys), pairWithKeys);
+	qSort(triggersWithKeys.begin(), triggersWithKeys.end(), compareKeys);
 
 	// and build the output
 	QByteArray indexBytes(indexSize, 0xff);
@@ -118,12 +127,13 @@ QPair<QByteArray, QByteArray> Trigger::encodeTriggers(QList<Trigger> triggers,
 	uint8_t *storageCursor = storageBase;
 
 	writeLittleEndian<uint16_t>(storageCursor, storageBytesRequired - 2);
-   
-	foreach (const Trigger& t, triggers) {
+
+	foreach (const TriggerWithKeys& twk, triggersWithKeys) {
 		// write index
-		QList<LogicalKeycode> rawTrigger = t.paddedTriggerKeys();
+		QList<LogicalKeycode> rawTrigger = twk.second;
+		const Trigger& t = *twk.first;
 		indexCursor = qCopy(rawTrigger.constBegin(), rawTrigger.constEnd(), indexCursor);
-		
+
 		if(rawTrigger[0] == Layout::NO_KEY) {
 			// Not a valid trigger, so no relevant data: just carry on
 			indexCursor += sizeof(uint16_t);
@@ -133,14 +143,14 @@ QPair<QByteArray, QByteArray> Trigger::encodeTriggers(QList<Trigger> triggers,
 			writeLittleEndian<uint16_t>(indexCursor, storageCursor - (storageBase + 2));
 
 			// write macro body
-			writeLittleEndian<uint16_t>(storageCursor, t.macro().length());
-			memcpy(storageCursor, t.macro().data(), t.macro().length());
-			storageCursor += t.macro().length();
+			uint16_t macroLen = t.macro().length();
+			writeLittleEndian<uint16_t>(storageCursor, macroLen);
+			memcpy(storageCursor, t.macro().data(), macroLen);
+			storageCursor += macroLen;
 		}
 		else {
 			// write programid to index with high bit flag set
-			uint16_t programid = t.program() | 0x8000;
-			writeLittleEndian<uint16_t>(indexCursor, programid);
+			writeLittleEndian<uint16_t>(indexCursor, t.program() | 0x8000);
 		}
 	}
 

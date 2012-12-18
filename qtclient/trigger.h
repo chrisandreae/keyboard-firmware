@@ -16,6 +16,8 @@ public:
 	};
 
 private:
+	typedef QPair<const Trigger*, QList<uint8_t> > TriggerWithKeys;
+
 	int mKeysPerTrigger;
 	QList<LogicalKeycode> mTriggerKeys;
 
@@ -35,15 +37,11 @@ private:
 		return keys;
 	}
 
-	class SortByTriggerKeys {
-	public:
-		bool operator()(const Trigger& left, const Trigger& right) {
-			QList<LogicalKeycode> leftKeys  = left.paddedTriggerKeys();
-			QList<LogicalKeycode> rightKeys = right.paddedTriggerKeys();
-			return std::lexicographical_compare(leftKeys.constBegin(), leftKeys.constEnd(),
-												rightKeys.constBegin(), rightKeys.constEnd());
-		}
-	};
+	static TriggerWithKeys pairWithKeys(const Trigger& t) {
+		return TriggerWithKeys(&t, t.paddedTriggerKeys());
+	}
+
+	static bool compareKeys(const TriggerWithKeys& left, const TriggerWithKeys& right);
 
 public:
 	Trigger(int keysPerTrigger)
