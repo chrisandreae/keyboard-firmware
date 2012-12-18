@@ -14,6 +14,7 @@ KeyboardModel::KeyboardModel(KeyboardComm& keyboard)
 	, mProgramSpace(keyboard.getProgramSpace())
 	, mMacroIndexSize(keyboard.getMacroIndexSize())
 	, mMacroStorageSize(keyboard.getMacroStorageSize())
+	, mKeysPerTrigger(keyboard.getMacroMaxKeys())
 	, mDefaultMapping(keyboard.getDefaultMapping())
 	, mPrograms(
 	    Program::readPrograms(keyboard.getPrograms(),
@@ -21,10 +22,10 @@ KeyboardModel::KeyboardModel(KeyboardComm& keyboard)
 	, mTriggers(
 	    Trigger::readTriggers(keyboard.getMacroIndex(),
 	                          keyboard.getMacroStorage(),
-	                          keyboard.getMacroMaxKeys()))
+	                          mKeysPerTrigger))
 	, mLayout(
 	    Layout::readLayout(keyboard.getLayoutID()))
-	, mMapping(mLayout, keyboard.getMapping())
+	, mMapping(keyboard.getMapping())
 {
 }
 

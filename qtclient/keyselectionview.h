@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 #include <QWidget>
+#include "layout.h"
+
 class QStandardItemModel;
 class HIDUsageProxyModel;
 class QListView;
@@ -30,7 +32,7 @@ public:
 	virtual void hideEvent(QHideEvent *e);
 
 signals:
-	void usageSelected(QString name, uint8_t usage);
+	void hidUsageSelected(QString name, HIDKeycode usage);
 	void dismissed();
 
 public slots:

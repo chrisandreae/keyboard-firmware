@@ -6,8 +6,8 @@
 #include <QLabel>
 #include <QPixmap>
 
-class Mapping;
-class Layout;
+#include "layout.h"
+
 class LayoutPresenter;
 class LayoutWidget;
 class KeySelectionView;
@@ -19,31 +19,25 @@ class LayoutView : public QWidget {
 	LayoutPresenter *mPresenter;
 	LayoutWidget *mLayoutWidget;
 
-	const Layout *mLayout;
-	Mapping *mMapping;
-
 	KeySelectionView *mKeySelectionView;
 
 	QColor mKeypadColor;
 	QColor mSelectedColor;
 	bool mShowingMainLayer;
 
-	int mUpdatingKeyIndex;
+	LogicalKeycode mUpdatingLogicalKeyIndex;
 
 public:
 	LayoutView(LayoutPresenter *presenter);
 
 	void setKeyboardLayout(const Layout *layout);
 
-	void setMapping(Mapping *m);
-
-signals:
-	void buttonClicked(int index, QString name);
+	void setMapping(const QByteArray& m);
 
 private slots:
-	void usageSelected(QString name, uint8_t usage);
+	void hidUsageSelected(QString name, HIDKeycode hidUsage);
 	void keySelectionFinished();
-	void handleKey(int keyIndex);
+	void handleLogicalKeyClicked(LogicalKeycode logicalKeycode);
 };
 
 #endif

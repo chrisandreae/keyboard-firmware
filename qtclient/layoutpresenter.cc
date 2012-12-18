@@ -7,7 +7,6 @@
 
 LayoutPresenter::LayoutPresenter()
 	: mModel(NULL)
-	, mShowingKeypad(false)
 {
 	mView = new LayoutView(this);
 }
@@ -19,27 +18,19 @@ LayoutPresenter::~LayoutPresenter() {
 }
 
 void LayoutPresenter::setModel(KeyboardModel *model) {
-	mShowingKeypad = false;
 	mModel = model;
-	mLayout = &mModel->getLayout();
-	mMapping = &mModel->getMapping();
 
 	mView->setKeyboardLayout(&mModel->getLayout());
-	mView->setMapping(mMapping);
+	mView->setMapping(mModel->getMapping());
 }
 
-void LayoutPresenter::setUsage(bool mainLayer, int offset, uint8_t usage) {
-	QList<uint8_t>& layer = mainLayer ?
-		mMapping->getMainLayer() : mMapping->getKeypadLayer();
-	layer[offset] = usage;
-
-	// since the view has a pointer directly to the model, this is
-	// redundant, but used to trigger the repaint. is this poor
-	// decomposition?
-	mView->setMapping(mMapping);
+void LayoutPresenter::setHIDUsage(LogicalKeycode logicalKey, HIDKeycode hidKey) {
+	mModel->getMapping()[logicalKey] = hidKey;
+	// and update the view
+	mView->setMapping(mModel->getMapping());
 }
 
 void LayoutPresenter::loadDefaults() {
-	mModel->getMapping().setMapping(mModel->getDefaultRawMapping());
-	mView->setMapping(mMapping);
+	mModel->getMapping() = mModel->getDefaultMapping();
+	mView->setMapping(mModel->getMapping());
 }

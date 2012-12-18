@@ -4,8 +4,8 @@
 
 #include <QObject>
 #include "program.h"
-#include "mapping.h"
 #include "trigger.h"
+#include "layout.h"
 
 class USBDevice;
 class KeyboardComm;
@@ -18,6 +18,7 @@ class KeyboardModel {
 	uint16_t mProgramSpace;
 	uint16_t mMacroIndexSize;
 	uint16_t mMacroStorageSize;
+	uint8_t  mKeysPerTrigger;
 
 	QByteArray mDefaultMapping;
 	QList<Program> mPrograms;
@@ -26,23 +27,25 @@ class KeyboardModel {
 	// not strictly part of the model, but useful for interpreting it
 	Layout mLayout;
 
-	Mapping mMapping;
+	QByteArray mMapping;
 
 public:
 	KeyboardModel(KeyboardComm& dev);
 
-	uint8_t getLayoutID() { return mLayoutID; }
-	uint8_t getMappingSize() { return mMappingSize; }
-	uint8_t getNumPrograms() { return mNumPrograms; }
-	uint16_t getProgramSpaceRaw() { return mProgramSpaceRaw; }
-	uint16_t getProgramSpace() { return mProgramSpace; }
-	uint16_t getMacroIndexSize() { return mMacroIndexSize; }
-	uint16_t getMacroStorageSize() { return mMacroStorageSize; }
-	QByteArray getDefaultRawMapping() { return mDefaultMapping; }
-	QList<Program> *getPrograms() { return &mPrograms; }
-	QList<Trigger> *getTriggers() { return &mTriggers; }
-	const Layout& getLayout() { return mLayout; }
-	Mapping& getMapping() { return mMapping; }
+	uint8_t          getLayoutID()         { return mLayoutID;         }
+	uint8_t          getMappingSize()      { return mMappingSize;      }
+	uint8_t          getNumPrograms()      { return mNumPrograms;      }
+	uint16_t         getProgramSpaceRaw()  { return mProgramSpaceRaw;  }
+	uint16_t         getProgramSpace()     { return mProgramSpace;     }
+	uint16_t         getMacroIndexSize()   { return mMacroIndexSize;   }
+	uint16_t         getMacroStorageSize() { return mMacroStorageSize; }
+	uint8_t          getKeysPerTrigger()   { return mKeysPerTrigger;   }
+	QByteArray       getDefaultMapping()   { return mDefaultMapping;   }
+	QList<Program> * getPrograms()         { return &mPrograms;        }
+	QList<Trigger> * getTriggers()         { return &mTriggers;        }
+	const Layout&    getLayout()           { return mLayout;           }
+	QByteArray&      getMapping()          { return mMapping;          }
+
 };
 
 #endif

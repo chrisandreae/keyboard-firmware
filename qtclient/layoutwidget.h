@@ -10,7 +10,8 @@
 #include <QList>
 #include <QRect>
 
-class Layout;
+#include "layout.h"
+
 class QPaintEvent;
 class QMouseEvent;
 class QPixmap;
@@ -18,12 +19,13 @@ class QPixmap;
 class LayoutWidget : public QLabel {
 	Q_OBJECT
 
-	QColor mBackgroundColor;
+	bool mKeypadLayerSelected;
+	QColor mKeypadLayerColor;
 	QColor mSelectedColor;
 
 	const Layout *mLayout;
 	QSet<uint8_t> mSelection;
-	QList<uint8_t> mUsages;
+	QByteArray mMapping;
 	float mScale;
 
 	inline QRect scaleRect(QRect r) {
@@ -36,27 +38,27 @@ class LayoutWidget : public QLabel {
 public:
 	LayoutWidget(QWidget *parent = NULL)
 		: QLabel(parent)
-		, mBackgroundColor(Qt::transparent)
+		, mKeypadLayerSelected(false)
 		, mScale(1.0f)
 	{
 		setAlignment(Qt::AlignLeft | Qt::AlignTop);
-		mSelectedColor = QColor::fromRgbF(1, 0, 0, 0.2);
+		mSelectedColor 	  = QColor::fromRgbF(1, 0, 0, 0.2);
+		mKeypadLayerColor = QColor::fromRgbF(0, 0, 1, 0.2);
 	}
 
 	void setScale(float f) { mScale = f; }
 	void setKeyboardLayout(const Layout *layout);
-	void setUsages(const QList<uint8_t>& usages);
+	void setMapping(const QByteArray& mapping);
 
-	void setSelection(const QSet<uint8_t>& selectedKeys);
-	void setSelection(uint8_t selectedKey);
-
-	void setBackgroundColor(const QColor& color);
+	void setSelection(const QSet<LogicalKeycode>& selectedKeys);
+	void setSelection(LogicalKeycode selectedKey);
 
 	void paintEvent(QPaintEvent *ev);
 	void mousePressEvent(QMouseEvent *ev);
 
 signals:
-	void buttonClicked(int index);
+	void logicalKeyClicked (LogicalKeycode logicalKeycode);
+	void physicalKeyClicked(PhysicalKeycode physicalKeycode);
 
 };
 

@@ -12,50 +12,44 @@ void LayoutWidget::paintEvent(QPaintEvent *ev) {
 	if (!mLayout) return;
 
 	QPainter painter(this);
+	
+	QFont defaultFont = painter.font();
+	QTextOption buttonTextOption;
+	buttonTextOption.setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
 
-	if (mUsages.empty() && mBackgroundColor == Qt::transparent) {
-		qDebug() << "rendering fast path";
-		// TODO: this is incompatible with background color
-		// drawing without usages, just draw selection
-		for (QSet<uint8_t>::const_iterator it = mSelection.constBegin();
-		     it != mSelection.constEnd();
-		     ++it)
-		{
-			painter.fillRect(scaleRect(mLayout->keys[*it].rect),
-							 mSelectedColor);
+	for (QList<Layout::Key>::const_iterator it = mLayout->keys.constBegin();
+		 it != mLayout->keys.constEnd();
+		 ++it)
+	{
+		QRect keyRect = scaleRect(it->rect);
+
+		if(mKeypadLayerSelected){
+			painter.fillRect(keyRect, mKeypadLayerColor);
 		}
-	}
-	else {
-		qDebug() << "rendering slow path";
-		QFont defaultFont = painter.font();
-		QTextOption buttonTextOption;
-		buttonTextOption.setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
 
-		for (QList<Layout::Key>::const_iterator it = mLayout->keys.constBegin();
-			 it != mLayout->keys.constEnd();
-			 ++it)
-		{
-			QRect keyRect = scaleRect(it->rect);
-			int offset = it - mLayout->keys.constBegin();
-			painter.fillRect(keyRect, mBackgroundColor);
-			if (mSelection.contains(offset)) {
-				painter.fillRect(keyRect, mSelectedColor);
-			}
-			if (!mUsages.empty()) {
-				QString keyLabel =
-					QString(HIDTables::nameUsage(mUsages[offset])).replace('_', '\n');
-				QRectF keyBounds(keyRect);
-				while (!keyBounds.contains(
-						   painter.boundingRect(keyRect, keyLabel, buttonTextOption)))
-				{
-					QFont f = painter.font();
-					f.setPointSize(f.pointSize() - 1);
-					painter.setFont(f);
-				}
+		unsigned int physicalKeycode = it - mLayout->keys.constBegin();
+		unsigned int logicalKeycode =
+			mLayout->physicalKeycodeToLogical(physicalKeycode, mKeypadLayerSelected);
 
-				painter.drawText(keyRect, keyLabel, buttonTextOption);
-				painter.setFont(defaultFont);
+		if (mSelection.contains(logicalKeycode)) {
+			painter.fillRect(keyRect, mSelectedColor);
+		}
+
+		if (mMapping.length() != 0) {
+			QString keyLabel =
+				QString(HIDTables::nameUsage(mMapping[logicalKeycode])).replace('_', '\n');
+			QRectF keyBounds(keyRect);
+			while (!keyBounds.contains(painter.boundingRect(keyRect,
+															keyLabel,
+															buttonTextOption)))
+			{
+				QFont f = painter.font();
+				f.setPointSize(f.pointSize() - 1);
+				painter.setFont(f);
 			}
+
+			painter.drawText(keyRect, keyLabel, buttonTextOption);
+			painter.setFont(defaultFont);
 		}
 	}
 }
@@ -82,28 +76,34 @@ void LayoutWidget::mousePressEvent(QMouseEvent *ev) {
 	     ++it)
 	{
 		if (scaleRect(it->rect).contains(ev->pos())) {
-			emit buttonClicked(it - mLayout->keys.constBegin());
+			unsigned int physicalIndex = it - mLayout->keys.constBegin();
+			if(physicalIndex == mLayout->keypad.keyIndex){
+				// keypad button pressed, switch to keypad mode
+				mKeypadLayerSelected = !mKeypadLayerSelected;
+				update();
+			}
+			else{
+				unsigned int logicalIndex = 
+					mLayout->physicalKeycodeToLogical(physicalIndex, mKeypadLayerSelected);
+				emit logicalKeyClicked(logicalIndex);
+				emit physicalKeyClicked(physicalIndex);
+			}
 		}
 	}
 }
 
-void LayoutWidget::setBackgroundColor(const QColor& color) {
-	mBackgroundColor = color;
-	update();
-}
-
-void LayoutWidget::setSelection(const QSet<uint8_t>& selectedKeys) {
+void LayoutWidget::setSelection(const QSet<LogicalKeycode>& selectedKeys) {
 	mSelection = selectedKeys;
 	update();
 }
 
-void LayoutWidget::setSelection(uint8_t selectedKey) {
+void LayoutWidget::setSelection(LogicalKeycode selectedKey) {
 	mSelection.clear();
 	mSelection << selectedKey;
 	update();
 }
 
-void LayoutWidget::setUsages(const QList<uint8_t>& usages) {
-	mUsages = usages;
+void LayoutWidget::setMapping(const QByteArray& mapping) {
+	mMapping = mapping;
 	update();
 }

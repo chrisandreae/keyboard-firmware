@@ -5,11 +5,11 @@
 #include <QWidget>
 
 #include "trigger.h"
+#include "layout.h"
 
 class QTableView;
 class TriggersItemModel;
 class TriggersPresenter;
-class Layout;
 class LayoutWidget;
 class QItemSelectionModel;
 class QModelIndex;
@@ -39,7 +39,7 @@ public slots:
 							   const QModelIndex& previous);
 	void handleModelChange(const QModelIndex& topLeft,
 						   const QModelIndex& bottomRight);
-	void handleButtonClicked(int position);
+	void handleLogicalKeyClicked(LogicalKeycode position);
 };
 
 #endif

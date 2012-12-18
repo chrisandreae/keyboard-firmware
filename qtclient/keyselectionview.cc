@@ -86,9 +86,9 @@ bool KeySelectionView::eventFilter(QObject *obj, QEvent *event) {
 
 void KeySelectionView::sendUsageSelected(const QModelIndex& idx) {
 	QString name = mHidUsageModelProxy->data(idx).toString();
-	uint8_t usage =
+	HIDKeycode hidUsage =
 		mHidUsageModelProxy->data(idx, HIDTables::UsageCode).toInt();
-	emit usageSelected(name, usage);
+	emit hidUsageSelected(name, hidUsage);
 	hide();
 	emit dismissed();
 }

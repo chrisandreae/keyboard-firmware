@@ -18,18 +18,12 @@ class LayoutPresenter : public QObject {
 	LayoutView *mView;
 	KeyboardModel *mModel;
 
-	QScopedPointer<KeySelectionView> mKeySelectionView;
-	bool mShowingKeypad;
-
-	Mapping *mMapping;
-	const Layout* mLayout;
-
 public:
 	LayoutPresenter();
 	~LayoutPresenter();
 	QWidget *getWidget() { return mView; }
 
-	void setUsage(bool mainLayer, int offset, uint8_t usage);
+	void setHIDUsage(LogicalKeycode logicalKey, HIDKeycode hidKey);
 
 public slots:
 	void setModel(KeyboardModel *model);

@@ -11,7 +11,6 @@
 #include "triggersitemmodel.h"
 #include "layoutwidget.h"
 
-
 TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent) 
 	: QWidget(parent)
 	, mItemModel(new TriggersItemModel(presenter))
@@ -39,8 +38,8 @@ TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent)
 	        this, SLOT(handleModelChange(const QModelIndex&, const QModelIndex&)));
 	connect(mSelection, SIGNAL(currentChanged(const QModelIndex&, const QModelIndex&)),
 	        this, SLOT(handleSelectionChange(const QModelIndex&, const QModelIndex&)));
-	connect(mTriggerSetView, SIGNAL(buttonClicked(int)),
-			this, SLOT(handleButtonClicked(int)));
+	connect(mTriggerSetView, SIGNAL(logicalKeyClicked(LogicalKeycode)),
+			this, SLOT(handleLogicalKeyClicked(LogicalKeycode)));
 
 	setLayout(layout);
 }
@@ -82,7 +81,7 @@ void TriggersView::handleSelectionChange(const QModelIndex& current,
 	}
 }
 
-void TriggersView::handleButtonClicked(int position) {
+void TriggersView::handleLogicalKeyClicked(LogicalKeycode position) {
 	QSet<uint8_t> s = mEditingTrigger.triggerSet();
 	if (!s.contains(position)) {
 		s += position;

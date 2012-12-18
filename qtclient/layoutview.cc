@@ -7,7 +7,6 @@
 #include "layoutpresenter.h"
 #include "layout.h"
 #include "layoutwidget.h"
-#include "mapping.h"
 #include "keyselectionview.h"
 #include "hidtables.h"
 
@@ -17,70 +16,54 @@ LayoutView::LayoutView(LayoutPresenter *presenter)
 	, mKeySelectionView(NULL)
 	, mShowingMainLayer(true)
 {
-	QPushButton *loadDefaults;
+	QPushButton *loadDefaultsButton = new QPushButton(tr("Load Defaults"));
 
-	QVBoxLayout *layout = new QVBoxLayout;
-	layout->addWidget(loadDefaults = new QPushButton(tr("Load Defaults")));
-	layout->addWidget(mLayoutWidget);
+	QGridLayout *layout = new QGridLayout;
+	layout->addWidget(loadDefaultsButton, 0, 1, 1, 1);
+	layout->addWidget(mLayoutWidget, 1, 0, 1, 3);
 	setLayout(layout);
 
-	mKeypadColor = QColor::fromRgbF(0, 0, 1, 0.2);
-	mUpdatingKeyIndex = -1;
+	mUpdatingLogicalKeyIndex = Layout::NO_KEY;
 
-	connect(mLayoutWidget, SIGNAL(buttonClicked(int)),
-	        this, SLOT(handleKey(int)));
+	connect(mLayoutWidget, SIGNAL(logicalKeyClicked(LogicalKeycode)),
+	        this, SLOT(handleLogicalKeyClicked(LogicalKeycode)));
 
-	connect(loadDefaults, SIGNAL(clicked()),
+	connect(loadDefaultsButton, SIGNAL(clicked()),
 	        mPresenter, SLOT(loadDefaults()));
 }
 
 void LayoutView::setKeyboardLayout(const Layout *layout) {
-	mLayout = layout;
 	mLayoutWidget->setKeyboardLayout(layout);
 }
 
-void LayoutView::setMapping(Mapping *m) {
-	mMapping = m;
-	mLayoutWidget->setUsages(mShowingMainLayer
-	                         ? mMapping->getMainLayer()
-	                         : mMapping->getKeypadLayer());
+void LayoutView::setMapping(const QByteArray& m) {
+	// just pass the mapping reference down to the widget, which will
+	// take a copy
+	mLayoutWidget->setMapping(m);
 }
 
-void LayoutView::handleKey(int keyIndex) {
-	const Layout::Key& key = mLayout->keys[keyIndex];
-	if (key.name == "LOGICAL_KEY_KEYPAD") {
-		mShowingMainLayer = !mShowingMainLayer;
-		mLayoutWidget->setBackgroundColor(
-		    mShowingMainLayer ? Qt::transparent : mKeypadColor);
-		mLayoutWidget->setUsages(mShowingMainLayer
-		                         ? mMapping->getMainLayer()
-		                         : mMapping->getKeypadLayer());
+void LayoutView::handleLogicalKeyClicked(LogicalKeycode logicalKey) {
+	if (!mKeySelectionView) {
+		mKeySelectionView = new KeySelectionView(this);
+		connect(mKeySelectionView, SIGNAL(hidUsageSelected(QString, HIDKeycode)),
+				this, SLOT(hidUsageSelected(QString, HIDKeycode)));
+		connect(mKeySelectionView, SIGNAL(dismissed()),
+				this, SLOT(keySelectionFinished()));
 	}
-	else {
-		if (!mKeySelectionView) {
-			mKeySelectionView = new KeySelectionView(this);
-			connect(mKeySelectionView,
-					SIGNAL(usageSelected(QString, uint8_t)),
-					this,
-					SLOT(usageSelected(QString, uint8_t)));
-			connect(mKeySelectionView, SIGNAL(dismissed()),
-					this, SLOT(keySelectionFinished()));
-		}
-		mKeySelectionView->move(QCursor::pos());
-		mKeySelectionView->show();
-		mUpdatingKeyIndex = keyIndex;
-		mLayoutWidget->setSelection(mUpdatingKeyIndex);
-	}
+	mKeySelectionView->move(QCursor::pos());
+	mKeySelectionView->show();
+	mUpdatingLogicalKeyIndex = logicalKey;
+	mLayoutWidget->setSelection(mUpdatingLogicalKeyIndex);
 }
 
 
-void LayoutView::usageSelected(QString name, uint8_t usage) {
+void LayoutView::hidUsageSelected(QString name, HIDKeycode hidUsage) {
 	Q_UNUSED(name);
-	if (mUpdatingKeyIndex < 0) {
+	if (mUpdatingLogicalKeyIndex == Layout::NO_KEY) {
 		qDebug() << "got key without selection?!";
 		return;
 	}
-	mPresenter->setUsage(mShowingMainLayer, mUpdatingKeyIndex, usage);
+	mPresenter->setHIDUsage(mUpdatingLogicalKeyIndex, hidUsage);
 }
 
 void LayoutView::keySelectionFinished() {

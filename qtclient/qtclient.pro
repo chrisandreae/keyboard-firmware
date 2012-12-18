@@ -19,7 +19,6 @@ HEADERS += \
 	layoutview.h \
 	libusb_wrappers.h \
 	hidtables.h \
-	mapping.h \
 	keyselectionview.h \
 	hidusageproxymodel.h \
 	program.h \
@@ -54,7 +53,6 @@ SOURCES += \
 	triggerspresenter.cc \
 	triggersitemmodel.cc \
 	trigger.cc \
-	mapping.cc \
 	layout.cc \
 
 unix {

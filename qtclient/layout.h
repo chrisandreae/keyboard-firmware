@@ -7,8 +7,15 @@
 #include <QString>
 #include <QList>
 
+typedef uint8_t PhysicalKeycode;
+typedef uint8_t LogicalKeycode;
+typedef uint8_t HIDKeycode;
+
+
 class Layout {
 public:
+	static const LogicalKeycode NO_KEY = 0xff;
+
 	struct Key {
 		QString name;
 		QString friendlyName;
@@ -19,8 +26,8 @@ public:
 	QString imageName;
 	QList<Layout::Key> keys;
 	struct {
-		uint8_t keyIndex;
-		uint8_t layerStart;
+		PhysicalKeycode keyIndex;
+		PhysicalKeycode layerStart;
 		uint8_t layerSize;
 	} keypad;
 
@@ -30,6 +37,13 @@ public:
 	};
 
 	QString namePosition(int position) const;
+	
+	LogicalKeycode physicalKeycodeToLogical(PhysicalKeycode pKey, bool keypadLayer) const {
+		if(keypadLayer && pKey > keypad.layerStart){
+			pKey += keypad.layerSize;
+		}
+		return pKey;
+	}
 };
 
 #endif

@@ -4,6 +4,7 @@
 #include "keyboardcomm.h"
 #include "keyboardmodel.h"
 #include "keyboardview.h"
+#include "layout.h"
 
 KeyboardPresenter::KeyboardPresenter()
 	: mKeyboardModel(NULL)
@@ -114,8 +115,7 @@ void KeyboardPresenter::uploadAction() {
 	if (!mKeyboardComm) return;
 
 	try {
-		mKeyboardComm->setMapping(
-			mKeyboardModel->getMapping().encodeMapping());
+		mKeyboardComm->setMapping(mKeyboardModel->getMapping());
 
 		mKeyboardComm->setPrograms(
 			Program::encodePrograms(*mKeyboardModel->getPrograms(),
