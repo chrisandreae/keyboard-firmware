@@ -19,9 +19,9 @@ class KeyboardPresenter : public QObject {
 	Q_DISABLE_COPY(KeyboardPresenter)
 
 	QList<USBDevice> mDevices;
+	QScopedPointer<USBDevice> mUSBDevice;
 	QScopedPointer<KeyboardView> mView;
 	QScopedPointer<KeyboardModel> mKeyboardModel;
-	QScopedPointer<KeyboardComm> mKeyboardComm;
 
 	LayoutPresenter mLayoutPresenter;
 	ProgramsPresenter mProgramsPresenter;

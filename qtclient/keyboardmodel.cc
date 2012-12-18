@@ -28,5 +28,3 @@ KeyboardModel::KeyboardModel(KeyboardComm& keyboard)
 	, mMapping(keyboard.getMapping())
 {
 }
-
-

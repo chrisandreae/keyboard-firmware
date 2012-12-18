@@ -46,8 +46,6 @@ void KeyboardPresenter::showAction() {
 }
 
 void KeyboardPresenter::updateDeviceListAction() {
-	mKeyboardComm.reset();
-
 	QStringList names;
 
 	mDevices = KeyboardComm::enumerate();
@@ -82,54 +80,58 @@ void KeyboardPresenter::updateDeviceListAction() {
 void KeyboardPresenter::selectDeviceAction(int index) {
 	if (index == -1) {
 		mView->showNoKeyboard();
-		mKeyboardComm.reset();
 		return;
 	}
-	else
-	{
+	else {
 		mView->showKeyboard();
 	}
 
-	USBDevice dev = mDevices.at(index);
-	mKeyboardComm.reset(new KeyboardComm(dev));
+	mUSBDevice.reset(new USBDevice(mDevices.at(index)));
 	downloadAction();
 }
 
 void KeyboardPresenter::downloadAction() {
-	if (!mKeyboardComm) return;
+	if (!mUSBDevice) return;
+	try {
+		KeyboardComm comm(*mUSBDevice);
 
-	KeyboardModel *m = new KeyboardModel(*mKeyboardComm);
-	mKeyboardModel.reset(m);
-	emit modelChanged(m);
-	mView->showValues(m->getLayoutID(),
-	                  m->getMappingSize(),
-	                  m->getNumPrograms(),
-	                  m->getProgramSpaceRaw(),
-	                  m->getProgramSpace(),
-	                  m->getMacroIndexSize(),
-	                  m->getMacroStorageSize());
+		KeyboardModel *m = new KeyboardModel(comm);
+		mKeyboardModel.reset(m);
+		emit modelChanged(m);
+		mView->showValues(m->getLayoutID(),
+						  m->getMappingSize(),
+						  m->getNumPrograms(),
+						  m->getProgramSpaceRaw(),
+						  m->getProgramSpace(),
+						  m->getMacroIndexSize(),
+						  m->getMacroStorageSize());
+	}
+	catch (LIBUSBError& usbError) {
+		qDebug() << "Error downloading settings: " << usbError.what();
+	}
 }
 
 
 void KeyboardPresenter::uploadAction() {
-	if (!mKeyboardComm) return;
-
+	if (!mUSBDevice) return;
 	try {
-		mKeyboardComm->setMapping(mKeyboardModel->getMapping());
+		KeyboardComm comm(*mUSBDevice);
 
-		mKeyboardComm->setPrograms(
-			Program::encodePrograms(*mKeyboardModel->getPrograms(),
-									mKeyboardModel->getNumPrograms(),
-									mKeyboardModel->getProgramSpaceRaw()));
-		
+		comm.setMapping(mKeyboardModel->getMapping());
+
+		comm.setPrograms(
+		    Program::encodePrograms(*mKeyboardModel->getPrograms(),
+		                            mKeyboardModel->getNumPrograms(),
+		                            mKeyboardModel->getProgramSpaceRaw()));
+
 		QPair<QByteArray, QByteArray> encodedMacros =
-			Trigger::encodeTriggers(*mKeyboardModel->getTriggers(),
-									mKeyboardModel->getKeysPerTrigger(),
-									mKeyboardModel->getMacroIndexSize(),
-									mKeyboardModel->getMacroStorageSize());
-		
-		mKeyboardComm->setMacroIndex(encodedMacros.first);
-		mKeyboardComm->setMacroStorage(encodedMacros.second);
+		    Trigger::encodeTriggers(*mKeyboardModel->getTriggers(),
+		                            mKeyboardModel->getKeysPerTrigger(),
+		                            mKeyboardModel->getMacroIndexSize(),
+		                            mKeyboardModel->getMacroStorageSize());
+
+		comm.setMacroIndex(encodedMacros.first);
+		comm.setMacroStorage(encodedMacros.second);
 	}
 	catch (LIBUSBError& e) {
 		qDebug() << "LIBUSBError setting mapping: " << e.what();
