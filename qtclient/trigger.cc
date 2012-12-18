@@ -33,17 +33,19 @@ QList<Trigger> Trigger::readTriggers(const QByteArray& index,
 
 		uint16_t dataOffset = unaligned_read<uint16_t>(
 			index.constData() + idxOff + maxKeys);
+		bool isProgram = !!(dataOffset & 0x8000);
+		dataOffset &= 0x7fff;
 
-		if (dataOffset & 0x8000) {
+		if (isProgram) {
 			t.setType(Trigger::Program);
-			t.setProgram(-1);
+			t.setProgram(dataOffset);;
 		}
 		else {
-			dataOffset &= 0x7fff;
 			t.setType(Trigger::Macro);
 			uint16_t macroLength = unaligned_read<uint16_t>(
 				data.constData() + dataOffset);
-			t.setMacro(data.mid(dataOffset + sizeof(uint16_t), macroLength));
+			t.setMacro(
+				data.mid(dataOffset + sizeof(uint16_t), macroLength));
 		}
 		triggers << t;
 		idxOff += maxKeys + sizeof(uint16_t);

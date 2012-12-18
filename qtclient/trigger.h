@@ -32,8 +32,8 @@ public:
 	TriggerType type() const { return mType; };
 	void setType(TriggerType type) { mType = type; }
 
-	uint8_t program() const { return mProgramContents; }
-	void setProgram(uint8_t program) { mProgramContents = program; }
+	uint16_t program() const { return mProgramContents; }
+	void setProgram(uint16_t program) { mProgramContents = program; }
 
 	QByteArray macro() const { return mMacroContents; }
 	void setMacro(const QByteArray& macro) { mMacroContents = macro; }

@@ -4,15 +4,27 @@
 
 #include <QWidget>
 
+#include "trigger.h"
+
 class QTableView;
 class TriggersItemModel;
 class TriggersPresenter;
+class Layout;
+class LayoutWidget;
+class QItemSelectionModel;
+class QModelIndex;
 
 class TriggersView : public QWidget {
 	Q_OBJECT
 
 	QScopedPointer<TriggersItemModel> mItemModel;
 	QTableView *mTableView;
+	LayoutWidget *mTriggerSetView;
+	const Layout *mKeyboardLayout;
+	QItemSelectionModel *mSelection;
+	TriggersPresenter *mPresenter;
+
+	Trigger mEditingTrigger;
 
 public:
 	TriggersView(TriggersPresenter *presenter, QWidget *parent = NULL);
@@ -20,6 +32,14 @@ public:
 
 	void triggerChanged(int index);
 	void triggersChanged();
+	void setKeyboardLayout(const Layout *keyboardLayout);
+
+public slots:
+	void handleSelectionChange(const QModelIndex& current,
+							   const QModelIndex& previous);
+	void handleModelChange(const QModelIndex& topLeft,
+						   const QModelIndex& bottomRight);
+	void handleButtonClicked(int position);
 };
 
 #endif

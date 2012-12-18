@@ -25,6 +25,7 @@ const Trigger* TriggersPresenter::getTrigger(int index) {
 void TriggersPresenter::setModel(KeyboardModel *m) {
 	mModel = m;
 	mTriggers = m->getTriggers();
+	mView->setKeyboardLayout(&m->getLayout());
 	mView->triggersChanged();
 }
 

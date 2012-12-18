@@ -26,9 +26,6 @@ public:
 public slots:
 	void triggerChanged(int index);
 	void triggersChanged();
-
-signals:
-	void dataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 };
 
 #endif
