@@ -7,6 +7,8 @@ QT += xml
 
 RESOURCES += qtclient.rsc
 
+PRECOMPILED_HEADER = prefix.h
+
 HEADERS += \
 	keyboard.h \
 	keyboardcomm.h \
@@ -31,6 +33,7 @@ HEADERS += \
 	triggerspresenter.h \
 	triggersitemmodel.h \
 	trigger.h \
+
 
 SOURCES += \
 	keyboardcomm.cc \
