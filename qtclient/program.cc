@@ -29,12 +29,12 @@ QList<Program> Program::readPrograms(const QByteArray& programData, int nProgram
 }
 
 QByteArray Program::encodePrograms(const QList<Program>& programs, int nPrograms, int maxSize) {
-	int programs_size = sizeof(ProgramIndex) * nPrograms;
+	int programsSize = sizeof(ProgramIndex) * nPrograms;
 	foreach (const Program& p, programs) {
-		programs_size += p.getByteCode().length();
+		programsSize += p.getByteCode().length();
 	}
 
-	QByteArray encoded(programs_size, int8_t(0xff));
+	QByteArray encoded(programsSize, int8_t(0xff));
 
 	ProgramIndex *idx =
 	    reinterpret_cast<ProgramIndex*>(encoded.data());
