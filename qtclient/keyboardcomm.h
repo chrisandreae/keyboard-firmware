@@ -28,6 +28,33 @@ public:
 	};
 };
 
+class InsufficentStorageException : public std::exception {
+private:
+	const int mBytes, mAvail;
+	const char * const mStorageType;
+	mutable char* mMessageBuffer;
+
+public:
+	InsufficentStorageException(int bytes, int avail, const char* storageType)
+		: mBytes(bytes)
+		, mAvail(avail)
+		, mStorageType(storageType)
+		, mMessageBuffer(NULL)
+	{}
+
+	~InsufficentStorageException() throw (){
+		if(mMessageBuffer){
+			free(mMessageBuffer);
+		}
+	}
+
+	virtual const char* what() const throw() {
+		if (!mMessageBuffer)
+			asprintf(&mMessageBuffer, "Cannot store %d bytes to %s: only %d available.", mBytes, mStorageType, mAvail);
+		return mMessageBuffer;
+	}
+};
+
 class KeyboardComm {
 	USBDeviceHandle mDeviceHandle;
 	unsigned int mTimeout;

@@ -33,8 +33,8 @@ QVariant TriggersItemModel::data(const QModelIndex& index, int role) const {
 	const Trigger* t = static_cast<const Trigger *>(index.internalPointer());
 	int col = index.column();
 	if(col < mPresenter->getKeysPerTrigger()) {
-		QSet<LogicalKeycode> triggerSet = t->triggerSet();
-		if(col >= triggerSet.count()){
+		const QList<LogicalKeycode>& triggerKeys = t->triggerKeys();
+		if(col >= triggerKeys.count()){
 			// Trigger has fewer than max columns, light grey placeholder
 			if (role == Qt::DisplayRole)
 				return QString("-");
@@ -43,8 +43,10 @@ QVariant TriggersItemModel::data(const QModelIndex& index, int role) const {
 		}
 		else if (role == Qt::DisplayRole) {
 			// Format the name of this trigger key
-			QList<LogicalKeycode> keyList = QList<LogicalKeycode>::fromSet(t->triggerSet());
-			qSort(keyList.begin(), keyList.end(), qGreater<LogicalKeycode>());
+			QList<LogicalKeycode> keyList = t->triggerKeys();
+			std::reverse(keyList.begin(), keyList.end());
+			// qSort(keyList.begin(), keyList.end(), qGreater<LogicalKeycode>());
+			// qReverse(keyList);
 			return QString(mPresenter->getLayout().namePosition(keyList.at(col)));
 		}
 	}

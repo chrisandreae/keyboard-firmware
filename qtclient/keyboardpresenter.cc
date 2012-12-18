@@ -121,6 +121,15 @@ void KeyboardPresenter::uploadAction() {
 			Program::encodePrograms(*mKeyboardModel->getPrograms(),
 									mKeyboardModel->getNumPrograms(),
 									mKeyboardModel->getProgramSpaceRaw()));
+		
+		QPair<QByteArray, QByteArray> encodedMacros =
+			Trigger::encodeTriggers(*mKeyboardModel->getTriggers(),
+									mKeyboardModel->getKeysPerTrigger(),
+									mKeyboardModel->getMacroIndexSize(),
+									mKeyboardModel->getMacroStorageSize());
+		
+		mKeyboardComm->setMacroIndex(encodedMacros.first);
+		mKeyboardComm->setMacroStorage(encodedMacros.second);
 	}
 	catch (LIBUSBError& e) {
 		qDebug() << "LIBUSBError setting mapping: " << e.what();

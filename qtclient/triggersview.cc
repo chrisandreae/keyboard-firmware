@@ -76,7 +76,7 @@ void TriggersView::updateTriggerSetWidget(const QModelIndex& index){
 	if(index.isValid()){
 		qDebug() << "have selection, is row " << index.row();
 		const Trigger& currentTrigger = mPresenter->getTrigger(index.row());
-		mTriggerSetWidget->setSelection(currentTrigger.triggerSet());
+		mTriggerSetWidget->setSelection(QSet<LogicalKeycode>::fromList(currentTrigger.triggerKeys()));
 	}
 	else{
 		qDebug() << "have no selection";
@@ -116,6 +116,7 @@ void TriggersView::handleModelReset()
 void TriggersView::handleSelectionChange(const QItemSelection& current,
                                          const QItemSelection& previous)
 {
+	Q_UNUSED(current);
 	Q_UNUSED(previous);
 
 	updateTriggerSetWidget(currentSelectionOf(*mSelection));
