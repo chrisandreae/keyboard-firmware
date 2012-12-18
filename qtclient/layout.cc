@@ -33,7 +33,6 @@ public:
 		}
 		else if (localName == "key") {
 			Layout::Key k = { atts.value("name"),
-			                  atts.value("friendlyName"),
 			                  QRect(atts.value("x").toInt(),
 			                        atts.value("y").toInt(),
 			                        atts.value("w").toInt(),
@@ -66,5 +65,5 @@ Layout Layout::readLayout(int layoutID) {
 QString Layout::namePosition(int position) const {
 	if (position < 0 || position >= keys.count())
 		return QString("Invalid Position");
-	return keys[position].friendlyName;
+	return keys[position].name;
 }

@@ -18,7 +18,6 @@ public:
 
 	struct Key {
 		QString name;
-		QString friendlyName;
 		QRect rect;
 	};
 
