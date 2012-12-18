@@ -4,6 +4,7 @@
 #include <QHeaderView>
 #include <QModelIndex>
 #include <QItemSelectionModel>
+#include <QDebug>
 
 #include "trigger.h"
 #include "triggersview.h"
@@ -27,18 +28,24 @@ TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent)
 
 	layout->addWidget(mTableView, 0, 0, 1, 2);
 
-	mTriggerSetView = new LayoutWidget;
-	mTriggerSetView->setScale(0.4f);
-	layout->addWidget(mTriggerSetView, 1, 0);
+	mTriggerSetWidget = new LayoutWidget;
+	mTriggerSetWidget->setScale(0.4f);
+	layout->addWidget(mTriggerSetWidget, 1, 0);
 
 	mSelection = new QItemSelectionModel(mItemModel.data(), mItemModel.data());
 	mTableView->setSelectionModel(mSelection);
 
 	connect(mItemModel.data(), SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
 	        this, SLOT(handleModelChange(const QModelIndex&, const QModelIndex&)));
-	connect(mSelection, SIGNAL(currentChanged(const QModelIndex&, const QModelIndex&)),
-	        this, SLOT(handleSelectionChange(const QModelIndex&, const QModelIndex&)));
-	connect(mTriggerSetView, SIGNAL(logicalKeyClicked(LogicalKeycode)),
+
+	connect(mItemModel.data(), SIGNAL(modelReset()),
+	        this, SLOT(handleModelReset()));
+
+
+	connect(mSelection, SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
+	        this, SLOT(handleSelectionChange(const QItemSelection&, const QItemSelection&)));
+
+	connect(mTriggerSetWidget, SIGNAL(logicalKeyClicked(LogicalKeycode)),
 			this, SLOT(handleLogicalKeyClicked(LogicalKeycode)));
 
 	setLayout(layout);
@@ -46,12 +53,13 @@ TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent)
 
 void TriggersView::setKeyboardLayout(const Layout *keyboardLayout) {
 	mKeyboardLayout = keyboardLayout;
-	mTriggerSetView->setKeyboardLayout(keyboardLayout);
+	mTriggerSetWidget->setKeyboardLayout(keyboardLayout);
 }
 
 TriggersView::~TriggersView()
 {
 }
+
 
 void TriggersView::triggersChanged() {
 	mItemModel->triggersChanged();
@@ -61,34 +69,61 @@ void TriggersView::triggerChanged(int row) {
 	mItemModel->triggerChanged(row);
 }
 
+/**
+ * Update the graphical display of the trigger for the currently selected row
+ */
+void TriggersView::updateTriggerSetWidget(const QModelIndex& index){
+	if(index.isValid()){
+		qDebug() << "have selection, is row " << index.row();
+		const Trigger& currentTrigger = mPresenter->getTrigger(index.row());
+		mTriggerSetWidget->setSelection(currentTrigger.triggerSet());
+	}
+	else{
+		qDebug() << "have no selection";
+		mTriggerSetWidget->setSelection(QSet<LogicalKeycode>());
+	}
+}
+
+static const QModelIndex currentSelectionOf(const QItemSelectionModel& selectionModel){
+	if(selectionModel.hasSelection()){
+		return selectionModel.selection().indexes().at(0);
+	}
+	else{
+		return QModelIndex();
+	}
+}
+
 void TriggersView::handleModelChange(const QModelIndex& topLeft,
                                      const QModelIndex& bottomRight)
 {
-	
+	Q_UNUSED(topLeft);
+	Q_UNUSED(bottomRight);
+
+	qDebug() << "got model change";
+
+	updateTriggerSetWidget(currentSelectionOf(*mSelection));
 }
 
-void TriggersView::handleSelectionChange(const QModelIndex& current,
-                                         const QModelIndex& previous)
+void TriggersView::handleModelReset()
+{
+	qDebug() << "got model reset";
+
+	updateTriggerSetWidget(currentSelectionOf(*mSelection));
+}
+
+
+
+void TriggersView::handleSelectionChange(const QItemSelection& current,
+                                         const QItemSelection& previous)
 {
 	Q_UNUSED(previous);
 
-	if (current.isValid()) {
-		mEditingTrigger = *mPresenter->getTrigger(current.row());
-		mTriggerSetView->setSelection(mEditingTrigger.triggerSet());
-	}
-	else {
-		mTriggerSetView->setSelection(QSet<uint8_t>());
-	}
+	updateTriggerSetWidget(currentSelectionOf(*mSelection));
 }
 
-void TriggersView::handleLogicalKeyClicked(LogicalKeycode position) {
-	QSet<uint8_t> s = mEditingTrigger.triggerSet();
-	if (!s.contains(position)) {
-		s += position;
+void TriggersView::handleLogicalKeyClicked(LogicalKeycode logicalKeycode) {
+	if(mSelection->hasSelection()) {
+		int triggerIndex = currentSelectionOf(*mSelection).row();
+		mPresenter->toggleKeyInTrigger(triggerIndex, logicalKeycode);
 	}
-	else{
-		s -= position;
-	}
-	mEditingTrigger.setTriggerSet(s);
-	mTriggerSetView->setSelection(s);
 }

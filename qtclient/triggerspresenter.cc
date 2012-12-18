@@ -18,8 +18,8 @@ TriggersPresenter::~TriggersPresenter() {
 	}
 }
 
-const Trigger* TriggersPresenter::getTrigger(int index) {
-	return &mTriggers->at(index);
+const Trigger& TriggersPresenter::getTrigger(int index) {
+	return mTriggers->at(index);
 }
 
 void TriggersPresenter::setModel(KeyboardModel *m) {
@@ -34,11 +34,20 @@ void TriggersPresenter::setTriggerType(int index, Trigger::TriggerType t) {
 	mView->triggerChanged(index);
 }
 
+void TriggersPresenter::toggleKeyInTrigger(int index, LogicalKeycode logicalKeycode) {
+	(*mTriggers)[index].toggleKeyInTrigger(logicalKeycode);
+	mView->triggerChanged(index);
+}
+
 int TriggersPresenter::getNumTriggers() {
 	if (mTriggers)
 		return mTriggers->count();
 	else
 		return 0;
+}
+
+int TriggersPresenter::getKeysPerTrigger(){
+	return mModel->getKeysPerTrigger();
 }
 
 const Layout& TriggersPresenter::getLayout() const {

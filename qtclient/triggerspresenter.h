@@ -22,11 +22,14 @@ public:
 
 	QWidget *getWidget() { return mView; }
 
-	const Trigger *getTrigger(int index);
+	const Trigger& getTrigger(int index);
 	int getNumTriggers();
+	int getKeysPerTrigger();
 	const Layout& getLayout() const;
 
 	void setTriggerType(int index, Trigger::TriggerType t);
+
+	void toggleKeyInTrigger(int index, LogicalKeycode logicalKeycode);
 
 public slots:
 	void setModel(KeyboardModel *m);

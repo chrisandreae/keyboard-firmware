@@ -7,7 +7,7 @@
 #include <QByteArray>
 #include <QSet>
 
-class Layout;
+#include "layout.h";
 
 class Trigger {
 public:
@@ -16,16 +16,19 @@ public:
 	};
 
 private:
-	QSet<uint8_t> mTriggerSet;
+	int mKeysPerTrigger;
+	QSet<LogicalKeycode> mTriggerSet;
+
+	TriggerType mType;
 
 	QByteArray mMacroContents;
 	uint16_t mProgramContents;
-	TriggerType mType;
 
 public:
-	Trigger()
-		: mProgramContents(0)
+	Trigger(int keysPerTrigger)
+		: mKeysPerTrigger(keysPerTrigger)
 		, mType(Macro)
+		, mProgramContents(0)
 	{
 	}
 
@@ -35,13 +38,13 @@ public:
 	uint16_t program() const { return mProgramContents; }
 	void setProgram(uint16_t program) { mProgramContents = program; }
 
-	QByteArray macro() const { return mMacroContents; }
-	void setMacro(const QByteArray& macro) { mMacroContents = macro; }
+	const QByteArray& macro() const { return mMacroContents; }
+	void setMacro(const QByteArray& macroContents) { mMacroContents = macroContents; }
 
-	QSet<uint8_t> triggerSet() const { return mTriggerSet; };
-	void setTriggerSet(const QSet<uint8_t>& triggerSet) {
-		mTriggerSet = triggerSet;
-	}
+	const QSet<LogicalKeycode>& triggerSet() const { return mTriggerSet; }
+	void setTriggerSet(const QSet<LogicalKeycode>& newTriggerSet) { mTriggerSet = newTriggerSet; }
+
+	void toggleKeyInTrigger(LogicalKeycode lkey);
 
 	static QList<Trigger> readTriggers(
 	    const QByteArray& index, const QByteArray& data, unsigned int maxKeys);
@@ -50,8 +53,6 @@ public:
 
 	static QString nameType(TriggerType type);
 	static QString formatMacro(const QByteArray& macro);
-	static QString formatTriggerSet(const Layout& layout,
-	                                const QSet<uint8_t>& macro);
 };
 
 #endif

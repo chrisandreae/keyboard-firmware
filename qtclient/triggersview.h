@@ -12,6 +12,7 @@ class TriggersItemModel;
 class TriggersPresenter;
 class LayoutWidget;
 class QItemSelectionModel;
+class QItemSelection;
 class QModelIndex;
 
 class TriggersView : public QWidget {
@@ -19,12 +20,12 @@ class TriggersView : public QWidget {
 
 	QScopedPointer<TriggersItemModel> mItemModel;
 	QTableView *mTableView;
-	LayoutWidget *mTriggerSetView;
+	LayoutWidget *mTriggerSetWidget;
 	const Layout *mKeyboardLayout;
 	QItemSelectionModel *mSelection;
 	TriggersPresenter *mPresenter;
 
-	Trigger mEditingTrigger;
+	void updateTriggerSetWidget(const QModelIndex& index);
 
 public:
 	TriggersView(TriggersPresenter *presenter, QWidget *parent = NULL);
@@ -35,10 +36,11 @@ public:
 	void setKeyboardLayout(const Layout *keyboardLayout);
 
 public slots:
-	void handleSelectionChange(const QModelIndex& current,
-							   const QModelIndex& previous);
+	void handleSelectionChange(const QItemSelection& current,
+							   const QItemSelection& previous);
 	void handleModelChange(const QModelIndex& topLeft,
 						   const QModelIndex& bottomRight);
+	void handleModelReset();
 	void handleLogicalKeyClicked(LogicalKeycode position);
 };
 

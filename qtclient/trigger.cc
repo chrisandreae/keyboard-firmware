@@ -4,6 +4,16 @@
 #include "layout.h"
 #include "hidtables.h"
 
+void Trigger::toggleKeyInTrigger(LogicalKeycode lkey){
+	if(mTriggerSet.contains(lkey)){
+		mTriggerSet -= lkey;
+	}
+	else{
+		if(mTriggerSet.count() < mKeysPerTrigger)
+			mTriggerSet += lkey;
+	}
+}
+
 template <typename T>
 static T unaligned_read(const char *p) {
 	T x;
@@ -21,11 +31,11 @@ QList<Trigger> Trigger::readTriggers(const QByteArray& index,
 	QList<Trigger> triggers;
 	int idxOff = 0;
 	while (uint8_t(index.at(idxOff)) != 0xff && idxOff < index.length()) {
-		Trigger t;
-		QSet<uint8_t> triggerSet;
+		Trigger t(maxKeys);
+		QSet<LogicalKeycode> triggerSet;
 		for (unsigned int key = 0; key < maxKeys; key++) {
-			uint8_t keyValue = index.at(idxOff + key);
-			if (keyValue == 0xff)
+			LogicalKeycode keyValue = index.at(idxOff + key);
+			if (keyValue == Layout::NO_KEY)
 				break;
 			triggerSet << keyValue;
 		}
@@ -38,7 +48,7 @@ QList<Trigger> Trigger::readTriggers(const QByteArray& index,
 
 		if (isProgram) {
 			t.setType(Trigger::Program);
-			t.setProgram(dataOffset);;
+			t.setProgram(dataOffset);
 		}
 		else {
 			t.setType(Trigger::Macro);
@@ -87,23 +97,4 @@ QString Trigger::formatMacro(const QByteArray& macro) {
 	return formatted;
 }
 
-QString Trigger::formatTriggerSet(const Layout& layout,
-                                  const QSet<uint8_t>& keys)
-{
-	QList<uint8_t> keyList;
-	keyList.reserve(keys.count());
-	qCopy(keys.constBegin(), keys.constEnd(),
-	      std::back_inserter(keyList));
-	qSort(keyList.begin(), keyList.end(), qGreater<uint8_t>());
 
-	QString formatted;
-	for (QList<uint8_t>::const_iterator it = keyList.constBegin();
-	     it != keyList.constEnd();
-	     ++it)
-	{
-		if (formatted.length() != 0)
-			formatted += " ";
-		formatted += layout.namePosition(*it);
-	}
-	return formatted;
-}
