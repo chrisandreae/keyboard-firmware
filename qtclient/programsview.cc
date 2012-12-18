@@ -8,6 +8,7 @@
 #include <QAction>
 #include <QPushButton>
 #include <QDebug>
+#include <QHeaderView>
 
 #include "programsview.h"
 #include "programspresenter.h"
@@ -28,6 +29,11 @@ ProgramsView::ProgramsView(ProgramsPresenter *presenter)
 	mProgramsTable->setShowGrid(false);
 	mProgramsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 	mProgramsTable->setSelectionMode(QAbstractItemView::SingleSelection);
+
+	mProgramsTable->horizontalHeader()->setStretchLastSection(true);
+	mProgramsTable->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
+	mProgramsTable->verticalHeader()->setVisible(false);
+
 
 	mLoadButton = new QPushButton(tr("Load Program"), this);
 	connect(mLoadButton, SIGNAL(clicked()),
