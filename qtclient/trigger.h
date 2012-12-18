@@ -7,7 +7,7 @@
 #include <QByteArray>
 #include <QSet>
 
-#include "layout.h";
+#include "layout.h"
 
 class Trigger {
 public:

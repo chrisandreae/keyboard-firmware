@@ -13,7 +13,7 @@ public:
 		: rawError(error)
 	{}
 
-	virtual const char *what() {
+	virtual const char *what() const throw() {
 		return libusb_error_name(rawError);
 	}
 };
@@ -52,6 +52,7 @@ public:
 			libusb_unref_device(mDevice);
 
 		mDevice = libusb_ref_device(other.mDevice);
+		return *this;
 	}
 
 	virtual ~USBDevice() {

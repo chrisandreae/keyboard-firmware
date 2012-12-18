@@ -47,7 +47,10 @@ int TriggersPresenter::getNumTriggers() {
 }
 
 int TriggersPresenter::getKeysPerTrigger(){
-	return mModel->getKeysPerTrigger();
+	if (mModel)
+		return mModel->getKeysPerTrigger();
+	else
+		return 0;
 }
 
 const Layout& TriggersPresenter::getLayout() const {
