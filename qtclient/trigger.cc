@@ -163,17 +163,18 @@ QPair<QByteArray, QByteArray> Trigger::encodeTriggers(const QList<Trigger>& trig
 		throw InsufficentStorageException(indexBytesRequired, indexSize, "macro index");
 	}
 
+	// encoded and check storage size
+
 	QList<EncodedTrigger> eTriggers;
 	eTriggers.reserve(triggers.count());
+	size_t storageBytesRequired = 2;
+
 	foreach (const Trigger& t, triggers){
-		eTriggers << EncodedTrigger(t);
+		EncodedTrigger et(t);
+		eTriggers << et;
+		storageBytesRequired += et.storageRequired();
 	}
 
-	// check storage size
-	size_t storageBytesRequired = 2;
-	foreach (const EncodedTrigger& t, eTriggers) {
-		storageBytesRequired += t.storageRequired();
-	}
 	if (storageBytesRequired > storageSize) {
 		throw InsufficentStorageException(storageBytesRequired, storageSize, "macro storage");
 	}
