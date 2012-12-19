@@ -170,6 +170,8 @@ QPair<QByteArray, QByteArray> Trigger::encodeTriggers(const QList<Trigger>& trig
 	size_t storageBytesRequired = 2;
 
 	foreach (const Trigger& t, triggers){
+		if (t.triggerKeys().empty())
+			continue;
 		EncodedTrigger et(t);
 		eTriggers << et;
 		storageBytesRequired += et.storageRequired();
