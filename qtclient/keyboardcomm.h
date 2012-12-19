@@ -2,6 +2,7 @@
 #ifndef KEYBOARDCOMM_H
 #define KEYBOARDCOMM_H
 
+#include <stdio.h>
 #include <stdint.h>
 #include <QList>
 #include <QByteArray>
@@ -32,26 +33,24 @@ class InsufficentStorageException : public std::exception {
 private:
 	const int mBytes, mAvail;
 	const char * const mStorageType;
-	mutable char* mMessageBuffer;
+	mutable QByteArray mMessage;
 
 public:
 	InsufficentStorageException(int bytes, int avail, const char* storageType)
 		: mBytes(bytes)
 		, mAvail(avail)
 		, mStorageType(storageType)
-		, mMessageBuffer(NULL)
 	{}
 
-	~InsufficentStorageException() throw (){
-		if(mMessageBuffer){
-			free(mMessageBuffer);
-		}
-	}
-
 	virtual const char* what() const throw() {
-		if (!mMessageBuffer)
-			asprintf(&mMessageBuffer, "Cannot store %d bytes to %s: only %d available.", mBytes, mStorageType, mAvail);
-		return mMessageBuffer;
+		if (mMessage.length() == 0) {
+			mMessage = QString("Cannot store %1 bytes to %2: only %3 available.")
+				.arg(mBytes)
+				.arg(mStorageType)
+				.arg(mAvail)
+				.toAscii();
+		}
+		return mMessage.constData();
 	}
 };
 
