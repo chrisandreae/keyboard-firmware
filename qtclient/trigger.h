@@ -15,6 +15,7 @@ public:
 		Macro, Program
 	};
 
+
 private:
 	typedef QPair<const Trigger*, QList<uint8_t> > TriggerWithKeys;
 
@@ -25,23 +26,6 @@ private:
 
 	QByteArray mMacroContents;
 	uint16_t mProgramContents;
-
-	/** 
-	 * Provide a padded and sorted trigger key list ready to write to
-	 * device.
-	 */
-	const QList<LogicalKeycode> paddedTriggerKeys() const {
-		QList<LogicalKeycode> keys = mTriggerKeys;
-		while(keys.count() < mKeysPerTrigger)
-			keys << 0xff;
-		return keys;
-	}
-
-	static TriggerWithKeys pairWithKeys(const Trigger& t) {
-		return TriggerWithKeys(&t, t.paddedTriggerKeys());
-	}
-
-	static bool compareKeys(const TriggerWithKeys& left, const TriggerWithKeys& right);
 
 public:
 	Trigger(int keysPerTrigger)
@@ -63,15 +47,17 @@ public:
 	const QList<LogicalKeycode>& triggerKeys() const { return mTriggerKeys; }
 	void setTriggerKeys(const QList<LogicalKeycode>& newTriggerKeys) { mTriggerKeys = newTriggerKeys; }
 
+	int keysPerTrigger() const { return mKeysPerTrigger; }
+
 	void toggleKeyInTrigger(LogicalKeycode lkey);
 
 	static QList<Trigger> readTriggers(
-	    const QByteArray& index, const QByteArray& data, unsigned int maxKeys);
+		const QByteArray& index, const QByteArray& data, unsigned int maxKeys);
 
-	static QPair<QByteArray, QByteArray> encodeTriggers(QList<Trigger> triggers, 
-														int keysPerTrigger,
-														int indexSize,
-														int storageSize);
+	static QPair<QByteArray, QByteArray> encodeTriggers(const QList<Trigger>& triggers,
+														size_t keysPerTrigger,
+														size_t indexSize,
+														size_t storageSize);
 
 	static QString nameType(TriggerType type);
 	static QString formatMacro(const QByteArray& macro);

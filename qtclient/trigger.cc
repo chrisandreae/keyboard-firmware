@@ -29,8 +29,8 @@ static T unaligned_read(const char *p) {
 }
 
 QList<Trigger> Trigger::readTriggers(const QByteArray& index,
-                                     const QByteArray& rawData,
-                                     unsigned int maxKeys)
+									 const QByteArray& rawData,
+									 unsigned int maxKeys)
 {
 	const QByteArray data =
 		rawData.mid(sizeof(uint16_t)); // skip free pointer
@@ -78,18 +78,84 @@ static void writeLittleEndian(uint8_t*& cursor, T val){
 	cursor += sizeof(val);
 }
 
-bool Trigger::compareKeys(const TriggerWithKeys& left, const TriggerWithKeys& right) {
-	return std::lexicographical_compare(left.second.constBegin(), left.second.constEnd(),
-	                                    right.second.constBegin(), right.second.constEnd());
-}
+class EncodedTrigger {
+	QByteArray mKeys;
+	int mKeysPerTrigger;
+	Trigger::TriggerType mType;
+	union {
+		uint16_t program;
+		const QByteArray* macro;
+	} mData;
 
-QPair<QByteArray, QByteArray> Trigger::encodeTriggers(QList<Trigger> triggers,
-                                                      int keysPerTrigger,
-                                                      int indexSize,
-                                                      int storageSize)
+	// convenience function: as soon as we've used fill() to
+	// appropriately size mKeys, we want to always access it as
+	// a uint8_t*
+	inline uint8_t* keys(){
+		return reinterpret_cast<uint8_t*>(mKeys.data());
+	}
+
+	inline const uint8_t* constKeys() const {
+		return reinterpret_cast<const uint8_t*>(mKeys.data());
+	}
+
+public:
+	EncodedTrigger(const Trigger& t) {
+		mKeysPerTrigger = t.keysPerTrigger();
+
+		mKeys.fill(0xff, mKeysPerTrigger);
+
+		qCopy(t.triggerKeys().constBegin(),
+			  t.triggerKeys().constEnd(),
+			  keys());
+
+		mType = t.type();
+
+		if(mType == Trigger::Program)
+			mData.program = t.program();
+		else
+			mData.macro = &t.macro();
+	}
+
+	size_t storageRequired() const {
+		return (mType == Trigger::Program) ? 0 : (2 + mData.macro->length());
+	}
+
+	bool operator< (const EncodedTrigger& other) const {
+		return memcmp(constKeys(), other.constKeys(), mKeysPerTrigger) < 0;
+	}
+
+	void encode(uint8_t*& indexCursor, uint8_t*& storageCursor, const uint8_t* storageBase) const {
+		memcpy(indexCursor, constKeys(), mKeysPerTrigger);
+		indexCursor += mKeysPerTrigger;
+
+		if(*constKeys() == Layout::NO_KEY){
+			indexCursor += sizeof(uint16_t);
+		}
+		else if(mType == Trigger::Macro) {
+			// write data offset to index
+			writeLittleEndian<uint16_t>(indexCursor, (storageCursor - storageBase));
+
+			// write macro body
+			uint16_t macroLen = mData.macro->length();
+			writeLittleEndian<uint16_t>(storageCursor, macroLen);
+			memcpy(storageCursor, mData.macro->data(), macroLen);
+			storageCursor += macroLen;
+		}
+		else {
+			// write programid to index with high bit flag set
+			writeLittleEndian<uint16_t>(indexCursor, mData.program | 0x8000);
+		}
+	}
+};
+
+
+QPair<QByteArray, QByteArray> Trigger::encodeTriggers(const QList<Trigger>& triggers,
+													  size_t keysPerTrigger,
+													  size_t indexSize,
+													  size_t storageSize)
 {
 	// check index size
-	int indexBytesRequired = triggers.count() * (keysPerTrigger + 2);
+	size_t indexBytesRequired = triggers.count() * (keysPerTrigger + 2);
 	if (indexBytesRequired > indexSize) {
 		// Fixme: this exception message isn't very meaningful to a
 		// user: better to tell them "You can only have up to 50
@@ -97,24 +163,23 @@ QPair<QByteArray, QByteArray> Trigger::encodeTriggers(QList<Trigger> triggers,
 		throw InsufficentStorageException(indexBytesRequired, indexSize, "macro index");
 	}
 
+	QList<EncodedTrigger> eTriggers;
+	eTriggers.reserve(triggers.count());
+	foreach (const Trigger& t, triggers){
+		eTriggers << EncodedTrigger(t);
+	}
+
 	// check storage size
-	int storageBytesRequired = 2;
-	foreach (const Trigger& t, triggers) {
-		if(t.type() == Trigger::Macro) {
-			storageBytesRequired += 2 + t.macro().length();
-		}
+	size_t storageBytesRequired = 2;
+	foreach (const EncodedTrigger& t, eTriggers) {
+		storageBytesRequired += t.storageRequired();
 	}
 	if (storageBytesRequired > storageSize) {
 		throw InsufficentStorageException(storageBytesRequired, storageSize, "macro storage");
 	}
 
-	// half-shwartzian transform:
-	//   triggersWithKeys =
-	//      sort (comparing snd) $ map (\f -> (addressOf f, paddedKeys f)) triggers
-	QList<TriggerWithKeys> triggersWithKeys;
-	std::transform(triggers.constBegin(), triggers.constEnd(),
-				   std::back_inserter(triggersWithKeys), pairWithKeys);
-	qSort(triggersWithKeys.begin(), triggersWithKeys.end(), compareKeys);
+	// sort etriggers using operator<
+	qSort(eTriggers.begin(), eTriggers.end());
 
 	// and build the output
 	QByteArray indexBytes(indexSize, 0xff);
@@ -123,35 +188,16 @@ QPair<QByteArray, QByteArray> Trigger::encodeTriggers(QList<Trigger> triggers,
 	uint8_t * const indexBase = reinterpret_cast<uint8_t*>(indexBytes.data());
 	uint8_t *indexCursor = indexBase;
 
-	uint8_t * const storageBase = reinterpret_cast<uint8_t*>(storageBytes.data());
+	uint8_t *storageBase = reinterpret_cast<uint8_t*>(storageBytes.data());
+	// Prepend the end macro offset total length to the storage for the keyboard's 'next macro' cursor:
+	// subtract 2 since macro offsets start after this field.
+	writeLittleEndian<uint16_t>(storageBase, storageBytesRequired - 2);
+
 	uint8_t *storageCursor = storageBase;
 
-	writeLittleEndian<uint16_t>(storageCursor, storageBytesRequired - 2);
-
-	foreach (const TriggerWithKeys& twk, triggersWithKeys) {
-		// write index
-		QList<LogicalKeycode> rawTrigger = twk.second;
-		const Trigger& t = *twk.first;
-		indexCursor = qCopy(rawTrigger.constBegin(), rawTrigger.constEnd(), indexCursor);
-
-		if(rawTrigger[0] == Layout::NO_KEY) {
-			// Not a valid trigger, so no relevant data: just carry on
-			indexCursor += sizeof(uint16_t);
-		}
-		if(t.type() == Trigger::Macro) {
-			// write data offset to index
-			writeLittleEndian<uint16_t>(indexCursor, storageCursor - (storageBase + 2));
-
-			// write macro body
-			uint16_t macroLen = t.macro().length();
-			writeLittleEndian<uint16_t>(storageCursor, macroLen);
-			memcpy(storageCursor, t.macro().data(), macroLen);
-			storageCursor += macroLen;
-		}
-		else {
-			// write programid to index with high bit flag set
-			writeLittleEndian<uint16_t>(indexCursor, t.program() | 0x8000);
-		}
+	// Encoding each trigger
+	foreach (const EncodedTrigger& t, eTriggers) {
+		t.encode(indexCursor, storageCursor, storageBase);
 	}
 
 	return QPair<QByteArray, QByteArray>(indexBytes, storageBytes);
@@ -190,5 +236,3 @@ QString Trigger::formatMacro(const QByteArray& macro) {
 	}
 	return formatted;
 }
-
-

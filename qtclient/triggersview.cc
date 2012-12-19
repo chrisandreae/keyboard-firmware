@@ -76,12 +76,10 @@ void TriggersView::triggerChanged(int row) {
  */
 void TriggersView::updateTriggerSetWidget(const QModelIndex& index){
 	if(index.isValid()){
-		qDebug() << "have selection, is row " << index.row();
 		const Trigger& currentTrigger = mPresenter->getTrigger(index.row());
 		mTriggerSetWidget->setSelection(QSet<LogicalKeycode>::fromList(currentTrigger.triggerKeys()));
 	}
 	else{
-		qDebug() << "have no selection";
 		mTriggerSetWidget->setSelection(QSet<LogicalKeycode>());
 	}
 }
@@ -101,15 +99,11 @@ void TriggersView::handleModelChange(const QModelIndex& topLeft,
 	Q_UNUSED(topLeft);
 	Q_UNUSED(bottomRight);
 
-	qDebug() << "got model change";
-
 	updateTriggerSetWidget(currentSelectionOf(*mSelection));
 }
 
 void TriggersView::handleModelReset()
 {
-	qDebug() << "got model reset";
-
 	updateTriggerSetWidget(currentSelectionOf(*mSelection));
 }
 

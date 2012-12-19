@@ -51,21 +51,21 @@ void KeyboardPresenter::updateDeviceListAction() {
 	mDevices = KeyboardComm::enumerate();
 	QList<USBDevice> devices = mDevices;
 	for (QList<USBDevice>::iterator it = devices.begin();
-	     it != devices.end();
-	     ++it)
+		 it != devices.end();
+		 ++it)
 	{
 		try {
 			libusb_device *dev = *it;
 			libusb_device_descriptor desc;
 			LIBUSBCheckResult(
-			    libusb_get_device_descriptor(dev, &desc));
+				libusb_get_device_descriptor(dev, &desc));
 
 			USBDeviceHandle devHandle(dev);
 			char productBuf[256] = {0};
 			LIBUSBCheckResult(
-			    libusb_get_string_descriptor_ascii(devHandle, desc.iProduct,
-			                                       (unsigned char*) productBuf,
-			                                       sizeof(productBuf) - 1));
+				libusb_get_string_descriptor_ascii(devHandle, desc.iProduct,
+												   (unsigned char*) productBuf,
+												   sizeof(productBuf) - 1));
 
 			names.push_back(QString(productBuf));
 		}
@@ -111,6 +111,20 @@ void KeyboardPresenter::downloadAction() {
 	}
 }
 
+void hexDebug(const uint8_t* data, size_t len){
+	char line[80];
+	char* cursor = line;
+	for(size_t i = 0; i < len; ++i){
+		if(i && (i % 16 == 0)){
+			qDebug() << line;
+			cursor = line;
+		}
+		cursor += sprintf(cursor, "%.2x ", data[i]);
+	}
+	if(cursor > line)
+		qDebug() << line;
+}
+
 
 void KeyboardPresenter::uploadAction() {
 	if (!mUSBDevice) return;
@@ -120,15 +134,15 @@ void KeyboardPresenter::uploadAction() {
 		comm.setMapping(mKeyboardModel->getMapping());
 
 		comm.setPrograms(
-		    Program::encodePrograms(*mKeyboardModel->getPrograms(),
-		                            mKeyboardModel->getNumPrograms(),
-		                            mKeyboardModel->getProgramSpaceRaw()));
+			Program::encodePrograms(*mKeyboardModel->getPrograms(),
+									mKeyboardModel->getNumPrograms(),
+									mKeyboardModel->getProgramSpaceRaw()));
 
 		QPair<QByteArray, QByteArray> encodedMacros =
-		    Trigger::encodeTriggers(*mKeyboardModel->getTriggers(),
-		                            mKeyboardModel->getKeysPerTrigger(),
-		                            mKeyboardModel->getMacroIndexSize(),
-		                            mKeyboardModel->getMacroStorageSize());
+			Trigger::encodeTriggers(*mKeyboardModel->getTriggers(),
+									mKeyboardModel->getKeysPerTrigger(),
+									mKeyboardModel->getMacroIndexSize(),
+									mKeyboardModel->getMacroStorageSize());
 
 		comm.setMacroIndex(encodedMacros.first);
 		comm.setMacroStorage(encodedMacros.second);
