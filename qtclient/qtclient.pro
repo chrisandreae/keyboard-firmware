@@ -33,6 +33,7 @@ HEADERS += \
 	triggerspresenter.h \
 	triggersitemmodel.h \
 	trigger.h \
+	hexdump.h \
 
 
 SOURCES += \
@@ -57,6 +58,7 @@ SOURCES += \
 	triggersitemmodel.cc \
 	trigger.cc \
 	layout.cc \
+	hexdump.cc \
 
 unix {
 	CONFIG += link_pkgconfig

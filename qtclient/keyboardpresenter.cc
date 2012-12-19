@@ -5,6 +5,7 @@
 #include "keyboardmodel.h"
 #include "keyboardview.h"
 #include "layout.h"
+#include "hexdump.h"
 
 KeyboardPresenter::KeyboardPresenter()
 	: mKeyboardModel(NULL)
@@ -111,40 +112,43 @@ void KeyboardPresenter::downloadAction() {
 	}
 }
 
-void hexDebug(const uint8_t* data, size_t len){
-	char line[80];
-	char* cursor = line;
-	for(size_t i = 0; i < len; ++i){
-		if(i && (i % 16 == 0)){
-			qDebug() << line;
-			cursor = line;
-		}
-		cursor += sprintf(cursor, "%.2x ", data[i]);
-	}
-	if(cursor > line)
-		qDebug() << line;
-}
 
 
 void KeyboardPresenter::uploadAction() {
 	if (!mUSBDevice) return;
+
+	QByteArray mapping = mKeyboardModel->getMapping();
+	QByteArray programs =
+		Program::encodePrograms(*mKeyboardModel->getPrograms(),
+								mKeyboardModel->getNumPrograms(),
+								mKeyboardModel->getProgramSpaceRaw());
+
+	QPair<QByteArray, QByteArray> encodedMacros =
+		Trigger::encodeTriggers(*mKeyboardModel->getTriggers(),
+								mKeyboardModel->getKeysPerTrigger(),
+								mKeyboardModel->getMacroIndexSize(),
+								mKeyboardModel->getMacroStorageSize());
+
 	try {
 		KeyboardComm comm(*mUSBDevice);
 
-		comm.setMapping(mKeyboardModel->getMapping());
+		// qDebug() has an implicit endl, we add an extra one for a
+		// gap between dumps.
 
-		comm.setPrograms(
-			Program::encodePrograms(*mKeyboardModel->getPrograms(),
-									mKeyboardModel->getNumPrograms(),
-									mKeyboardModel->getProgramSpaceRaw()));
+		qDebug() << "Uploading mapping:" << endl
+				 << hexdump(mapping) << endl;
+		comm.setMapping(mapping);
 
-		QPair<QByteArray, QByteArray> encodedMacros =
-			Trigger::encodeTriggers(*mKeyboardModel->getTriggers(),
-									mKeyboardModel->getKeysPerTrigger(),
-									mKeyboardModel->getMacroIndexSize(),
-									mKeyboardModel->getMacroStorageSize());
+		qDebug() << "Uploading programs:" << endl
+				 << hexdump(programs) << endl;
+		comm.setPrograms(programs);
 
+		qDebug() << "Uplaoding macro index:" << endl
+				 << hexdump(encodedMacros.first) << endl;
 		comm.setMacroIndex(encodedMacros.first);
+
+		qDebug() << "Uploading macro data: " << endl
+				 << hexdump(encodedMacros.second) << endl;
 		comm.setMacroStorage(encodedMacros.second);
 	}
 	catch (LIBUSBError& e) {
