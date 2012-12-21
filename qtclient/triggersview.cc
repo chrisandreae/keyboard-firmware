@@ -29,6 +29,7 @@ TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent)
 	mTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 	mTableView->setSelectionMode(QAbstractItemView::SingleSelection);
 	mTableView->setItemDelegate(new TriggersItemDelegate(mTableView, presenter));
+	mTableView->setEditTriggers(QAbstractItemView::AllEditTriggers);
 
 	layout->addWidget(mTableView, 0, 0, 1, 2);
 
