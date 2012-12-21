@@ -41,6 +41,8 @@ public:
 		, mAvail(avail)
 		, mStorageType(storageType)
 	{}
+	~InsufficentStorageException() throw () {
+	}
 
 	virtual const char* what() const throw() {
 		if (mMessage.length() == 0) {
