@@ -35,8 +35,12 @@ public:
 		return keys.count() + keypad.layerSize;
 	};
 
-	QString namePosition(int position) const;
-	
+	QString namePosition(const LogicalKeycode position) const;
+
+	bool isKeypadLayer(LogicalKeycode lKey) const {
+		return lKey > keys.count();
+	}
+
 	LogicalKeycode physicalKeycodeToLogical(PhysicalKeycode pKey, bool keypadLayer) const {
 		if(keypadLayer && pKey > keypad.layerStart){
 			pKey += keypad.layerSize;

@@ -62,8 +62,20 @@ Layout Layout::readLayout(int layoutID) {
 	return layout;
 }
 
-QString Layout::namePosition(int position) const {
-	if (position < 0 || position >= keys.count())
+QString Layout::namePosition(const LogicalKeycode logicalKeycode) const {
+	PhysicalKeycode physicalKeycode;
+	bool keypad = isKeypadLayer(logicalKeycode);
+	if (keypad) {
+		physicalKeycode = logicalKeycode - this->keypad.layerSize;
+	}
+	else {
+		physicalKeycode = logicalKeycode;
+	}
+
+	if (physicalKeycode >= keys.count())
 		return QString("Invalid Position");
-	return keys[position].name;
+	else if (!keypad)
+		return keys[physicalKeycode].name;
+	else
+		return QString("K:%1").arg(keys[physicalKeycode].name);
 }

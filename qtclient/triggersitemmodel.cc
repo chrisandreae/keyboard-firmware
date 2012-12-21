@@ -51,16 +51,25 @@ QVariant TriggersItemModel::data(const QModelIndex& index, int role) const {
 		}
 	}
 	// Format the type and contents fields
-	else if(role == Qt::DisplayRole){
+	else {
 		switch (index.column() - mPresenter->getKeysPerTrigger()) {
 		case 0:
-			return Trigger::nameType(t->type());
-		case 1:
-			if (t->type() == Trigger::Macro) {
-				return Trigger::formatMacro(t->macro());
+			if(role == Qt::DisplayRole){
+				return Trigger::nameType(t->type());
 			}
-			else if (t->type() == Trigger::Program) {
-				return QString("Program %1").arg(t->program());
+			else if (role == Qt::EditRole) {
+				return t->type();
+			}
+			break;
+
+		case 1:
+			if(role == Qt::DisplayRole){
+				if (t->type() == Trigger::Macro) {
+					return Trigger::formatMacro(t->macro());
+				}
+				else if (t->type() == Trigger::Program) {
+					return QString("Program %1").arg(t->program());
+				}
 			}
 		}
 	}
@@ -83,6 +92,23 @@ QVariant TriggersItemModel::headerData(int section, Qt::Orientation orientation,
 		return QAbstractItemModel::headerData(section, orientation, role);
 }
 
+bool TriggersItemModel::setData(const QModelIndex& index, const QVariant& value, int role) {
+	if (index.column() == mPresenter->getKeysPerTrigger() && role == Qt::EditRole) {
+		Trigger::TriggerType type = static_cast<Trigger::TriggerType>(value.toInt());
+		mPresenter->setTriggerType(index.row(), type);
+		return true;
+	}
+	else
+		return QAbstractItemModel::setData(index, value, role);
+}
+
+Qt::ItemFlags TriggersItemModel::flags(const QModelIndex& index) const {
+	Qt::ItemFlags f = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+	if (index.column() == mPresenter->getKeysPerTrigger()) {
+		f |= Qt::ItemIsEditable;
+	}
+	return f;
+}
 
 void TriggersItemModel::triggerChanged(int row) {
 	emit dataChanged(index(row, 0), index(row, qMax(columnCount()-1, 0)));

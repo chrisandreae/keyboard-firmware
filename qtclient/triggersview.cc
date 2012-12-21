@@ -10,6 +10,7 @@
 #include "triggersview.h"
 #include "triggerspresenter.h"
 #include "triggersitemmodel.h"
+#include "triggersitemdelegate.h"
 #include "layoutwidget.h"
 
 TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent) 
@@ -27,6 +28,7 @@ TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent)
 	mTableView->setShowGrid(false);
 	mTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 	mTableView->setSelectionMode(QAbstractItemView::SingleSelection);
+	mTableView->setItemDelegate(new TriggersItemDelegate(mTableView, presenter));
 
 	layout->addWidget(mTableView, 0, 0, 1, 2);
 
