@@ -18,7 +18,7 @@ TriggersPresenter::~TriggersPresenter() {
 	}
 }
 
-const Trigger& TriggersPresenter::getTrigger(int index) {
+const Trigger& TriggersPresenter::getTrigger(int index) const {
 	return mTriggers->at(index);
 }
 
@@ -39,16 +39,28 @@ void TriggersPresenter::toggleKeyInTrigger(int index, LogicalKeycode logicalKeyc
 	mView->triggerChanged(index);
 }
 
-int TriggersPresenter::getNumTriggers() {
+void TriggersPresenter::setTriggerProgram(int index, uint16_t program) {
+	(*mTriggers)[index].setProgram(program);
+	mView->triggerChanged(index);
+}
+
+int TriggersPresenter::getNumTriggers() const {
 	if (mTriggers)
 		return mTriggers->count();
 	else
 		return 0;
 }
 
-int TriggersPresenter::getKeysPerTrigger(){
+int TriggersPresenter::getKeysPerTrigger() const {
 	if (mModel)
 		return mModel->getKeysPerTrigger();
+	else
+		return 0;
+}
+
+int TriggersPresenter::getNumPrograms() const {
+	if (mModel)
+		return mModel->getPrograms()->count();
 	else
 		return 0;
 }

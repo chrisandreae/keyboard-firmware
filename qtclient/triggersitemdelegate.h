@@ -4,6 +4,7 @@
 
 #include <QStyledItemDelegate>
 #include "triggerspresenter.h"
+#include "triggersitemmodel.h"
 
 class QWidget;
 class QModelIndex;
@@ -20,12 +21,16 @@ class TriggersItemDelegate : public QStyledItemDelegate {
 	// lazy constructor
 	QStandardItemModel *triggerTypesModel() const;
 
+	QStandardItemModel *programsModel(QObject *parent) const;
+
 	inline bool isTypeField(const QModelIndex& index) const {
-		return index.column() == mPresenter->getKeysPerTrigger();
+		return static_cast<const TriggersItemModel*>(index.model())
+			->isTypeField(index);
 	}
-
-	inline int typeField() const { return mPresenter->getKeysPerTrigger(); };
-
+	inline bool isProgramField(const QModelIndex& index) const {
+		return static_cast<const TriggersItemModel*>(index.model())
+			->isProgramField(index);
+	}
 
 public:
 	TriggersItemDelegate(QObject *parent, TriggersPresenter *presenter)

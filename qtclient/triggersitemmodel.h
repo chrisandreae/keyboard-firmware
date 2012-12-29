@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QAbstractItemModel>
 
-class TriggersPresenter;
+#include "triggerspresenter.h"
 
 class TriggersItemModel : public QAbstractItemModel {
 	Q_OBJECT
@@ -25,6 +25,20 @@ public:
 
 	bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole);
 	Qt::ItemFlags flags(const QModelIndex& index) const;
+
+
+	inline int typeFieldIndex() const {
+		return mPresenter->getKeysPerTrigger();
+	}
+	inline int contentsFieldIndex() const {
+		return mPresenter->getKeysPerTrigger() + 1;
+	}
+
+	inline bool isTypeField(const QModelIndex& index) const {
+		return index.column() == typeFieldIndex();
+	}
+
+	bool isProgramField(const QModelIndex& index) const;
 
 public slots:
 	void triggerChanged(int index);
