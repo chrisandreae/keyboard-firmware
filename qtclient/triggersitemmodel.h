@@ -42,8 +42,13 @@ public:
 
 public slots:
 	void triggerChanged(int index);
-	void beforeTriggersChanged();
-	void afterTriggersChanged();
+
+	inline void beforeTriggersChanged()        { beginResetModel(); }
+	inline void afterTriggersChanged()         { endResetModel(); }
+	inline void beforeInsertTrigger(int index) { beginInsertRows(QModelIndex(), index, index); }
+	inline void afterInsertTrigger()           { endInsertRows(); }
+	inline void beforeRemoveTrigger(int index) { beginRemoveRows(QModelIndex(), index, index); }
+	inline void afterRemoveTrigger()           { endRemoveRows(); }
 };
 
 #endif

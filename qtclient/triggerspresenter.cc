@@ -68,6 +68,26 @@ int TriggersPresenter::getNumPrograms() const {
 		return 0;
 }
 
+int TriggersPresenter::appendTrigger() {
+	if (mModel) {
+		const int newIndex = getNumTriggers();
+		mView->beforeInsertTrigger(newIndex);
+		mTriggers->append(Trigger(getKeysPerTrigger()));
+		mView->afterInsertTrigger();
+		return newIndex;
+	}
+	else
+		return -1;
+}
+
+void TriggersPresenter::removeTrigger(int index) {
+	if (mModel) {
+		mView->beforeRemoveTrigger(index);
+		mTriggers->removeAt(index);
+		mView->afterRemoveTrigger();
+	}
+}
+
 const Layout* TriggersPresenter::getLayout() const {
 	return mModel->getLayout();
 }

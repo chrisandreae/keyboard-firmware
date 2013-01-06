@@ -4,6 +4,7 @@
 #include <QHeaderView>
 #include <QModelIndex>
 #include <QItemSelectionModel>
+#include <QPushButton>
 #include <QDebug>
 
 #include "trigger.h"
@@ -33,9 +34,17 @@ TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent)
 
 	layout->addWidget(mTableView, 0, 0, 1, 2);
 
+	mAddTriggerButton = new QPushButton(tr("Add Trigger"));
+	layout->addWidget(mAddTriggerButton, 1, 0);
+	connect(mAddTriggerButton, SIGNAL(clicked()), this, SLOT(appendTrigger()));
+
+	mRemoveTriggerButton = new QPushButton(tr("Remove Trigger"));
+	layout->addWidget(mRemoveTriggerButton, 1, 1);
+	connect(mRemoveTriggerButton, SIGNAL(clicked()), this, SLOT(removeTrigger()));
+
 	mTriggerSetWidget = new LayoutWidget;
 	mTriggerSetWidget->setScale(0.4f);
-	layout->addWidget(mTriggerSetWidget, 1, 0);
+	layout->addWidget(mTriggerSetWidget, 2, 0);
 
 	mSelection = new QItemSelectionModel(mItemModel.data(), mItemModel.data());
 	mTableView->setSelectionModel(mSelection);
@@ -65,6 +74,18 @@ TriggersView::~TriggersView()
 {
 }
 
+void TriggersView::appendTrigger() {
+	mPresenter->appendTrigger();
+}
+
+void TriggersView::removeTrigger() {
+	if (mSelection->hasSelection()) {
+		mPresenter->removeTrigger(mSelection->currentIndex().row());
+	}
+	else{
+		qDebug() << "remove trigger without selection";
+	}
+}
 
 void TriggersView::beforeTriggersChanged() {
 	mItemModel->beforeTriggersChanged();
@@ -73,9 +94,26 @@ void TriggersView::afterTriggersChanged() {
 	mItemModel->afterTriggersChanged();
 }
 
-void TriggersView::triggerChanged(int row) {
-	mItemModel->triggerChanged(row);
+void TriggersView::triggerChanged(int index) {
+	mItemModel->triggerChanged(index);
 }
+
+void TriggersView::beforeInsertTrigger(int index) {
+	mItemModel->beforeInsertTrigger(index);
+}
+
+void TriggersView::afterInsertTrigger() {
+	mItemModel->afterInsertTrigger();
+}
+
+void TriggersView::beforeRemoveTrigger(int index) {
+	mItemModel->beforeRemoveTrigger(index);
+}
+
+void TriggersView::afterRemoveTrigger() {
+	mItemModel->afterRemoveTrigger();
+}
+
 
 /**
  * Update the graphical display of the trigger for the currently selected row
@@ -106,9 +144,13 @@ void TriggersView::handleModelChange(const QModelIndex& topLeft,
 void TriggersView::handleModelReset()
 {
 	updateTriggerSetWidget(currentSelectionOf(*mSelection));
+	updateButtons();
 }
 
 
+void TriggersView::updateButtons() {
+	mRemoveTriggerButton->setEnabled(mSelection->hasSelection());
+}
 
 void TriggersView::handleSelectionChange(const QItemSelection& current,
                                          const QItemSelection& previous)
@@ -117,6 +159,7 @@ void TriggersView::handleSelectionChange(const QItemSelection& current,
 	Q_UNUSED(previous);
 
 	updateTriggerSetWidget(currentSelectionOf(*mSelection));
+	updateButtons();
 }
 
 void TriggersView::handleLogicalKeyClicked(LogicalKeycode logicalKeycode) {

@@ -14,6 +14,7 @@ class LayoutWidget;
 class QItemSelectionModel;
 class QItemSelection;
 class QModelIndex;
+class QPushButton;
 
 class TriggersView : public QWidget {
 	Q_OBJECT
@@ -24,8 +25,11 @@ class TriggersView : public QWidget {
 	const Layout *mKeyboardLayout;
 	QItemSelectionModel *mSelection;
 	TriggersPresenter *mPresenter;
+	QPushButton *mAddTriggerButton;
+	QPushButton *mRemoveTriggerButton;
 
 	void updateTriggerSetWidget(const QModelIndex& index);
+	void updateButtons();
 
 public:
 	TriggersView(TriggersPresenter *presenter, QWidget *parent = NULL);
@@ -36,6 +40,11 @@ public:
 	void afterTriggersChanged();
 	void setKeyboardLayout(const Layout& keyboardLayout);
 
+	void beforeInsertTrigger(int index);
+	void afterInsertTrigger();
+	void beforeRemoveTrigger(int index);
+	void afterRemoveTrigger();
+
 public slots:
 	void handleSelectionChange(const QItemSelection& current,
 							   const QItemSelection& previous);
@@ -43,6 +52,9 @@ public slots:
 						   const QModelIndex& bottomRight);
 	void handleModelReset();
 	void handleLogicalKeyClicked(LogicalKeycode position);
+
+	void appendTrigger();
+	void removeTrigger();
 };
 
 #endif

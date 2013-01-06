@@ -33,6 +33,9 @@ public:
 
 	void toggleKeyInTrigger(int index, LogicalKeycode logicalKeycode);
 
+	int appendTrigger();
+	void removeTrigger(int);
+
 public slots:
 	void setModel(const QSharedPointer<KeyboardModel>& m);
 };

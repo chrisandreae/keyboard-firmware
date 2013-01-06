@@ -141,11 +141,3 @@ Qt::ItemFlags TriggersItemModel::flags(const QModelIndex& index) const {
 void TriggersItemModel::triggerChanged(int row) {
 	emit dataChanged(index(row, 0), index(row, qMax(columnCount()-1, 0)));
 }
-
-void TriggersItemModel::beforeTriggersChanged() {
-	beginResetModel();
-}
-
-void TriggersItemModel::afterTriggersChanged() {
-	endResetModel();
-}
