@@ -12,7 +12,7 @@ ProgramsPresenter::~ProgramsPresenter() {
 	}
 }
 
-void ProgramsPresenter::setModel(KeyboardModel *model) {
+void ProgramsPresenter::setModel(const QSharedPointer<KeyboardModel>& model) {
 	mKeyboardModel = model;
 	mView->setPrograms(model->getPrograms(), model->getProgramSpace());
 }

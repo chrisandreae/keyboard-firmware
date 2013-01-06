@@ -33,7 +33,7 @@ public:
 
 	void triggerChanged(int index);
 	void triggersChanged();
-	void setKeyboardLayout(const Layout *keyboardLayout);
+	void setKeyboardLayout(const Layout& keyboardLayout);
 
 public slots:
 	void handleSelectionChange(const QItemSelection& current,

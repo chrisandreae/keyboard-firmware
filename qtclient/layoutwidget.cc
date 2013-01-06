@@ -54,10 +54,10 @@ void LayoutWidget::paintEvent(QPaintEvent *ev) {
 	}
 }
 
-void LayoutWidget::setKeyboardLayout(const Layout *layout) {
-	mLayout = layout;
+void LayoutWidget::setKeyboardLayout(const Layout& layout) {
+	mLayout = &layout; // FIXME: aliasing without ownership
 	QPixmap image =
-		QPixmap(QString(":layout/%1").arg(layout->imageName));
+		QPixmap(QString(":layout/%1").arg(layout.imageName));
 	if (mScale != 1.0f) {
 		setPixmap(image.scaledToWidth(image.width() * mScale,
 		                              Qt::SmoothTransformation));

@@ -14,7 +14,7 @@ class TriggersPresenter : public QObject {
 
 	TriggersView *mView;
 	QList<Trigger>* mTriggers;
-	KeyboardModel *mModel;
+	QSharedPointer<KeyboardModel> mModel;
 
 public:
 	TriggersPresenter();
@@ -22,11 +22,11 @@ public:
 
 	QWidget *getWidget() { return mView; }
 
-	const Trigger& getTrigger(int index) const;
+	const Trigger *getTrigger(int index) const;
 	int getNumTriggers() const;
 	int getKeysPerTrigger() const;
 	int getNumPrograms() const;
-	const Layout& getLayout() const;
+	const Layout *getLayout() const;
 
 	void setTriggerType(int index, Trigger::TriggerType t);
 	void setTriggerProgram(int index, uint16_t program);
@@ -34,7 +34,7 @@ public:
 	void toggleKeyInTrigger(int index, LogicalKeycode logicalKeycode);
 
 public slots:
-	void setModel(KeyboardModel *m);
+	void setModel(const QSharedPointer<KeyboardModel>& m);
 };
 
 #endif

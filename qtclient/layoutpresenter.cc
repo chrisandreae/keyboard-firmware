@@ -17,20 +17,22 @@ LayoutPresenter::~LayoutPresenter() {
 	}
 }
 
-void LayoutPresenter::setModel(KeyboardModel *model) {
+void LayoutPresenter::setModel(const QSharedPointer<KeyboardModel>& model) {
 	mModel = model;
 
-	mView->setKeyboardLayout(&mModel->getLayout());
-	mView->setMapping(mModel->getMapping());
+	mView->setKeyboardLayout(*mModel->getLayout());
+	mView->setMapping(*mModel->getMapping());
 }
 
 void LayoutPresenter::setHIDUsage(LogicalKeycode logicalKey, HIDKeycode hidKey) {
-	mModel->getMapping()[logicalKey] = hidKey;
+	QByteArray *mapping = mModel->getMapping();
+	(*mapping)[logicalKey] = hidKey;
 	// and update the view
-	mView->setMapping(mModel->getMapping());
+	mView->setMapping(*mapping);
 }
 
 void LayoutPresenter::loadDefaults() {
-	mModel->getMapping() = mModel->getDefaultMapping();
-	mView->setMapping(mModel->getMapping());
+	QByteArray *mapping = mModel->getMapping();
+	*mapping = mModel->getDefaultMapping();
+	mView->setMapping(*mapping);
 }

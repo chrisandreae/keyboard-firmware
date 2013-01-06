@@ -18,14 +18,14 @@ TriggersPresenter::~TriggersPresenter() {
 	}
 }
 
-const Trigger& TriggersPresenter::getTrigger(int index) const {
-	return mTriggers->at(index);
+const Trigger *TriggersPresenter::getTrigger(int index) const {
+	return &mTriggers->at(index);
 }
 
-void TriggersPresenter::setModel(KeyboardModel *m) {
+void TriggersPresenter::setModel(const QSharedPointer<KeyboardModel>& m) {
 	mModel = m;
 	mTriggers = m->getTriggers();
-	mView->setKeyboardLayout(&m->getLayout());
+	mView->setKeyboardLayout(*m->getLayout());
 	mView->triggersChanged();
 }
 
@@ -65,6 +65,6 @@ int TriggersPresenter::getNumPrograms() const {
 		return 0;
 }
 
-const Layout& TriggersPresenter::getLayout() const {
+const Layout* TriggersPresenter::getLayout() const {
 	return mModel->getLayout();
 }

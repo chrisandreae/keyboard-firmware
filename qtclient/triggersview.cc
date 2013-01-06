@@ -56,8 +56,8 @@ TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent)
 	setLayout(layout);
 }
 
-void TriggersView::setKeyboardLayout(const Layout *keyboardLayout) {
-	mKeyboardLayout = keyboardLayout;
+void TriggersView::setKeyboardLayout(const Layout& keyboardLayout) {
+	mKeyboardLayout = &keyboardLayout; // FIXME: aliasing without ownership
 	mTriggerSetWidget->setKeyboardLayout(keyboardLayout);
 }
 
@@ -79,8 +79,8 @@ void TriggersView::triggerChanged(int row) {
  */
 void TriggersView::updateTriggerSetWidget(const QModelIndex& index){
 	if(index.isValid()){
-		const Trigger& currentTrigger = mPresenter->getTrigger(index.row());
-		mTriggerSetWidget->setSelection(QSet<LogicalKeycode>::fromList(currentTrigger.triggerKeys()));
+		const Trigger *currentTrigger = mPresenter->getTrigger(index.row());
+		mTriggerSetWidget->setSelection(QSet<LogicalKeycode>::fromList(currentTrigger->triggerKeys()));
 	}
 	else{
 		mTriggerSetWidget->setSelection(QSet<LogicalKeycode>());

@@ -14,7 +14,7 @@ class ProgramsPresenter : public QObject {
 	Q_OBJECT
 
 	ProgramsView *mView;
-	KeyboardModel *mKeyboardModel;
+	QSharedPointer<KeyboardModel> mKeyboardModel;
 
 public:
 	ProgramsPresenter();
@@ -24,7 +24,7 @@ public:
 	void setProgram(int program, QByteArray newContents);
 
 public slots:
-	void setModel(KeyboardModel *model);
+	void setModel(const QSharedPointer<KeyboardModel>& model);
 };
 
 #endif

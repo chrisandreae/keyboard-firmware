@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QList>
 #include <QScopedPointer>
+#include <QSharedPointer>
 
 #include "keyboardview.h"
 #include "layoutpresenter.h"
@@ -21,7 +22,8 @@ class KeyboardPresenter : public QObject {
 	QList<USBDevice> mDevices;
 	QScopedPointer<USBDevice> mUSBDevice;
 	QScopedPointer<KeyboardView> mView;
-	QScopedPointer<KeyboardModel> mKeyboardModel;
+
+	QSharedPointer<KeyboardModel> mKeyboardModel;
 
 	LayoutPresenter mLayoutPresenter;
 	ProgramsPresenter mProgramsPresenter;
@@ -34,7 +36,7 @@ public:
 	~KeyboardPresenter();
 
 signals:
-	void modelChanged(KeyboardModel*);
+	void modelChanged(const QSharedPointer<KeyboardModel>&);
 
 public slots:
 	void showAction();

@@ -30,7 +30,7 @@ class KeyboardModel {
 	QByteArray mMapping;
 
 public:
-	KeyboardModel(KeyboardComm& dev);
+	KeyboardModel(KeyboardComm *dev);
 
 	uint8_t          getLayoutID()         { return mLayoutID;         }
 	uint8_t          getMappingSize()      { return mMappingSize;      }
@@ -43,8 +43,8 @@ public:
 	QByteArray       getDefaultMapping()   { return mDefaultMapping;   }
 	QList<Program> * getPrograms()         { return &mPrograms;        }
 	QList<Trigger> * getTriggers()         { return &mTriggers;        }
-	const Layout&    getLayout()           { return mLayout;           }
-	QByteArray&      getMapping()          { return mMapping;          }
+	const Layout*    getLayout()           { return &mLayout;          }
+	QByteArray*      getMapping()          { return &mMapping;         }
 
 };
 

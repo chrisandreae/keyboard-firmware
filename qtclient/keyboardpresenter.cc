@@ -13,14 +13,14 @@ KeyboardPresenter::KeyboardPresenter()
 	mView.reset(new KeyboardView(this, createSubviewList()));
 
 	// distribute model to sub-presenters
-	connect(this, SIGNAL(modelChanged(KeyboardModel*)),
-			&mLayoutPresenter, SLOT(setModel(KeyboardModel*)));
+	connect(this, SIGNAL(modelChanged(const QSharedPointer<KeyboardModel>&)),
+			&mLayoutPresenter, SLOT(setModel(const QSharedPointer<KeyboardModel>&)));
 
-	connect(this, SIGNAL(modelChanged(KeyboardModel*)),
-			&mProgramsPresenter, SLOT(setModel(KeyboardModel*)));
+	connect(this, SIGNAL(modelChanged(const QSharedPointer<KeyboardModel>&)),
+			&mProgramsPresenter, SLOT(setModel(const QSharedPointer<KeyboardModel>&)));
 
-	connect(this, SIGNAL(modelChanged(KeyboardModel*)),
-			&mTriggersPresenter, SLOT(setModel(KeyboardModel*)));
+	connect(this, SIGNAL(modelChanged(const QSharedPointer<KeyboardModel>&)),
+			&mTriggersPresenter, SLOT(setModel(const QSharedPointer<KeyboardModel>&)));
 }
 
 QList<QPair<QString, QWidget*> > KeyboardPresenter::createSubviewList() {
@@ -94,18 +94,18 @@ void KeyboardPresenter::selectDeviceAction(int index) {
 void KeyboardPresenter::downloadAction() {
 	if (!mUSBDevice) return;
 	try {
-		KeyboardComm comm(*mUSBDevice);
+		KeyboardComm comm(mUSBDevice.data());
 
-		KeyboardModel *m = new KeyboardModel(comm);
-		mKeyboardModel.reset(m);
-		emit modelChanged(m);
-		mView->showValues(m->getLayoutID(),
-						  m->getMappingSize(),
-						  m->getNumPrograms(),
-						  m->getProgramSpaceRaw(),
-						  m->getProgramSpace(),
-						  m->getMacroIndexSize(),
-						  m->getMacroStorageSize());
+		mKeyboardModel = QSharedPointer<KeyboardModel>(
+			new KeyboardModel(&comm));
+		emit modelChanged(mKeyboardModel);
+		mView->showValues(mKeyboardModel->getLayoutID(),
+		                  mKeyboardModel->getMappingSize(),
+		                  mKeyboardModel->getNumPrograms(),
+		                  mKeyboardModel->getProgramSpaceRaw(),
+		                  mKeyboardModel->getProgramSpace(),
+		                  mKeyboardModel->getMacroIndexSize(),
+		                  mKeyboardModel->getMacroStorageSize());
 	}
 	catch (LIBUSBError& usbError) {
 		qDebug() << "Error downloading settings: " << usbError.what();
@@ -117,7 +117,7 @@ void KeyboardPresenter::downloadAction() {
 void KeyboardPresenter::uploadAction() {
 	if (!mUSBDevice) return;
 
-	QByteArray mapping = mKeyboardModel->getMapping();
+	QByteArray mapping = *mKeyboardModel->getMapping();
 	QByteArray programs =
 		Program::encodePrograms(*mKeyboardModel->getPrograms(),
 								mKeyboardModel->getNumPrograms(),
@@ -130,7 +130,7 @@ void KeyboardPresenter::uploadAction() {
 								mKeyboardModel->getMacroStorageSize());
 
 	try {
-		KeyboardComm comm(*mUSBDevice);
+		KeyboardComm comm(mUSBDevice.data());
 
 		// qDebug() has an implicit endl, we add an extra one for a
 		// gap between dumps.

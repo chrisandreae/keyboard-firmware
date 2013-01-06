@@ -30,7 +30,7 @@ class LayoutView : public QWidget {
 public:
 	LayoutView(LayoutPresenter *presenter);
 
-	void setKeyboardLayout(const Layout *layout);
+	void setKeyboardLayout(const Layout& layout);
 
 	void setMapping(const QByteArray& m);
 

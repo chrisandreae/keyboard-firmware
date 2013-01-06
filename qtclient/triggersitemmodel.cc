@@ -18,7 +18,7 @@ QModelIndex TriggersItemModel::index(int row, int column, const QModelIndex& par
 	Q_UNUSED(parent);
 	if (row < 0 || row >= rowCount() || column < 0 || column >= columnCount())
 		return QModelIndex();
-	return createIndex(row, column, (void*) &mPresenter->getTrigger(row));
+	return createIndex(row, column, (void*) mPresenter->getTrigger(row));
 }
 
 QModelIndex TriggersItemModel::parent(const QModelIndex& index) const {
@@ -54,7 +54,7 @@ QVariant TriggersItemModel::data(const QModelIndex& index, int role) const {
 			std::reverse(keyList.begin(), keyList.end());
 			// qSort(keyList.begin(), keyList.end(), qGreater<LogicalKeycode>());
 			// qReverse(keyList);
-			return QString(mPresenter->getLayout().namePosition(keyList.at(col)));
+			return QString(mPresenter->getLayout()->namePosition(keyList.at(col)));
 		}
 	}
 	// Format the type and contents fields

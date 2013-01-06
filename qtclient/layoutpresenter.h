@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 #include <QObject>
-#include <QScopedPointer>
+#include <QSharedPointer>
 
 #include "layoutview.h"
 #include "keyselectionview.h"
@@ -16,7 +16,7 @@ class LayoutPresenter : public QObject {
 	Q_OBJECT
 
 	LayoutView *mView;
-	KeyboardModel *mModel;
+	QSharedPointer<KeyboardModel> mModel;
 
 public:
 	LayoutPresenter();
@@ -26,7 +26,7 @@ public:
 	void setHIDUsage(LogicalKeycode logicalKey, HIDKeycode hidKey);
 
 public slots:
-	void setModel(KeyboardModel *model);
+	void setModel(const QSharedPointer<KeyboardModel>& model);
 	void loadDefaults();
 };
 

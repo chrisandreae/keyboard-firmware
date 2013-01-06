@@ -42,12 +42,12 @@ public:
 		, mScale(1.0f)
 	{
 		setAlignment(Qt::AlignLeft | Qt::AlignTop);
-		mSelectedColor 	  = QColor::fromRgbF(1, 0, 0, 0.2);
+		mSelectedColor = QColor::fromRgbF(1, 0, 0, 0.2);
 		mKeypadLayerColor = QColor::fromRgbF(0, 0, 1, 0.2);
 	}
 
 	void setScale(float f) { mScale = f; }
-	void setKeyboardLayout(const Layout *layout);
+	void setKeyboardLayout(const Layout& layout);
 	void setMapping(const QByteArray& mapping);
 
 	void setSelection(const QSet<LogicalKeycode>& selectedKeys);

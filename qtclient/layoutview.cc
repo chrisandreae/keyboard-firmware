@@ -32,7 +32,7 @@ LayoutView::LayoutView(LayoutPresenter *presenter)
 	        mPresenter, SLOT(loadDefaults()));
 }
 
-void LayoutView::setKeyboardLayout(const Layout *layout) {
+void LayoutView::setKeyboardLayout(const Layout& layout) {
 	mLayoutWidget->setKeyboardLayout(layout);
 }
 
