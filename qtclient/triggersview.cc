@@ -91,12 +91,7 @@ void TriggersView::updateTriggerSetWidget(const QModelIndex& index){
 }
 
 static const QModelIndex currentSelectionOf(const QItemSelectionModel& selectionModel){
-	if(selectionModel.hasSelection()){
-		return selectionModel.selection().indexes().at(0);
-	}
-	else{
-		return QModelIndex();
-	}
+	return selectionModel.currentIndex();
 }
 
 void TriggersView::handleModelChange(const QModelIndex& topLeft,

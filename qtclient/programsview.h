@@ -47,6 +47,9 @@ public slots:
 	void fileSelected(const QString& filename);
 	void programChanged(int idx);
 
+private slots:
+	void handleSelectionChanged();
+
 };
 
 #endif

@@ -104,8 +104,8 @@ void ProgramsView::setPrograms(const QList<Program> *programs, int programSpace)
 
 	connect(mProgramsModel.data(), SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
 	        this, SLOT(updatePrograms()));
-	connect(mProgramsSelection, SIGNAL(currentChanged(const QModelIndex&, const QModelIndex&)),
-	        this, SLOT(selectedProgram(const QModelIndex&)));
+	connect(mProgramsSelection, SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
+	        this, SLOT(handleSelectionChanged()));
 
 }
 
@@ -146,4 +146,8 @@ void ProgramsView::fileSelected(const QString& filename) {
 
 void ProgramsView::programChanged(int index) {
 	mProgramsModel->sendChanged(index);
+}
+
+void ProgramsView::handleSelectionChanged() {
+	selectedProgram(mProgramsSelection->currentIndex());
 }
