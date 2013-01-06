@@ -23,10 +23,13 @@ const Trigger *TriggersPresenter::getTrigger(int index) const {
 }
 
 void TriggersPresenter::setModel(const QSharedPointer<KeyboardModel>& m) {
+	mView->beforeTriggersChanged();
+
 	mModel = m;
 	mTriggers = m->getTriggers();
 	mView->setKeyboardLayout(*m->getLayout());
-	mView->triggersChanged();
+
+	mView->afterTriggersChanged();
 }
 
 void TriggersPresenter::setTriggerType(int index, Trigger::TriggerType t) {

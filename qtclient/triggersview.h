@@ -32,7 +32,8 @@ public:
 	~TriggersView();
 
 	void triggerChanged(int index);
-	void triggersChanged();
+	void beforeTriggersChanged();
+	void afterTriggersChanged();
 	void setKeyboardLayout(const Layout& keyboardLayout);
 
 public slots:

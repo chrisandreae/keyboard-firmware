@@ -142,6 +142,10 @@ void TriggersItemModel::triggerChanged(int row) {
 	emit dataChanged(index(row, 0), index(row, qMax(columnCount()-1, 0)));
 }
 
-void TriggersItemModel::triggersChanged() {
-	reset();
+void TriggersItemModel::beforeTriggersChanged() {
+	beginResetModel();
+}
+
+void TriggersItemModel::afterTriggersChanged() {
+	endResetModel();
 }

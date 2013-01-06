@@ -42,7 +42,8 @@ public:
 
 public slots:
 	void triggerChanged(int index);
-	void triggersChanged();
+	void beforeTriggersChanged();
+	void afterTriggersChanged();
 };
 
 #endif

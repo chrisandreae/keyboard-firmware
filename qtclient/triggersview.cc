@@ -66,8 +66,11 @@ TriggersView::~TriggersView()
 }
 
 
-void TriggersView::triggersChanged() {
-	mItemModel->triggersChanged();
+void TriggersView::beforeTriggersChanged() {
+	mItemModel->beforeTriggersChanged();
+}
+void TriggersView::afterTriggersChanged() {
+	mItemModel->afterTriggersChanged();
 }
 
 void TriggersView::triggerChanged(int row) {
