@@ -39,6 +39,7 @@ public:
 	LayoutWidget(QWidget *parent = NULL)
 		: QLabel(parent)
 		, mKeypadLayerSelected(false)
+		, mLayout(NULL)
 		, mScale(1.0f)
 	{
 		setAlignment(Qt::AlignLeft | Qt::AlignTop);

@@ -64,7 +64,7 @@ public:
 		: mDevice(libusb_ref_device(other.mDevice))
 	{}
 
-	operator libusb_device*() {
+	operator libusb_device*() const {
 		return mDevice;
 	}
 };

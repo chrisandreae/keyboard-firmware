@@ -89,8 +89,8 @@ class KeyboardComm {
 public:
 	static QList<USBDevice> enumerate(libusb_context *context = NULL);
 
-	KeyboardComm(USBDevice *dev)
-		: mDeviceHandle(*dev)
+	KeyboardComm(const USBDevice& dev)
+		: mDeviceHandle(dev)
 		, mTimeout(5000)
 	{
 	}

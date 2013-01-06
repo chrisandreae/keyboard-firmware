@@ -89,5 +89,8 @@ void TriggersPresenter::removeTrigger(int index) {
 }
 
 const Layout* TriggersPresenter::getLayout() const {
-	return mModel->getLayout();
+	if (mModel)
+		return mModel->getLayout();
+	else
+		return NULL;
 }

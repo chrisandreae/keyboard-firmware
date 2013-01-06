@@ -88,7 +88,7 @@ void ProgramsView::selectedProgram(const QModelIndex& index) {
 
 
 void ProgramsView::setPrograms(const QList<Program> *programs, int programSpace) {
-	mPrograms = programs;
+	mPrograms = programs; // FIXME: alias without ownership
 	mProgramSpace = programSpace;
 
 	mProgramsModel.reset(

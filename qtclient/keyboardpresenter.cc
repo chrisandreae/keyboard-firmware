@@ -94,7 +94,7 @@ void KeyboardPresenter::selectDeviceAction(int index) {
 void KeyboardPresenter::downloadAction() {
 	if (!mUSBDevice) return;
 	try {
-		KeyboardComm comm(mUSBDevice.data());
+		KeyboardComm comm(*mUSBDevice);
 
 		mKeyboardModel = QSharedPointer<KeyboardModel>(
 			new KeyboardModel(&comm));
@@ -130,7 +130,7 @@ void KeyboardPresenter::uploadAction() {
 								mKeyboardModel->getMacroStorageSize());
 
 	try {
-		KeyboardComm comm(mUSBDevice.data());
+		KeyboardComm comm(*mUSBDevice);
 
 		// qDebug() has an implicit endl, we add an extra one for a
 		// gap between dumps.
