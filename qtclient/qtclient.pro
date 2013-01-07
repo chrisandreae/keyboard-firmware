@@ -35,6 +35,7 @@ HEADERS += \
 	trigger.h \
 	hexdump.h \
 	triggersitemdelegate.h \
+	util.h \
 
 SOURCES += \
 	keyboardcomm.cc \
@@ -60,6 +61,7 @@ SOURCES += \
 	layout.cc \
 	hexdump.cc \
 	triggersitemdelegate.cc \
+	util.cc \
 
 unix {
 	CONFIG += link_pkgconfig

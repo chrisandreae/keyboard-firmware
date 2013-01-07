@@ -13,6 +13,7 @@
 #include "programsview.h"
 #include "programspresenter.h"
 #include "programsitemmodel.h"
+#include "util.h"
 
 ProgramsView::ProgramsView(ProgramsPresenter *presenter)
 	: mPresenter(presenter)
@@ -149,5 +150,5 @@ void ProgramsView::programChanged(int index) {
 }
 
 void ProgramsView::handleSelectionChanged() {
-	selectedProgram(mProgramsSelection->currentIndex());
+	selectedProgram(currentSelectionOf(*mProgramsSelection));
 }

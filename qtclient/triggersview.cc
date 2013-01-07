@@ -13,6 +13,7 @@
 #include "triggersitemmodel.h"
 #include "triggersitemdelegate.h"
 #include "layoutwidget.h"
+#include "util.h"
 
 TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent) 
 	: QWidget(parent)
@@ -75,12 +76,15 @@ TriggersView::~TriggersView()
 }
 
 void TriggersView::appendTrigger() {
-	mPresenter->appendTrigger();
+	int newIndex = mPresenter->appendTrigger();
+	mSelection->setCurrentIndex(mItemModel->index(newIndex, 0, QModelIndex()),
+	                            QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
 }
 
 void TriggersView::removeTrigger() {
-	if (mSelection->hasSelection()) {
-		mPresenter->removeTrigger(mSelection->currentIndex().row());
+	QModelIndex i = currentSelectionOf(*mSelection);
+	if (i.isValid()) {
+		mPresenter->removeTrigger(i.row());
 	}
 	else{
 		qDebug() << "remove trigger without selection";
@@ -126,10 +130,6 @@ void TriggersView::updateTriggerSetWidget(const QModelIndex& index){
 	else{
 		mTriggerSetWidget->setSelection(QSet<LogicalKeycode>());
 	}
-}
-
-static const QModelIndex currentSelectionOf(const QItemSelectionModel& selectionModel){
-	return selectionModel.currentIndex();
 }
 
 void TriggersView::handleModelChange(const QModelIndex& topLeft,
