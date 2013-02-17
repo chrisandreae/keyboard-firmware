@@ -63,9 +63,13 @@ SOURCES += \
 	triggersitemdelegate.cc \
 	util.cc \
 
-unix {
+linux-* {
 	CONFIG += link_pkgconfig
 	PKGCONFIG += libusb-1.0
+}
+
+freebsd-* {
+	LIBS += -lusb
 }
 
 win32 {
