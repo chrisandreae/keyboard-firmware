@@ -8,6 +8,7 @@
 
 TriggersPresenter::TriggersPresenter()
 	: mTriggers(NULL)
+	, mModel(NULL)
 {
 	mView = new TriggersView(this);
 }
