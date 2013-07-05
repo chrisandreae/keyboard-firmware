@@ -63,6 +63,11 @@ SOURCES += \
 	triggersitemdelegate.cc \
 	util.cc \
 
+mac {
+	CONFIG += link_pkgconfig
+	PKGCONFIG += libusb-1.0
+}
+
 linux-* {
 	CONFIG += link_pkgconfig
 	PKGCONFIG += libusb-1.0
