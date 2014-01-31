@@ -69,7 +69,7 @@ HID_NAMES = ["",
              "F11",                            # 0x44
              "F12",                            # 0x45
              "Prnt_Scrn",                      # 0x46
-             "Scrl_Lck",                       # 0x47
+             "Scrl_Lock",                       # 0x47
              "Pause",                          # 0x48
              "Insert",                         # 0x49
              "Home",                           # 0x4a

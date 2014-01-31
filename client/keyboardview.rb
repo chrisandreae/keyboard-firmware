@@ -7,7 +7,7 @@ require_relative "keyboardpresenter"
 
 class KeyboardView
   attr :glade
-  attr_reader :window
+  attr_reader :keyboardWindow
 
   def initialize(presenter)
     @presenter = presenter
@@ -16,17 +16,49 @@ class KeyboardView
     builder = Gtk::Builder::new
     builder.add_from_file("gui.xml")
     builder.connect_signals{ |handler| method(handler) }
-    @window = builder.get_object("window1")
+
+    init_keyboard_window(builder)
+
+    @keyboardWindow.show()
+  end
+
+  def init_keyboard_window(builder)
+    @keyboardWindow = builder.get_object("keyboard_window")
 
     @refreshButton = builder.get_object("refresh")
 
     @devCombo = builder.get_object("devices")
-    @devList = Gtk::ListStore.new(String);
-    @devCombo.model= @devList
+    @devList = builder.get_object("devices_liststore")
+
     comboRenderer = Gtk::CellRendererText.new
     @devCombo.pack_start(comboRenderer, true)
     @devCombo.add_attribute(comboRenderer, 'text', 0)
 
+    # Macro view
+    @macrosView = builder.get_object("macros_view")
+    @macrosModel = Gtk::ListStore.new(Object) # can't create with ruby types in builder?
+    @macrosView.model = @macrosModel
+    initializeMacrosView
+
+    # Macro edit
+    @macroEditFrame = builder.get_object("macro_edit_frame")
+    @macroTypes = Hash[builder.get_object("macro_type_macro") => :macro,
+                       builder.get_object("macro_type_program") => :program]
+    @macroContentsTabs = builder.get_object("macro_contents_tabs")
+
+    @macroProgramCombo = builder.get_object("macro_program_combo")
+    macroProgramListStore = builder.get_object("macro_program_liststore")
+    macroComboRenderer = Gtk::CellRendererText.new
+    @macroProgramCombo.pack_start(macroComboRenderer, true)
+    @macroProgramCombo.set_cell_data_func(macroComboRenderer) do |col, renderer, model, iter|
+      renderer.text = "Program #{iter[0]+1}"
+    end
+
+    @macroRecordingEntry = builder.get_object("macro_recording_entry")
+
+    @macroSummaryLabel = builder.get_object("macro_summary_label")
+
+    #remapping
     @remapButton = builder.get_object("remap")
 
     # TODO: rather than fixed program buttons, add them programmatically
@@ -56,9 +88,70 @@ class KeyboardView
     # to decide which part of the provided mapping to display on the picture
     @keypadMode = false
 
-    @window.show()
   end
 
+  def initializeMacrosView
+    @macrosView.selection.mode = Gtk::SELECTION_BROWSE
+    @macrosView.selection.signal_connect("changed") do |sel|
+      macros_view_select(sel.selected)
+    end
+
+
+    # Key column
+    renderer = Gtk::CellRendererText.new
+    col = Gtk::TreeViewColumn.new("Trigger", renderer)
+    @macrosView.append_column(col)
+    col.set_cell_data_func(renderer) do |col, renderer, model, iter|
+      # Display key by reversing and joining with " + "
+      key = iter[0].key
+      keyDescr = if key.length == 0
+                   "Undefined"
+                 elsif @layout == nil
+                   "Layout not loaded"
+                 else
+                   iter[0].key.sort{|a,b| b <=> a}.collect{|h| @layout[h]["name"] }.join("+");
+                 end
+      renderer.text = keyDescr
+    end
+
+    # Type column
+    renderer = Gtk::CellRendererText.new
+    col = Gtk::TreeViewColumn.new("Type", renderer)
+    col.set_cell_data_func(renderer) do |col, renderer, model, iter|
+      renderer.text = iter[0].type.to_s.capitalize
+    end
+    @macrosView.append_column(col)
+
+    # Value column
+    renderer = Gtk::CellRendererText.new
+    col = Gtk::TreeViewColumn.new("Contents", renderer)
+    @macrosView.append_column(col)
+    col.set_cell_data_func(renderer) do |col, renderer, model, iter|
+      m = iter[0]
+      case m.type
+      when :program
+        display = "Program %s" % (m.data + 1)
+      when :macro
+        display = render_macro_sequence(m.data)
+      else
+        raise "Unexpected macro entry type #{iter[1]}"
+      end
+      renderer.text = display
+    end
+  end
+
+  def render_macro_sequence(data)
+    down = Set.new
+    data.collect do |x|
+      if down.include? x
+        down.delete(x)
+        "-#{HID_NAMES[x]}"
+      else
+        down.add(x)
+        "+#{HID_NAMES[x]}"
+      end
+    end.join(" ")
+  end
 
   ## Presenter interface
   def setPresenter(p)
@@ -82,6 +175,19 @@ class KeyboardView
     count = vsizes.length
     total = vsizes.inject(0, &:+)
     @programSummaryLabel.text = "#{count} program(s): #{total}/#{space} bytes used"
+  end
+
+  def setMacros(macros)
+    @macrosModel.clear
+    macros.each do |m|
+      row = @macrosModel.append
+      row[0] = m
+    end
+    @presenter.updateMacroSizes
+  end
+
+  def setMacroSizes(macroCount, macroMax, macroSize, maxSize)
+    @macroSummaryLabel.text = "#{macroCount}/#{macroMax} macro(s): #{macroSize}/#{maxSize} bytes used"
   end
 
   def updateDeviceList(names)
@@ -116,7 +222,7 @@ class KeyboardView
     @devCombo.set_sensitive(false)
     @remapButton.set_sensitive(true)
     @remapButton.label = "End Remap"
-    @programButtons.each { |b| b.set_sensitive(source) }
+    @programButtons.each { |b| b.set_sensitive(false) }
   end
 
   def setStatusLine(str)
@@ -177,8 +283,99 @@ class KeyboardView
 
   def program_clicked_cb(x)
     i = @programButtons.index(x)
-    @presenter.handleProgramClick(i)
+    @presenter.alterProgramAction(i)
   end
+
+
+############ macro editing ##############
+
+  def macro_remove_clicked_cb(x)
+    selIter = @macrosView.selection.selected
+    @presenter.deleteMacroAction(selIter[0])
+    @macrosModel.remove(selIter)
+    @presenter.updateMacroSize
+  end
+
+  def macro_add_clicked_cb(x)
+    newmacro = @presenter.addNewMacroAction
+    newrow = @macrosModel.append
+    newrow[0] = newmacro
+    @presenter.updateMacroSize
+  end
+
+  def macros_update_editor_frame
+    iter = @macrosView.selection.selected
+    if iter.nil?
+      # disable editor!
+    else
+      #enable editor!
+      currentMacro = iter[0]
+      type = currentMacro.type
+
+      #select correct radio
+      @macroTypes.invert[type].active = true
+
+      # fill out edit box
+      case type
+      when :macro
+        @macroContentsTabs.page = 0
+        @macroRecordingEntry.text = render_macro_sequence(currentMacro.data)
+      when :program
+        @macroContentsTabs.page = 1
+        @macroProgramCombo.active = currentMacro.data
+      end
+    end
+  end
+
+  def macros_view_select(iter)
+    macros_update_editor_frame
+  end
+
+  def macro_type_changed_cb(typeRadio)
+    iter = @macrosView.selection.selected
+    if typeRadio.active? && !iter.nil?
+      currentMacro = iter[0]
+      oldType = currentMacro.type
+      newType = @macroTypes[typeRadio]
+      if oldType != newType
+        currentMacro.data = case newType
+                             when :macro; []
+                             when :program; 0
+                             end
+        currentMacro.type = newType
+        @macrosModel.row_changed(nil, iter)
+      end
+      macros_update_editor_frame
+      @presenter.updateMacroSize
+    end
+  end
+
+  def macro_change_trigger_toggled_cb(x)
+    print "Toggled trigger #{x}\n"
+  end
+
+  def macro_program_combo_changed_cb(combo)
+    iter = @macrosView.selection.selected
+    iter[0].data = combo.active_iter[0]
+    @macrosModel.row_changed(nil, iter)
+  end
+
+  def macro_record_key_press_cb(entry, key)
+    kc = Gdk::Keymap.default.translate_keyboard_state(key.hardware_keycode, 0, 0)[0]
+    n = Gdk::Keyval.to_name(kc)
+    print "Press 0x%x (%s)\n" % [kc, n]
+  end
+  def macro_record_key_release_cb(entry, key)
+    hk = key.hardware_keycode
+    sk = key.keyval
+    rk = Gdk::Keymap.default.translate_keyboard_state(hk, 0, 0)
+    print "Release h: 0x%x s: 0x%x r: 0x%x\n" % [hk, sk, rk[0]]
+  end
+  def macro_record_clicked_cb(x, y)
+    print "#{x.inspect} #{y.inspect}\n"
+  end
+
+############### Keyboard image ###############
 
   def keyboardDrawing_click_cb(area, event)
     x = event.x
@@ -207,9 +404,6 @@ class KeyboardView
       # otherwise pass on to the presenter
       @presenter.handleKeyclick(lkeyid)
     end
-  end
-
-  def keyboardDrawing_realize_cb(area)
   end
 
   def key_dimensions(lkey_entry)
@@ -251,7 +445,7 @@ class KeyboardView
         # get dimensions
         kx, ky, kw, kh = key_dimensions(lkey)
 
-        #If we're in keypard mode, provide visual indication by highlighting:
+        #If we're in keypad mode, provide visual indication by highlighting:
         if @keypadMode
           cr.set_source_rgba 0, 0, 1, 0.2
           cr.rectangle @pictureOriginX+kx, @pictureOriginY+ky, kw, kh

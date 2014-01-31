@@ -385,21 +385,6 @@ int keystate_get_hid_keys(hid_keycode* h_keys, bool exclude_special){
 }
 
 
-
-void keystate_run_programs(){
-	for(int i = 0; i < KEYSTATE_COUNT; ++i){
-		if(key_states[i].state){
-			logical_keycode l_key = key_states[i].l_key;
-			hid_keycode h_key = config_get_definition(l_key);
-			uint8_t i;
-			if(h_key >= SPECIAL_HID_KEY_EXEC_PROGRAM1 &&
-			   (i = h_key - SPECIAL_HID_KEY_EXEC_PROGRAM1) < NUM_PROGRAMS){
-				vm_start(i, l_key);
-			}
-		}
-	}
-}
-
 void keystate_register_change_hook(keystate_change_hook hook){
 	keystate_change_hook_fn = hook;
 }

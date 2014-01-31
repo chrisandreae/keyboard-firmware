@@ -43,70 +43,76 @@
   this software.
 */
 
-#ifndef __MACRO_H
-#define __MACRO_H
+#ifndef __MACRO_INDEX_H
+#define __MACRO_INDEX_H
 
 #include <stdint.h>
 
-#include <extrareport.h>
+/**
+ * Size in bytes of macro index
+ */
+#define MACRO_INDEX_SIZE 300 // 50 x 6-byte entries
+
+#define MACRO_MAX_KEYS 4
+
+// Macro indices
+typedef struct _macro_idx_key {
+	hid_keycode keys[MACRO_MAX_KEYS];
+} macro_idx_key;
+
+typedef enum _macro_idx_entry_type { MACRO, PROGRAM } macro_idx_entry_type;
+
+typedef struct _macro_idx_entry_data {
+	macro_idx_entry_type type;
+	uint16_t data;
+} macro_idx_entry_data;
+
+// Opaque macro entry struct
+struct _macro_idx_entry;
+typedef struct _macro_idx_entry macro_idx_entry;
 
 /**
- * Size in bytes of macro storage (including end offset)
+ * Get a pointer to the underlying data in EEMEM. (To be read/written
+ * as a whole by the client application)
  */
-#define MACROS_SIZE 1024
-
-
-typedef struct _macro_data {
-	uint16_t length;
-	hid_keycode events[1]; // When encountering a key event, if not pressed, press, else release.
-} macro_data;
+uint8_t* macro_idx_get_storage();
 
 /**
- * Get the underlying macro data in EEEXT. (To be read/written as a
- * whole by the client application)
+ * Erases the macro index - to be called from config_reset_fully
  */
-uint8_t* macros_get_storage();
+void macro_idx_reset_defaults();
 
 /**
- * Resets the macro storage - to be called from config_reset_fully
+ * Looks up a key combination in the macro index.  Returns opaque
+ * macro_idx_entry handle if found, or NULL if not.
  */
-void macros_reset_defaults();
+macro_idx_entry* macro_idx_lookup(macro_idx_key* key);
 
 /**
- * Starts recording a macro identified by the given key. Adds it to
- * the index, removes any existing data, and returns a pointer to the
- * macro data. Only one macro may be being recorded at once.
+ * Returns a discriminated union of the contents of a found macro index entry,
+ * Either a macro offset, or an integer program id
  */
-bool macros_start_macro(macro_idx_key* key);
+macro_idx_entry_data macro_idx_get_data(macro_idx_entry* mh);
 
 /**
- * Commits the currently recording macro which was started with
- * macros_start_macro().  If no events have been appended, instead
- * rolls back the macro creation and removes the entry from the index.
- * This is also used to delete a macro.
+ * Sets the data content of a macro index entry
  */
-void macros_commit_macro();
+void macro_idx_set_data(macro_idx_entry* mh, macro_idx_entry_data data);
 
 /**
- * Aborts the currently recording macro which was started with
- * macros_start_macro()
+ * Removes an entry from the macro index
  */
-void macros_abort_macro();
+void macro_idx_remove(macro_idx_entry* mh);
 
 /**
- * Appends the argument HID keycode to the macro being recorded.
- * Returns false if no space left or write failed.
+ * Adds an entry for the given key to the index, and returns a pointer
+ * to the new (empty) entry, or NULL if full or error.
  */
-bool macros_append(hid_keycode event);
+macro_idx_entry* macro_idx_create(macro_idx_key* key);
 
-/**
- * Sets up to play from the macro specified by macro_offset, returns true if successful
- */
-bool macros_start_playback(uint16_t macro_offset);
+typedef void(*macro_idx_iterator)(macro_idx_entry*, void*);
 
-/**
- * Plays the next character, returns true there's more to replay, false if finished.
- */
-bool macros_fill_next_report(KeyboardReport_Data_t* report);
+void macro_idx_iterate(macro_idx_iterator itr, void* c);
 
-#endif // __MACRO_H
+
+#endif // __MACRO_INDEX_H

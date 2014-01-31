@@ -45,6 +45,7 @@
 
 #include "hardware.h"
 
+#include "macro_index.h"
 #include "macro.h"
 
 #include "usb.h"
@@ -57,60 +58,39 @@
 #include <avr/eeprom.h>
 #include <util/delay.h>
 
-// The macro lookup index is in internal eeprom
-#define MACRO_INDEX_COUNT (MACRO_INDEX_SIZE / sizeof(macro_idx))
-static macro_idx macro_index[MACRO_INDEX_COUNT] EEMEM;
-
-// and the macro data itself is in external eeprom
+// The macro data itself is in external eeprom
 static uint8_t macros_storage[MACROS_SIZE] EEEXT;
 static uint16_t *const macros_end_offset = (uint16_t*)macros_storage;
 static uint8_t  *const macros = macros_storage + sizeof(uint16_t);
 
 
-////////////////////// Macro Execution ////////////////////////
-static macro_data* current_macro;
-static hid_keycode* current_macro_cursor;
-static macro_idx* current_macro_index;
+/////////////// Recording and Playback Data ////////////////////
+
+static struct _macro_recording_state {
+	macro_data* macro;
+	hid_keycode* cursor;
+	macro_idx_entry* index_entry;
+} recording_state;
+
+static struct _macro_playback_state {
+	uint16_t remaining;
+	hid_keycode* cursor; // pointer to serial eeprom memory
+	ExtraKeyboardReport report;
+} playback_state;
 
 ////////////////////// Macro Management ////////////////////////
 
 uint8_t* macros_get_storage(){
 	return &macros_storage[0];
 }
-uint8_t* macros_get_index(){
-	return (uint8_t*) &macro_index[0];
-}
 
 void macros_reset_defaults(){
-	macro_idx tmp;
-	memset(tmp.keys, NO_KEY, MACRO_MAX_KEYS);
-	tmp.macro_offset = 0x0;
-
-	for(uint8_t i = 0; i < MACRO_INDEX_COUNT; ++i){
-		eeprom_update_block(&tmp, &macro_index[i], sizeof(macro_idx));
-		USB_KeepAlive(true);
-	}
-
 	volatile uint16_t zero = 0x0;
 	serial_eeprom_write((uint8_t*)macros_end_offset, (uint8_t*)&zero, sizeof(uint16_t));
 }
 
-// comparator for a macro key (in ram) and macro_idx (in eeprom)
-static int macro_index_cmp(const macro_key* k, const macro_idx* v){
-	for(uint8_t j = 0; j < MACRO_MAX_KEYS; ++j){
-		int d = k->keys[j] - eeprom_read_byte(&v->keys[j]);
-		if(d) return d;
-	}
-	return 0;
-}
-
-static inline macro_idx* find_macro(macro_key* key){
-	macro_idx* r = (macro_idx*) bsearch(key,
-										macro_index,
-										MACRO_INDEX_COUNT, //nelem
-										sizeof(macro_idx), // width
-										(int(*)(const void*, const void*)) macro_index_cmp);
-	return r;
+static macro_data* macros_get_macro_pointer(uint16_t offset){
+	return (macro_data*) &macros[offset];
 }
 
 // convenience macro for reading from eeprom and handling errors
@@ -119,12 +99,33 @@ static inline macro_idx* find_macro(macro_key* key){
 
 #define seeprom_write_var(ptr, var)										\
 	if(serial_eeprom_write((uint8_t*)ptr, (uint8_t*)&var, sizeof(typeof(var))) != sizeof(typeof(var))){ goto err; }
+
+
+typedef struct {
+	uint16_t offset;
+	uint16_t len;
+} macro_range;
+
+static void macro_shift_down_iterator(macro_idx_entry* entry, macro_range* range){
+	macro_idx_entry_data d = macro_idx_get_data(entry);
+	if(d.type != MACRO) return;
+	// offset of start of macro is in d.data: if it's greater than the
+	// removed range, subtract the removed length
+	if(d.data > range->offset){
+		d.data -= range->len;
+		macro_idx_set_data(entry, d);
+	}
+}
+
 /**
- * internal function: remove the macro data for the given
- * macro index entry.
+ * internal function: remove any macro data for the given macro index
+ * entry. Returns true if no error, false if error.
  */
-static bool delete_macro_data(macro_idx* entry_idx){
-	uint16_t entry_offset = eeprom_read_word(&entry_idx->macro_offset);
+static bool delete_macro_data(macro_idx_entry* idx_entry){
+	macro_idx_entry_data idx_data = macro_idx_get_data(idx_entry);
+	if(idx_data.type != MACRO) return true; // no data to delete, trivial success
+
+	uint16_t entry_offset = idx_data.data;
 	macro_data* entry = (macro_data*) (&macros[entry_offset]);
 
 	// read the macro space end offset
@@ -142,122 +143,58 @@ static bool delete_macro_data(macro_idx* entry_idx){
 		// if there is data after the entry, move rest_len bytes of
 		// macro data down to entry_offset from rest_offset
 		if(serial_eeprom_memmove(&macros[entry_offset], &macros[rest_offset], rest_len) != SUCCESS){ goto err; }
+
+		// Now scan the macro index, and move down any entries > entry_offset by entry_len
+		macro_range deleted_range;
+		deleted_range.offset = entry_offset;
+		deleted_range.len = entry_len;
+		macro_idx_iterate((macro_idx_iterator)macro_shift_down_iterator, &deleted_range);
 	}
 	// and update the saved macro end offset
 	end_offset -= entry_len;
 	seeprom_write_var(macros_end_offset, end_offset);
 
-	// Now scan the macro index, and move down any entries > entry_offset by entry_len
-	for(uint8_t i = 0; i < MACRO_INDEX_COUNT; ++i){
-		if(eeprom_read_byte(&macro_index[i].keys[0]) == NO_KEY) break;
-
-		uint16_t ioff = eeprom_read_word(&macro_index[i].macro_offset);
-		if(ioff > entry_offset){
-			eeprom_update_word(&macro_index[i].macro_offset, ioff - entry_len);
-			USB_KeepAlive(true);
-		}
-	}
 	return true;
  err:
 	return false;
 }
 
-static void remove_macro_index(macro_idx* mi){
-	// move macros down into the slot until we hit the end of the array or an empty (keys[0] == NO_KEY) entry
-	uint8_t mi_offset = mi - macro_index;
-	for(uint8_t i = mi_offset; i < MACRO_INDEX_COUNT; ++i){
-		macro_idx tmp;
-		if(i == MACRO_INDEX_COUNT - 1){
-			// hit the end, fill with empty
-			memset(tmp.keys, NO_KEY, MACRO_MAX_KEYS);
-			tmp.macro_offset = 0;
-		}
-		else{
-			eeprom_read_block(&tmp, &macro_index[i + 1], sizeof(macro_idx));
-		}
-		// and write
-		eeprom_update_block(&tmp, &macro_index[i], sizeof(macro_idx));
 
-		if(tmp.keys[0] == NO_KEY) break; // done
-		USB_KeepAlive(true);
-	}
-}
-
-/**
- * Looks up a macro based on a set of pressed keys, returns a pointer
- * to the macro data or NO_MACRO if not found.
- */
-macro_data* macros_lookup(macro_key* key){
-	if(key->keys[0] == NO_KEY){
-		return NO_MACRO; // do not allow lookup of empty entry
-	}
-	macro_idx* r = find_macro(key);
-	if(r){
-		uint16_t off = eeprom_read_word(&r->macro_offset);
-		return (macro_data*) (&macros[off]);
-	}
-	else return NO_MACRO;
-}
+/////////// Macro Recording /////////////
 
 /**
  * Starts recording a macro identified by the given key. Adds it to
  * the index, removes any existing data, and returns a pointer to the
  * macro data. Only one macro may be being recorded at once.
  */
-bool macros_start_macro(macro_key* key){
-	macro_idx* r = find_macro(key);
-	if(r){
-		// macro index exists: remove the old macro data and re-use this slot
-		if(!delete_macro_data(r)) goto err;
+bool macros_start_macro(macro_idx_key* key){
+	// Find or create a free entry:
+	macro_idx_entry* entry = macro_idx_lookup(key);
+	if(entry){
+		// There's already an entry for this key in the index: delete
+		// the old macro data if necessary and re-use this slot
+		if(!delete_macro_data(entry)) goto err;
 	}
 	else{
-		// macro index does not exist: move the index up from the end until we reach
-		// a key lower than us, then insert
-		if(eeprom_read_byte(&macro_index[MACRO_INDEX_COUNT - 1].keys[0]) != NO_KEY){
-			// then we're full, error
-			goto err;
-		}
-		for(int i = MACRO_INDEX_COUNT - 1; i >= 0; --i){
-			// consider each slot i from the end. If it is the correct
-			// position (first or key is >= the preceding cell) then
-			// store, otherwise move the value in preceding cell up
-			// and repeat.
-			if(i == 0 || macro_index_cmp(key, &macro_index[i-1]) >= 0){
-				r = &macro_index[i];
-				break;
-			}
-			else if(eeprom_read_byte(&macro_index[i-1].keys[0]) == NO_KEY){
-				continue; // Don't bother to copy empty cells.
-			}
-			else{
-				// copy up (i-1)
-				macro_idx tmp;
-				eeprom_read_block  (&tmp, &macro_index[i-1], sizeof(macro_idx));
-				eeprom_update_block(&tmp, &macro_index[i],   sizeof(macro_idx));
-				USB_KeepAlive(true);
-			}
-		}
+		entry = macro_idx_create(key);
+		if(!entry) goto err;
 	}
-	// we now have a free index cell at r: write in the key part
-	eeprom_update_block(key, r, sizeof(macro_key)); // macro_key is prefix to macro_idx
-	USB_KeepAlive(true);
 
-	// and now the data
-	uint16_t new_macro_offset;
-	seeprom_read_var(new_macro_offset, macros_end_offset);
-	eeprom_update_word((uint16_t*)&r->macro_offset, (uint16_t)new_macro_offset);
+	// Now store the data in the entry:
+	macro_idx_entry_data new_entry_data;
+	new_entry_data.type = MACRO;
+	seeprom_read_var(new_entry_data.data, macros_end_offset);
+	macro_idx_set_data(entry, new_entry_data);
 
 	// and set up the new macro for recording content
-	current_macro = (macro_data*) &macros[new_macro_offset];
-	current_macro_cursor = &current_macro->events[0];
-	current_macro_index = r;
+	recording_state.macro = macros_get_macro_pointer(new_entry_data.data);
+	recording_state.cursor = &recording_state.macro->events[0];
+	recording_state.index_entry = entry;
 	return true;
 
  err:
 	buzzer_start_f(200, BUZZER_FAILURE_TONE);
-	current_macro = 0;
-	current_macro_cursor = 0;
-	current_macro_index = 0;
+	memset(&recording_state, 0x0, sizeof(recording_state));
 	return false;
 }
 
@@ -268,17 +205,17 @@ bool macros_start_macro(macro_key* key){
  * to delete a macro.
  */
 void macros_commit_macro(){
-	if(current_macro == 0){
+	if(!recording_state.macro){
 		// cannot commit no macro
 		goto err;
 	}
-	uint16_t macro_len = current_macro_cursor - &current_macro->events[0];
+	uint16_t macro_len = recording_state.cursor - &recording_state.macro->events[0];
 	if(macro_len == 0){
 		// find the macro in the index and remove it.
-		remove_macro_index(current_macro_index);
+		macro_idx_remove(recording_state.index_entry);
 	}
 	else{
-		seeprom_write_var(&current_macro->length, macro_len);
+		seeprom_write_var(&recording_state.macro->length, macro_len);
 		uint16_t end_offset;
 		seeprom_read_var(end_offset, macros_end_offset);
 		end_offset += macro_len + 2; // length header + data
@@ -286,9 +223,7 @@ void macros_commit_macro(){
 		buzzer_start_f(200, BUZZER_SUCCESS_TONE);
 	}
 
-	current_macro = 0;
-	current_macro_cursor = 0;
-	current_macro_index = 0;
+	memset(&recording_state, 0x0, sizeof(recording_state));
 	return;
 
  err:
@@ -296,31 +231,40 @@ void macros_commit_macro(){
 }
 
 void macros_abort_macro(){
-	remove_macro_index(current_macro_index);
-	current_macro = 0;
-	current_macro_cursor = 0;
-	current_macro_index = 0;
+	macro_idx_remove(recording_state.index_entry);
+	memset(&recording_state, 0x0, sizeof(recording_state));
 }
 
 bool macros_append(hid_keycode event){
-	seeprom_write_var(current_macro_cursor++, event);
+	seeprom_write_var(recording_state.cursor++, event);
 	return true;
  err:
 	return false;
 }
 
-bool macros_fill_next_report(macro_playback* state, KeyboardReport_Data_t* report){
-	if(state->remaining){
-		--state->remaining;
+////// Macro Playback /////
+
+
+bool macros_start_playback(uint16_t macro_offset){
+	macro_data* macro = macros_get_macro_pointer(macro_offset);
+	ExtraKeyboardReport_clear(&playback_state.report);
+	playback_state.cursor = &macro->events[0];
+	seeprom_read_var(playback_state.remaining, &macro->length);
+	return true;
+
+ err:
+	return false;
+}
+
+bool macros_fill_next_report(KeyboardReport_Data_t* report){
+	if(playback_state.remaining){
+		--playback_state.remaining;
 		hid_keycode event;
-		seeprom_read_var(event, state->cursor++);
-		ExtraKeyboardReport_toggle(&state->report, event);
-		ExtraKeyboardReport_append(&state->report, report);
-		return true;
+		seeprom_read_var(event, playback_state.cursor++);
+		ExtraKeyboardReport_toggle(&playback_state.report, event);
+		ExtraKeyboardReport_append(&playback_state.report, report);
 	}
-	else{
-		return false;
-	}
+	return playback_state.remaining ? true : false;
  err:
 	buzzer_start_f(200, BUZZER_FAILURE_TONE);
 	return false;
