@@ -60,7 +60,7 @@
 
 
 # MCU name
-MCU = at90usb162
+MCU = atmega32u4
 
 
 # Target architecture (see library "Board Types" documentation).
@@ -134,7 +134,6 @@ include $(LUFA_PATH)/LUFA/makefile
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c                                                 \
 	  Descriptors.c                                               \
-	  Descriptors.c												  \
 	  twi.c														  \
 	  printing.c												  \
 	  keystate.c												  \
@@ -144,6 +143,7 @@ SRC = $(TARGET).c                                                 \
 	  leds.c													  \
 	  hardware.c												  \
 	  interpreter.c												  \
+	  macro_index.c												  \
 	  macro.c													  \
 	  extrareport.c												  \
 	  sort.c													  \

@@ -48,7 +48,7 @@
 
 // Select the specific keyboard hardware
 
-#include "hardware/kinesis.h"
+#include "hardware/ergodox.h"
 // #include "hardware/kinesis110.h"
 
 #endif // __HARDWARE_H

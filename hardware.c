@@ -43,5 +43,5 @@
   this software.
 */
 
-#include "hardware/kinesis.c"
+#include "hardware/ergodox.c"
 // #include "hardware/kinesis110.c"
