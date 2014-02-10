@@ -48,17 +48,16 @@
 // because the matrix is not tightly packed, we want a map from matrix
 // position to logical key.
 const logical_keycode matrix_to_logical_map[MATRIX_ROWS][MATRIX_COLS] PROGMEM = {
-	//              PF0            PF1            PF4             PF5           PF6            PF7        |   GBP0           GBP1           GBP2           GBP3           GBP4           GBP5
-	/*PB0 + GPA0*/ {LOGICAL_KEY_A, LOGICAL_KEY_B, LOGICAL_KEY_C, LOGICAL_KEY_D, LOGICAL_KEY_E, LOGICAL_KEY_F, LOGICAL_KEY_G, LOGICAL_KEY_H, LOGICAL_KEY_I, LOGICAL_KEY_J, LOGICAL_KEY_K, LOGICAL_KEY_L},
-	/*PB1 + GPA1*/ {LOGICAL_KEY_A, LOGICAL_KEY_B, LOGICAL_KEY_C, LOGICAL_KEY_D, LOGICAL_KEY_E, LOGICAL_KEY_F, LOGICAL_KEY_G, LOGICAL_KEY_H, LOGICAL_KEY_I, LOGICAL_KEY_J, LOGICAL_KEY_K, LOGICAL_KEY_L},
-	/*PB2 + GPA2*/ {LOGICAL_KEY_A, LOGICAL_KEY_B, LOGICAL_KEY_C, LOGICAL_KEY_D, LOGICAL_KEY_E, LOGICAL_KEY_F, LOGICAL_KEY_G, LOGICAL_KEY_H, LOGICAL_KEY_I, LOGICAL_KEY_J, LOGICAL_KEY_K, LOGICAL_KEY_L},
-	/*PB3 + GPA3*/ {LOGICAL_KEY_A, LOGICAL_KEY_B, LOGICAL_KEY_C, LOGICAL_KEY_D, LOGICAL_KEY_E, LOGICAL_KEY_F, LOGICAL_KEY_G, LOGICAL_KEY_H, LOGICAL_KEY_I, LOGICAL_KEY_J, LOGICAL_KEY_K, LOGICAL_KEY_L},
-	/*PD2 + GPA4*/ {LOGICAL_KEY_A, LOGICAL_KEY_B, LOGICAL_KEY_C, LOGICAL_KEY_D, LOGICAL_KEY_E, LOGICAL_KEY_F, LOGICAL_KEY_G, LOGICAL_KEY_H, LOGICAL_KEY_I, LOGICAL_KEY_J, LOGICAL_KEY_K, LOGICAL_KEY_L},
-	/*PD3 + GPA5*/ {LOGICAL_KEY_A, LOGICAL_KEY_B, LOGICAL_KEY_C, LOGICAL_KEY_D, LOGICAL_KEY_E, LOGICAL_KEY_F, LOGICAL_KEY_G, LOGICAL_KEY_H, LOGICAL_KEY_I, LOGICAL_KEY_J, LOGICAL_KEY_K, LOGICAL_KEY_L},
-	/*PC6 + GPA6*/ {LOGICAL_KEY_A, LOGICAL_KEY_B, LOGICAL_KEY_C, LOGICAL_KEY_D, LOGICAL_KEY_E, LOGICAL_KEY_F, LOGICAL_KEY_G, LOGICAL_KEY_H, LOGICAL_KEY_I, LOGICAL_KEY_J, LOGICAL_KEY_K, LOGICAL_KEY_L}
+	//              PF0                     PF1                 PF4            PF5                  PF6     PF7                         |   GBP0           GBP1           GBP2           GBP3           GBP4           GBP5
+	/*PB0 + GPA0*/ {LOGICAL_KEY_PROGRAM,   LOGICAL_KEY_RCOL2_1, NO_KEY,                LOGICAL_KEY_RCOL2_2, NO_KEY,            LOGICAL_KEY_R_ALT,  NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
+	/*PB1 + GPA1*/ {LOGICAL_KEY_6,         LOGICAL_KEY_Y,       LOGICAL_KEY_H,         LOGICAL_KEY_N,       NO_KEY,            LOGICAL_KEY_R_CTRL, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
+	/*PB2 + GPA2*/ {LOGICAL_KEY_7,         LOGICAL_KEY_U,       LOGICAL_KEY_J,         LOGICAL_KEY_M,       LOGICAL_KEY_RROW5, LOGICAL_KEY_PGUP,   NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
+	/*PB3 + GPA3*/ {LOGICAL_KEY_8,         LOGICAL_KEY_I,       LOGICAL_KEY_K,         LOGICAL_KEY_COMMA,   LOGICAL_KEY_RROW4, LOGICAL_KEY_SPACE,  NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
+	/*PD2 + GPA4*/ {LOGICAL_KEY_9,         LOGICAL_KEY_O,       LOGICAL_KEY_L,         LOGICAL_KEY_PERIOD,  LOGICAL_KEY_RROW3, LOGICAL_KEY_ENTER,  NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
+	/*PD3 + GPA5*/ {LOGICAL_KEY_0,         LOGICAL_KEY_P,       LOGICAL_KEY_SEMICOLON, LOGICAL_KEY_SLASH,   LOGICAL_KEY_RROW2, NO_KEY,             NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
+	/*PC6 + GPA6*/ {LOGICAL_KEY_RCOL1_1,   LOGICAL_KEY_RCOL1_2, LOGICAL_KEY_RCOL1_3,   LOGICAL_KEY_RCOL1_4, LOGICAL_KEY_RROW1, NO_KEY,             NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY}
 };
 #undef KEY_NONE
-
 
 const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM = {
 	SPECIAL_HID_KEY_KEYPAD,							   //	LOGICAL_KEY_KEYPAD
@@ -273,10 +272,9 @@ void matrix_select_row(uint8_t matrix_row){
 		RIGHT_MATRIX_OUT_1_DDR |= (1 << matrix_row);
 	}
 	else if(matrix_row < 6){
-		matrix_row -= (4 - RIGHT_MATRIX_OUT_2_OFFSET);
-		RIGHT_MATRIX_OUT_2_DDR |= (1 << matrix_row);
+		RIGHT_MATRIX_OUT_2_DDR |= (RIGHT_MATRIX_OUT_2_START << (matrix_row - 4));
 	}
-	else{
+	else if(matrix_row == 6){
 		RIGHT_MATRIX_OUT_3_DDR |= RIGHT_MATRIX_OUT_3_MASK;
 	}
 
@@ -288,7 +286,9 @@ uint8_t matrix_read_column(uint8_t matrix_column){
 	if(matrix_column < 6){
 		// Right hand side
 		uint8_t shift = matrix_column;
-		if(shift > 2) shift += 2; // Handle hole in input port
+		if(shift > 1){
+			shift += 2; // Handle hole in input port
+		}
 		uint8_t val = (RIGHT_MATRIX_IN_PIN & (1<<shift)) == 0;
 		return val;
 	}
