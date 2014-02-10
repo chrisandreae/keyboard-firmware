@@ -43,19 +43,20 @@
 
 #include <util/delay.h>     /* for _delay_ms() */
 #include "ergodox.h"
+#include "twi.h"
 
 #define KEY_NONE NO_KEY
 // because the matrix is not tightly packed, we want a map from matrix
-// position to logical key.
+// position to logical key. (Ergodox matrix names in parens)
 const logical_keycode matrix_to_logical_map[MATRIX_ROWS][MATRIX_COLS] PROGMEM = {
-	//              PF0                     PF1                 PF4            PF5                  PF6     PF7                         |   GBP0           GBP1           GBP2           GBP3           GBP4           GBP5
-	/*PB0 + GPA0*/ {LOGICAL_KEY_PROGRAM,   LOGICAL_KEY_RCOL2_1, NO_KEY,                LOGICAL_KEY_RCOL2_2, NO_KEY,            LOGICAL_KEY_R_ALT,  NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
-	/*PB1 + GPA1*/ {LOGICAL_KEY_6,         LOGICAL_KEY_Y,       LOGICAL_KEY_H,         LOGICAL_KEY_N,       NO_KEY,            LOGICAL_KEY_R_CTRL, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
-	/*PB2 + GPA2*/ {LOGICAL_KEY_7,         LOGICAL_KEY_U,       LOGICAL_KEY_J,         LOGICAL_KEY_M,       LOGICAL_KEY_RROW5, LOGICAL_KEY_PGUP,   NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
-	/*PB3 + GPA3*/ {LOGICAL_KEY_8,         LOGICAL_KEY_I,       LOGICAL_KEY_K,         LOGICAL_KEY_COMMA,   LOGICAL_KEY_RROW4, LOGICAL_KEY_SPACE,  NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
-	/*PD2 + GPA4*/ {LOGICAL_KEY_9,         LOGICAL_KEY_O,       LOGICAL_KEY_L,         LOGICAL_KEY_PERIOD,  LOGICAL_KEY_RROW3, LOGICAL_KEY_ENTER,  NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
-	/*PD3 + GPA5*/ {LOGICAL_KEY_0,         LOGICAL_KEY_P,       LOGICAL_KEY_SEMICOLON, LOGICAL_KEY_SLASH,   LOGICAL_KEY_RROW2, NO_KEY,             NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY},
-	/*PC6 + GPA6*/ {LOGICAL_KEY_RCOL1_1,   LOGICAL_KEY_RCOL1_2, LOGICAL_KEY_RCOL1_3,   LOGICAL_KEY_RCOL1_4, LOGICAL_KEY_RROW1, NO_KEY,             NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY}
+	//                  PF0 (5)                PF1 (4)              PF4 (3)                PF5 (2)              PF6 (1)            PF7 (0)         |   GPB0 (5)   GPB1 (4)   GPB2 (3)   GPB3 (2)  GPB4 (1)  GPB5 (0)
+	/*PB0 (7) + GPA0*/ {LOGICAL_KEY_PROGRAM,   LOGICAL_KEY_RCOL2_1, NO_KEY,                LOGICAL_KEY_RCOL2_2, NO_KEY,            LOGICAL_KEY_R_ALT,  LOGICAL_KEY_LCOL1_1, LOGICAL_KEY_LCOL1_2, LOGICAL_KEY_LCOL1_3, LOGICAL_KEY_LCOL1_4, LOGICAL_KEY_LROW1, NO_KEY},
+	/*PB1 (8) + GPA1*/ {LOGICAL_KEY_6,         LOGICAL_KEY_Y,       LOGICAL_KEY_H,         LOGICAL_KEY_N,       NO_KEY,            LOGICAL_KEY_R_CTRL, LOGICAL_KEY_1,       LOGICAL_KEY_Q,       LOGICAL_KEY_A, LOGICAL_KEY_Z, LOGICAL_KEY_LROW2, LOGICAL_KEY_END},
+	/*PB2 (9) + GPA2*/ {LOGICAL_KEY_7,         LOGICAL_KEY_U,       LOGICAL_KEY_J,         LOGICAL_KEY_M,       LOGICAL_KEY_RROW5, LOGICAL_KEY_PGUP,   LOGICAL_KEY_2,       LOGICAL_KEY_W,       LOGICAL_KEY_S, LOGICAL_KEY_X, LOGICAL_KEY_LROW3, LOGICAL_KEY_DELETE},
+	/*PB3 (A) + GPA3*/ {LOGICAL_KEY_8,         LOGICAL_KEY_I,       LOGICAL_KEY_K,         LOGICAL_KEY_COMMA,   LOGICAL_KEY_RROW4, LOGICAL_KEY_SPACE,  LOGICAL_KEY_3,       LOGICAL_KEY_E,       LOGICAL_KEY_D, LOGICAL_KEY_C, LOGICAL_KEY_LROW4, LOGICAL_KEY_BACKSPACE},
+	/*PD2 (B) + GPA4*/ {LOGICAL_KEY_9,         LOGICAL_KEY_O,       LOGICAL_KEY_L,         LOGICAL_KEY_PERIOD,  LOGICAL_KEY_RROW3, LOGICAL_KEY_ENTER,  LOGICAL_KEY_4,       LOGICAL_KEY_R,       LOGICAL_KEY_F, LOGICAL_KEY_V, LOGICAL_KEY_LROW5, LOGICAL_KEY_HOME},
+	/*PD3 (C) + GPA5*/ {LOGICAL_KEY_0,         LOGICAL_KEY_P,       LOGICAL_KEY_SEMICOLON, LOGICAL_KEY_SLASH,   LOGICAL_KEY_RROW2, LOGICAL_KEY_PGDN,   LOGICAL_KEY_5,       LOGICAL_KEY_T,       LOGICAL_KEY_G, LOGICAL_KEY_B, NO_KEY,            LOGICAL_KEY_L_CTRL},
+	/*PC6 (D) + GPA6*/ {LOGICAL_KEY_RCOL1_1,   LOGICAL_KEY_RCOL1_2, LOGICAL_KEY_RCOL1_3,   LOGICAL_KEY_RCOL1_4, LOGICAL_KEY_RROW1, NO_KEY,             LOGICAL_KEY_KEYPAD,  LOGICAL_KEY_LCOL2_1, NO_KEY,  LOGICAL_KEY_LCOL2_2, NO_KEY,            LOGICAL_KEY_L_ALT}
 };
 #undef KEY_NONE
 
@@ -224,6 +225,40 @@ const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM = {
 	HID_KEYBOARD_SC_SPACE,							   //	LOGICAL_KEY_KP_SPACE,
 };
 
+uint8_t init_mcp23018(){
+	// Set up IO direction
+	// Rows (output direction) are GPA 0-6
+	// Columns (input direction) are GPB0-5
+	twi_start();
+	if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_WRITE)) goto err;
+	twi_write_byte(MCP23018_IODIRA);
+	twi_write_byte(0b10000000); // A0-6 output
+	twi_write_byte(0b11111111); // otherwise input
+	twi_stop();
+
+	// set up pull-up registers on input columns
+	twi_start();
+	if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_WRITE)) goto err;
+	twi_write_byte(MCP23018_GPPUA);
+	twi_write_byte(0b10000000); // Pull-ups on except for driving
+	twi_write_byte(0b11111111);
+	twi_stop();
+
+	// set up outputs to high-z
+	twi_start();
+	if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_WRITE)) goto err;
+	twi_write_byte(MCP23018_OLATA);
+	twi_write_byte(0b11111111);
+	twi_write_byte(0b11111111);
+	twi_stop();
+
+	return 1;
+ err:
+	PORTD |= (1<<6); // signal error by lighting up the internal LED
+	twi_stop();
+	return 0;
+}
+
 void ports_init(void){
 	// Set up input
 	// we want to enable internal pull-ups on all of these pins: we're scanning by pulling low.
@@ -252,12 +287,25 @@ void ports_init(void){
 
 	// Initialize TWI
 	TWSR = 0x00;
-	TWBR = 32; // 200kHz SCL clock (try 100hz (TWBR=72) if things don't respond well)
+	TWBR = 72; // 32; // 200kHz SCL clock (try 100hz (TWBR=72) if things don't respond well)
 
 	//enable TWI
 	TWCR = (1<<TWEN);
 
+	// Set up the internal LED
+	DDRD  |= (1<<6);  // output
+	PORTD &= ~(1<<6); // off
+
+	// initialize the MCP23018
+	init_mcp23018();
+
+		// turn on the internal LED to debug
+		/* if(matrix_row == 1) PORTD |= (1<<6); */
+		/* else PORTD &= ~(1<<6); */
 }
+
+// Init high
+static uint8_t cached_mcp_columns = 0b00111111;
 
 void matrix_select_row(uint8_t matrix_row){
 	// Set right hand side row
@@ -278,8 +326,31 @@ void matrix_select_row(uint8_t matrix_row){
 		RIGHT_MATRIX_OUT_3_DDR |= RIGHT_MATRIX_OUT_3_MASK;
 	}
 
-	// Set left hand side row
-	// TODO
+		// Set left hand side row, and read and cache columns
+		PORTD |= 1<<6;
+
+		twi_start();
+		if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_WRITE)) goto err;
+		twi_write_byte(MCP23018_GPIOA);
+		twi_write_byte(0xFF & ~(1 << matrix_row));
+		twi_stop();
+
+		// set the address to read from GPIOB and read a byte. (TODO: if we write to GPIOA above, it should roll over to GPIOB without readdressing?)
+		twi_start();
+		if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_WRITE)) goto err;
+		twi_write_byte(MCP23018_GPIOB);
+		twi_start();
+		if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_READ)) goto err;
+		cached_mcp_columns = twi_read_byte(NACK); // for now, let's only save GPB1
+		twi_stop();
+
+		PORTD &= ~(1<<6);
+
+	return;
+	// TODO: is it worth turning it off again after?
+err:
+	PORTD |= (1<<6); // signal error by lighting up the internal LED
+	twi_stop();
 }
 
 uint8_t matrix_read_column(uint8_t matrix_column){
@@ -293,9 +364,9 @@ uint8_t matrix_read_column(uint8_t matrix_column){
 		return val;
 	}
 	else{
-		//left hand side
-		// TODO
-		return 0;
+		uint8_t shift = matrix_column - 6;
+		uint8_t val = (cached_mcp_columns & (1<<shift)) == 0;
+			return val; // temporarily: this column includes 'q' if row 2
 	}
 }
 

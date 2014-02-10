@@ -232,6 +232,23 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 #define EEPROM_SCL (1<<0)
 #define EEPROM_SDA (1<<1)
 
+#define MCP23018_ADDR  0b01000000
+#define MCP23018_WRITE 0
+#define MCP23018_READ  1
+
+// The MCP23018 initializes in bank 0 sequential-access mode,
+// so registers are as in table 1-3, 1-5.
+
+#define MCP23018_IODIRA 0x00  // ~ DDR
+#define MCP23018_IODIRB 0x01
+#define MCP23018_GPPUA  0x0C  // pull-up config
+#define MCP23018_GPPUB  0x0D
+#define MCP23018_GPIOA  0x12  // ~ PIN
+#define MCP23018_GPIOB  0x13
+#define MCP23018_OLATA  0x14  // ~ PORT
+#define MCP23018_OLATB  0x15
+
+
 void ports_init(void);
 
 /**
