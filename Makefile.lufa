@@ -613,7 +613,7 @@ extcoff: $(TARGET).elf
 %.hex: %.elf
 	@echo
 	@echo $(MSG_FLASH) $@
-	$(OBJCOPY) -O $(FORMAT) -R .eeprom -R .fuse -R .lock $< $@
+	$(OBJCOPY) -O $(FORMAT) -j .text -j .data $< $@
 
 %.eep: %.elf
 	@echo
