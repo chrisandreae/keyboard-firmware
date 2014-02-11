@@ -89,12 +89,12 @@ serial_eeprom_err serial_eeprom_start_write(uint8_t* addr){
 
 	// If it timed out, return an error.
 	if(!ack) {
-		twi_stop();
+		twi_stop(NOWAIT);
 		return WSELECT_ERROR;
 	}
 
 	if(twi_write_byte(iaddr & 0xff) != ACK){
-		twi_stop();
+		twi_stop(NOWAIT);
 		return ADDRESS_ERROR;
 	}
 
@@ -110,7 +110,7 @@ int8_t serial_eeprom_continue_write(const uint8_t* buf, uint8_t len){
 	for(; i < len; ++i){
 		if(twi_write_byte(buf[i]) != ACK){
 			serial_eeprom_errno = DATA_ERROR;
-			twi_stop();
+			twi_stop(NOWAIT);
 			break;
 		}
 	}
@@ -261,7 +261,7 @@ int16_t serial_eeprom_read(const uint8_t* addr, uint8_t* buf, uint16_t len){
 	}
 
  end:
-	twi_stop();
+	twi_stop(NOWAIT);
 	return read_bytes ? read_bytes : -1;
 }
 

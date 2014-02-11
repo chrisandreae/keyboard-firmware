@@ -272,20 +272,7 @@ void ports_init(void){
 	BUZZER_DDR  |= BUZZER;
 #endif
 
-#ifdef BITBANG_TWI
-	// Serial eeprom lines have external pull-ups, so 0 = output-low(1,0) / 1 = input-highz(0,0)
-	EEPROM_PORT &= ~(EEPROM_SCL | EEPROM_SDA); // initially leave floating
-	EEPROM_DDR  &= ~(EEPROM_SCL | EEPROM_SDA);
-#else
-	TWSR = 0x00;
-	TWBR = 72; // 100kHz SCL clock (The eeprom starts responding
-			   // poorly (returns 0xff) when faster. Can go up to
-			   // 200kHz (TWBR=32) on the all-in-one board design.)
-
-	//enable TWI
-	TWCR = (1<<TWEN);
-#endif // bitbang
-
+	twi_init();
 }
 
 

@@ -225,37 +225,36 @@ const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM = {
 	HID_KEYBOARD_SC_SPACE,							   //	LOGICAL_KEY_KP_SPACE,
 };
 
-uint8_t init_mcp23018(){
+#define twi_write_byte_checked(x) if(ACK != twi_write_byte(x)) goto err;
+
+static uint8_t init_mcp23018(){
 	// Set up IO direction
 	// Rows (output direction) are GPA 0-6
 	// Columns (input direction) are GPB0-5
 	twi_start();
-	if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_WRITE)) goto err;
+	twi_write_byte_checked(MCP23018_ADDR | MCP23018_WRITE);
 	twi_write_byte(MCP23018_IODIRA);
 	twi_write_byte(0b10000000); // A0-6 output
-	twi_write_byte(0b11111111); // otherwise input
-	twi_stop();
+	twi_stop(WAIT);
 
 	// set up pull-up registers on input columns
 	twi_start();
-	if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_WRITE)) goto err;
-	twi_write_byte(MCP23018_GPPUA);
-	twi_write_byte(0b10000000); // Pull-ups on except for driving
-	twi_write_byte(0b11111111);
-	twi_stop();
+	twi_write_byte_checked(MCP23018_ADDR | MCP23018_WRITE);
+	twi_write_byte(MCP23018_GPPUB);
+	twi_write_byte(0b00111111); // pull-ups on on inputs
+	twi_stop(WAIT);
 
 	// set up outputs to high-z
 	twi_start();
-	if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_WRITE)) goto err;
+	twi_write_byte_checked(MCP23018_ADDR | MCP23018_WRITE);
 	twi_write_byte(MCP23018_OLATA);
-	twi_write_byte(0b11111111);
-	twi_write_byte(0b11111111);
-	twi_stop();
+	twi_write_byte(0b01111111);
+	twi_stop(WAIT);
 
 	return 1;
  err:
 	PORTD |= (1<<6); // signal error by lighting up the internal LED
-	twi_stop();
+	twi_stop(NOWAIT);
 	return 0;
 }
 
@@ -285,9 +284,7 @@ void ports_init(void){
 	BUZZER_DDR  |= BUZZER;
 #endif
 
-	// Initialize TWI
-	TWSR = 0x00;
-	TWBR = 72; // 32; // 200kHz SCL clock (try 100hz (TWBR=72) if things don't respond well)
+	twi_init();
 
 	//enable TWI
 	TWCR = (1<<TWEN);
@@ -308,7 +305,7 @@ void ports_init(void){
 static uint8_t cached_mcp_columns = 0b00111111;
 
 void matrix_select_row(uint8_t matrix_row){
-	// Set right hand side row
+	// Set on right hand side
 
 	// Reset all matrix rows to input (high-z)
 	RIGHT_MATRIX_OUT_1_DDR  &= ~RIGHT_MATRIX_OUT_1_MASK; // 0 = input
@@ -326,31 +323,25 @@ void matrix_select_row(uint8_t matrix_row){
 		RIGHT_MATRIX_OUT_3_DDR |= RIGHT_MATRIX_OUT_3_MASK;
 	}
 
-		// Set left hand side row, and read and cache columns
-		PORTD |= 1<<6;
+	// Set on left hand side
+	if(matrix_row == 0){
+		init_mcp23018(); // reinitialize the MCP23018: it may have been unplugged
+	}
 
-		twi_start();
-		if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_WRITE)) goto err;
-		twi_write_byte(MCP23018_GPIOA);
-		twi_write_byte(0xFF & ~(1 << matrix_row));
-		twi_stop();
+	twi_start();
+	twi_write_byte_checked(MCP23018_ADDR | MCP23018_WRITE);
+	twi_write_byte(MCP23018_GPIOA);
+	twi_write_byte(0xFF & ~(1 << matrix_row));
 
-		// set the address to read from GPIOB and read a byte. (TODO: if we write to GPIOA above, it should roll over to GPIOB without readdressing?)
-		twi_start();
-		if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_WRITE)) goto err;
-		twi_write_byte(MCP23018_GPIOB);
-		twi_start();
-		if(ACK != twi_write_byte(MCP23018_ADDR | MCP23018_READ)) goto err;
-		cached_mcp_columns = twi_read_byte(NACK); // for now, let's only save GPB1
-		twi_stop();
-
-		PORTD &= ~(1<<6);
+	twi_start();
+	twi_write_byte_checked(MCP23018_ADDR | MCP23018_READ);
+	cached_mcp_columns = twi_read_byte(NACK);
+	twi_stop(WAIT);
 
 	return;
-	// TODO: is it worth turning it off again after?
-err:
+ err:
 	PORTD |= (1<<6); // signal error by lighting up the internal LED
-	twi_stop();
+	twi_stop(NOWAIT);
 }
 
 uint8_t matrix_read_column(uint8_t matrix_column){
@@ -366,7 +357,10 @@ uint8_t matrix_read_column(uint8_t matrix_column){
 	else{
 		uint8_t shift = matrix_column - 6;
 		uint8_t val = (cached_mcp_columns & (1<<shift)) == 0;
+		/* if(matrix_column == 7) */
 			return val; // temporarily: this column includes 'q' if row 2
+		/* else */
+			/* return 0; */
 	}
 }
 

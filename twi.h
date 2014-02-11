@@ -48,13 +48,24 @@
 
 #include "hardware.h"
 
+#ifndef TWI_FREQ
+// Frequency for hardware TWI: may be overridden by hardware.h
+#define TWI_FREQ 100000
+#endif
+
 typedef enum _twi_ack {
 	ACK = 0,
 	NACK = 1
 } twi_ack;
 
+typedef enum _twi_wait {
+	NOWAIT = 0,
+	WAIT = 1
+} twi_wait;
+
+void twi_init(void);
 void twi_start(void);
-void twi_stop(void);
+void twi_stop(twi_wait wait);
 uint8_t twi_read_byte(twi_ack ack);
 twi_ack twi_write_byte(uint8_t val);
 
