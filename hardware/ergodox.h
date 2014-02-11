@@ -191,7 +191,7 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 // 6 cols: GPB0-5
 
 // Output:
-// 3 LEDs on PB5,6,7 - connection unknown (sink current to enable?)
+// 3 LEDs on PB5,6,7 - source current to enable
 // Onboard LED on PD6
 
 // For now, no buzzer, no eeprom.
@@ -224,6 +224,11 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 #define LED_NUMLOCK (1<<6)
 #define LED_KEYPAD (1<<7)
 #define ALL_LEDS (LED_CAPS | LED_NUMLOCK | LED_KEYPAD)
+
+// portd6 is OC4D - could drive it with timer4
+#define LED_EXTRA_PORT PORTD
+#define LED_EXTRA_DDR  DDRD
+#define LED_EXTRA (1<<6)
 
 // EEPROM not initially installed.
 #define EEPROM_PORT PORTD

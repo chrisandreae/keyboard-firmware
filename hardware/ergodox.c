@@ -274,9 +274,9 @@ void ports_init(void){
 	RIGHT_MATRIX_OUT_3_DDR  &= ~RIGHT_MATRIX_OUT_3_MASK; // 0 = input
 	RIGHT_MATRIX_OUT_3_PORT &= ~RIGHT_MATRIX_OUT_3_MASK; // 0 = high-z
 
-	// Set up LEDs - they're externally pulled up, so output-low(1,0) to enable, input-highz(0,0) to disable.
+	// Set up LEDs. I think we drive them directly: so output-high to enable (1,1), output-low (1,0) to disable.
+	LED_DDR  |=   ALL_LEDS; // start as 1,0
 	LED_PORT &= ~(ALL_LEDS);
-	LED_DDR  &= ~(ALL_LEDS); // start as hi-z (disabled)
 
 #if USE_BUZZER
 	// start out output/low
@@ -368,7 +368,7 @@ uint8_t matrix_read_column(uint8_t matrix_column){
 void set_all_leds(uint8_t led_mask){
 	led_mask &= ALL_LEDS; // only touch within led range
 
-	LED_DDR = (LED_DDR & ~ALL_LEDS) | led_mask;
+	LED_PORT = (LED_DDR & ~ALL_LEDS) | led_mask;
 }
 
 void test_leds(void){
