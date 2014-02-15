@@ -46,6 +46,15 @@
 
 #include "keystate.h"
 
+// Continue using the same USB VID/PID pair that's assigned to the hardware
+#define USB_VENDOR_ID  0x1d50 // Openmoko, Inc
+#define USB_PRODUCT_ID 0x6028 // ErgoDox ergonomic keyboard
+
+// But define different descriptive strings
+#define USB_MANUFACTURER_STRING L"andreae.gen.nz"
+#define USB_PRODUCT_STRING L"Programmable USB Keyboard"
+#define USB_SERIAL_NUMBER_STRING L"andreae.gen.nz:ergodox"
+
 // Unique identifier representing this keyboard's layout and
 // definition of logical_keycode values.  Is reported to the
 // configuration program over USB to identify the layout.

@@ -44,6 +44,7 @@
 */
 
 #include "Descriptors.h"
+#include "hardware.h"
 
 /** Mouse HID report descriptor. */
 const USB_Descriptor_HIDReport_Datatype_t PROGMEM MouseReport[] =
@@ -131,13 +132,13 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 
 	.Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
 
-	.VendorID               = 0x03EB,
-	.ProductID              = 0x2043,
-	.ReleaseNumber          = VERSION_BCD(00.01),
+	.VendorID               = USB_VENDOR_ID,  // Defined in hardware.h
+	.ProductID              = USB_PRODUCT_ID,
+	.ReleaseNumber          = VERSION_BCD(01.10),
 
 	.ManufacturerStrIndex   = 0x01,
 	.ProductStrIndex        = 0x02,
-	.SerialNumStrIndex      = NO_DESCRIPTOR,
+	.SerialNumStrIndex      = 0x03,
 
 	.NumberOfConfigurations = FIXED_NUM_CONFIGURATIONS
 };
@@ -238,6 +239,8 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 };
 
 #ifdef BUILD_FOR_LUFA
+#define USB_STRING_LEN_OF(x) (sizeof(USB_Descriptor_Header_t) + sizeof(x) - 2)
+
 /** Language descriptor structure. This descriptor, located in FLASH memory, is returned when the host requests
  *  the string descriptor with index 0 (the first index). It is actually an array of 16-bit integers, which indicate
  *  via the language ID table available at USB.org what languages the device supports for its string descriptors.
@@ -255,9 +258,9 @@ const USB_Descriptor_String_t PROGMEM LanguageString =
  */
 const USB_Descriptor_String_t PROGMEM ManufacturerString =
 {
-	.Header                 = {.Size = USB_STRING_LEN(14), .Type = DTYPE_String},
+	.Header                 = {.Size = USB_STRING_LEN_OF(USB_MANUFACTURER_STRING), .Type = DTYPE_String},
 
-	.UnicodeString          = L"andreae.gen.nz"
+	.UnicodeString          = USB_MANUFACTURER_STRING
 };
 
 /** Product descriptor string. This is a Unicode string containing the product's details in human readable form,
@@ -266,9 +269,16 @@ const USB_Descriptor_String_t PROGMEM ManufacturerString =
  */
 const USB_Descriptor_String_t PROGMEM ProductString =
 {
-	.Header                 = {.Size = USB_STRING_LEN(7), .Type = DTYPE_String},
+	.Header                 = {.Size = USB_STRING_LEN_OF(USB_PRODUCT_STRING), .Type = DTYPE_String},
 
-	.UnicodeString          = L"Kin3sis"
+	.UnicodeString          = USB_PRODUCT_STRING
+};
+
+const USB_Descriptor_String_t PROGMEM SerialNumberString =
+{
+	.Header                 = {.Size = USB_STRING_LEN_OF(USB_SERIAL_NUMBER_STRING), .Type = DTYPE_String},
+
+	.UnicodeString          = USB_SERIAL_NUMBER_STRING
 };
 
 #endif
@@ -315,6 +325,11 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 					Address = &ProductString;
 					Size    = pgm_read_byte(&ProductString.Header.Size);
 					break;
+				case 0x03:
+					Address = &SerialNumberString;
+					Size    = pgm_read_byte(&SerialNumberString.Header.Size);
+					break;
+
 			}
 
 			break;
@@ -391,6 +406,10 @@ usbMsgLen_t usbFunctionDescriptor(usbRequest_t* rq)
 				case 0x02:
 					Address = &ProductString;
 					Size    = pgm_read_byte(&ProductString.Header.Size);
+					break;
+				case 0x03:
+					Address = &SerialNumberString;
+					Size    = pgm_read_byte(&SerialNumberString.Header.Size);
 					break;
 				}
 #endif
