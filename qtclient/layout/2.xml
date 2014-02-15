@@ -1,0 +1,163 @@
+<keyboard layout="ergodox" layoutid="2" image="ergodox.png">
+<!-- We have a keypad layer. the @layersize keys after index    -->
+<!-- @layerstart are duplicated as a keypad layer with separate -->
+<!-- definitions  -->
+  <keypad keyindex="0" layerstart="2" layersize="74"/>
+  <layout>
+	<key name="KEYPAD"	  w="48" h="48"  x="352" y="15"/>
+	<key name="PROGRAM"	  w="47" h="48"  x="623" y="15"/>
+	<key name="A"		  w="48" h="48"  x="95"  y="123"/>
+	<key name="B"		  w="48" h="48"  x="301" y="169"/>
+	<key name="C"		  w="48" h="48"  x="198" y="161"/>
+	<key name="D"		  w="48" h="48"  x="198" y="110"/>
+	<key name="E"		  w="48" h="47"  x="198" y="59"/>
+	<key name="F"		  w="48" h="48"  x="250" y="115"/>
+	<key name="G"		  w="48" h="48"  x="301" y="118"/>
+	<key name="H"		  w="48" h="48"  x="674" y="118"/>
+	<key name="I"		  w="48" h="47"  x="777" y="59"/>
+	<key name="J"		  w="47" h="48"  x="726" y="114"/>
+	<key name="K"		  w="48" h="48"  x="777" y="110"/>
+	<key name="L"		  w="47" h="48"  x="829" y="114"/>
+	<key name="M"		  w="48" h="48"  x="726" y="166"/>
+	<key name="N"		  w="48" h="48"  x="674" y="169"/>
+	<key name="O"		  w="47" h="48"  x="829" y="63"/>
+	<key name="P"		  w="48" h="48"  x="880" y="71"/>
+	<key name="Q"		  w="48" h="48"  x="95"  y="71"/>
+	<key name="R"		  w="47" h="48"  x="250" y="63"/>
+	<key name="S"		  w="47" h="48"  x="147" y="114"/>
+	<key name="T"		  w="48" h="48"  x="301" y="66"/>
+	<key name="U"		  w="48" h="48"  x="726" y="63"/>
+	<key name="V"		  w="47" h="47"  x="250" y="166"/>
+	<key name="W"		  w="47" h="48"  x="147" y="63"/>
+	<key name="X"		  w="47" h="47"  x="147" y="166"/>
+	<key name="Y"		  w="48" h="48"  x="674" y="66"/>
+	<key name="Z"		  w="48" h="48"  x="95"  y="174"/>
+	<key name="1"		  w="48" h="48"  x="95"  y="20"/>
+	<key name="2"		  w="47" h="48"  x="147" y="11"/>
+	<key name="3"		  w="48" h="48"  x="198" y="7"/>
+	<key name="4"		  w="47" h="48"  x="250" y="11"/>
+	<key name="5"		  w="48" h="48"  x="301" y="15"/>
+	<key name="6"		  w="48" h="48"  x="674" y="15"/>
+	<key name="7"		  w="47" h="48"  x="726" y="11"/>
+	<key name="8"		  w="48" h="48"  x="777" y="7"/>
+	<key name="9"		  w="47" h="48"  x="829" y="11"/>
+	<key name="0"		  w="48" h="48"  x="880" y="20"/>
+	<key name="SEMICOLON" w="48" h="48"  x="880" y="123"/>
+	<key name="COMMA"	  w="48" h="48"  x="777" y="161"/>
+	<key name="PERIOD"	  w="47" h="48"  x="829" y="166"/>
+	<key name="SLASH"	  w="48" h="48"  x="880" y="174"/>
+	<key name="LCOL1_1"	  w="19" h="20"  x="72"  y="48"/>
+	<key name="LCOL1_2"	  w="19" h="71"  x="72"  y="48"/>
+	<key name="LCOL1_3"	  w="19" h="123" x="72"  y="48"/>
+	<key name="LCOL1_4"	  w="19" h="174" x="72"  y="48"/>
+	<key name="LROW1"	  w="47" h="48"  x="44"  y="226"/>
+	<key name="LROW2"	  w="48" h="47"  x="95"  y="226"/>
+	<key name="LROW3"	  w="47" h="48"  x="147" y="217"/>
+	<key name="LROW4"	  w="48" h="48"  x="198" y="213"/>
+	<key name="LROW5"	  w="47" h="48"  x="250" y="217"/>
+	<key name="LCOL2_1"	  w="48" h="72"  x="352" y="67"/>
+	<key name="LCOL2_2"	  w="48" h="72"  x="352" y="144"/>
+	<key name="RCOL1_1"	  w="72" h="48"  x="932" y="20"/>
+	<key name="RCOL1_2"	  w="72" h="48"  x="932" y="71"/>
+	<key name="RCOL1_3"	  w="72" h="48"  x="932" y="123"/>
+	<key name="RCOL1_4"	  w="72" h="48"  x="932" y="174"/>
+	<key name="RROW1"	  w="48" h="47"  x="931" y="226"/>
+	<key name="RROW2"	  w="48" h="47"  x="880" y="226"/>
+	<key name="RROW3"	  w="47" h="48"  x="829" y="217"/>
+	<key name="RROW4"	  w="48" h="48"  x="777" y="213"/>
+	<key name="RROW5"	  w="47" h="48"  x="726" y="217"/>
+	<key name="RCOL2_1"	  w="47" h="72"  x="623" y="67"/>
+	<key name="RCOL2_2"	  w="47" h="72"  x="623" y="144"/>
+	<key name="L_ALT"	  w="45" h="45"  x="458" y="227"/>
+	<key name="L_CTRL"	  w="45" h="45"  x="407" y="204"/>
+	<key name="HOME"	  w="45" h="41"  x="435" y="276"/>
+	<key name="END"		  w="45" h="41"  x="413" y="323"/>
+	<key name="BACKSPACE" w="36" h="70"  x="333" y="240"/>
+	<key name="DELETE"	  w="32" h="68"  x="383" y="263"/>
+	<key name="R_ALT"	  w="44" h="44"  x="522" y="227"/>
+	<key name="R_CTRL"	  w="43" h="46"  x="571" y="205"/>
+	<key name="PGUP"	  w="44" h="42"  x="544" y="276"/>
+	<key name="PGDN"	  w="44" h="42"  x="566" y="323"/>
+	<key name="ENTER"	  w="35" h="62"  x="606" y="266"/>
+	<key name="SPACE"     w="35" h="72"  x="656" y="241"/>
+  </layout>
+</keyboard>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+backspace
