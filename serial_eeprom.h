@@ -66,7 +66,7 @@ extern serial_eeprom_err serial_eeprom_errno;
 
 serial_eeprom_err serial_eeprom_start_write(uint8_t* addr);
 int8_t serial_eeprom_continue_write(const uint8_t* buf, uint8_t len);
-static inline void serial_eeprom_end_write(){ twi_stop(NOWAIT); }
+static inline void serial_eeprom_end_write(void){ twi_stop(NOWAIT); }
 
 /**
  * Write len bytes within an eeprom page. The caller is responsible

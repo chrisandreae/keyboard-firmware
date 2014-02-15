@@ -227,7 +227,7 @@ const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM = {
 
 #define twi_write_byte_checked(x) if(ACK != twi_write_byte(x)) goto err;
 
-static uint8_t init_mcp23018(){
+static uint8_t init_mcp23018(void){
 	// Set up IO direction
 	// Rows (output direction) are GPA 0-6
 	// Columns (input direction) are GPB0-5

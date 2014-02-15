@@ -75,12 +75,12 @@ typedef struct _macro_idx_entry macro_idx_entry;
  * Get a pointer to the underlying data in EEMEM. (To be read/written
  * as a whole by the client application)
  */
-uint8_t* macro_idx_get_storage();
+uint8_t* macro_idx_get_storage(void);
 
 /**
  * Erases the macro index - to be called from config_reset_fully
  */
-void macro_idx_reset_defaults();
+void macro_idx_reset_defaults(void);
 
 /**
  * Looks up a key combination in the macro index.  Returns opaque

@@ -43,45 +43,31 @@
   this software.
 */
 
-#ifndef __CONFIG_H
-#define __CONFIG_H
+#ifndef _USB_VENDOR_INTERFACE_H_
+#define _USB_VENDOR_INTERFACE_H_
 
-#include "hardware.h"
-#include "keystate.h"
+typedef enum _vendor_request {
+	READ_LAYOUT_ID,    // Which type of keyboard are we, what do the logical keycodes mean?
+	READ_MAPPING_SIZE, // How many logical keycodes do we map?
+	WRITE_MAPPING, READ_MAPPING,
+	READ_DEFAULT_MAPPING,
 
-// Number of programs we support. We always permit concurrent program
-// execution, so we limit the number of programs to the number of VMs.
-#define NUM_PROGRAMS 6
+	READ_NUM_PROGRAMS,  // How many program VMs do we run?
+	READ_PROGRAMS_SIZE, // How much space is available for program storage?
+	WRITE_PROGRAMS, READ_PROGRAMS,
 
-// size in bytes of program storage (including index)
-#define PROGRAMS_SIZE 1024
+	RESET_DEFAULTS,
+	RESET_FULLY,
 
-// Configuration is saved in the eeprom
-typedef struct _configuration_flags {
-	unsigned char key_sound_enabled:1;
-	unsigned char packing:7;
-} configuration_flags;
+	READ_CONFIG_FLAGS,
+	WRITE_CONFIG_FLAGS, // one byte: passed in wvalue
 
-// returns eeprom address of logical_to_hid_map
-hid_keycode* config_get_mapping(void);
+	READ_MACRO_INDEX_SIZE,
+	WRITE_MACRO_INDEX, READ_MACRO_INDEX,
+	READ_MACRO_STORAGE_SIZE,
+	WRITE_MACRO_STORAGE, READ_MACRO_STORAGE,
+	READ_MACRO_MAX_KEYS
 
-hid_keycode config_get_definition(logical_keycode l_key);
-void config_save_definition(logical_keycode l_key, hid_keycode h_key);
+} vendor_request;
 
-void config_init(void);
-void config_reset_defaults(void);
-void config_reset_fully(void);
-uint8_t config_delete_layout(uint8_t num);
-uint8_t config_save_layout(uint8_t num);
-uint8_t config_load_layout(uint8_t num);
-
-configuration_flags config_get_flags(void);
-void config_save_flags(configuration_flags state);
-
-uint8_t* config_get_programs(void);
-
-struct _program;
-const struct _program* config_get_program(uint8_t idx);
-void config_reset_program_defaults(void);
-
-#endif // __CONFIG_H
+#endif //_USB_VENDOR_INTERFACE_H_
