@@ -154,8 +154,8 @@ enum logical_keys {
 	// Right hand thumb pad
 	LOGICAL_KEY_R_ALT,
 	LOGICAL_KEY_R_CTRL,
-	LOGICAL_KEY_PGDN,
 	LOGICAL_KEY_PGUP,
+	LOGICAL_KEY_PGDN,
 	LOGICAL_KEY_ENTER,
 	LOGICAL_KEY_SPACE
 	// The keypad layer duplicates the previous 74 keys
