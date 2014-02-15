@@ -10,6 +10,9 @@
 
 #include "keyboardcomm.h"
 
+const uint16_t valid_vid_pid_pairs[][2] = {{0x16c0, 0x27db}, {0x1d50, 0x6028}};
+
+
 const char *KeyboardCommError::nameException(KeyboardCommError::Cause c) {
 	switch (c) {
 	case KeyboardCommError::Underflow:
@@ -33,11 +36,18 @@ QList<USBDevice> KeyboardComm::enumerate(libusb_context *context) {
 			LIBUSBCheckResult(
 			    libusb_get_device_descriptor(dev, &desc));
 
-			if (desc.idVendor != 0x16c0 || desc.idProduct != 0x27db)
-				continue;
+			int n_ids = sizeof(valid_vid_pid_pairs) / sizeof(*valid_vid_pid_pairs);
+			bool valid_id = false;
+			for(int i = 0; i < n_ids; ++i){
+				if (desc.idVendor == valid_vid_pid_pairs[i][0] && desc.idProduct == valid_vid_pid_pairs[i][1]){
+					valid_id = true;
+					break;
+				}
+			}
+			if(!valid_id) continue;
 
 			USBDeviceHandle d(dev);
-			const unsigned char requiredPrefix[] = "andreae.gen.nz";
+			const unsigned char requiredPrefix[] = "andreae.gen.nz:";
 			unsigned char buf[sizeof(requiredPrefix)] = {0};
 			int length = LIBUSBCheckResult(
 			    libusb_get_string_descriptor_ascii(d, desc.iSerialNumber, buf, sizeof(buf) - 1));
