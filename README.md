@@ -35,7 +35,8 @@ to Kinesis Advantage/Professional hardware.)
 ## Building
 
 To build for a non-USB-capable AVR using the V-USB library:
-   ````make -f Makefile.vusb HARDWARE_VARIANT=<variant>````
+
+````make -f Makefile.vusb HARDWARE_VARIANT=<variant>````
 
 Currently supported hardware variants for non-USB AVRs are:
 
@@ -43,7 +44,8 @@ Currently supported hardware variants for non-USB AVRs are:
 * ````KINESIS110```` (Kinesis Model 110, ATMega32, board design in schematic/KinesisModel110)
 
 To build for a USB-capable AVR using the LUFA library:
-   ````make -f Makefile.lufa HARDWARE_VARIANT=<variant> HAS_EXTERNAL_STORAGE={1,0}````
+
+````make -f Makefile.lufa HARDWARE_VARIANT=<variant> HAS_EXTERNAL_STORAGE={1,0}````
 
 Currently supported hardware variants for USB AVRs are:
 
@@ -56,6 +58,7 @@ The default key layout for each hardware type can be found in the subdirectory `
 ### Enter/exit layout programming
 
 Kinesis: ````Program + F12````
+
 Ergodox: ````Program + P````
 
 Press the above key combination to enter programming mode. In programming mode,
@@ -116,7 +119,7 @@ recording key combination.
 When key-click is enabled, a noise will be each time the keyboard registers a
 keypress. This can be useful to learn to type without 'bottoming-out' the keys.
 
-### Program macros (Note: requires EEPROM)
+### VM Programs (Note: requires EEPROM)
 
 The keyboard includes a built in virtual machine interpreter which can run up to
 six concurrent programs. A program is bound to a trigger combination like a
