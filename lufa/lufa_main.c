@@ -37,6 +37,13 @@
 #include <LUFA/Version.h>
 #include <LUFA/Drivers/USB/USB.h>
 
+#include "eeext_endpoint_stream.h"
+
+#include "usb_vendor_interface.h"
+#include "config.h"
+#include "macro.h"
+#include "macro_index.h"
+
 /** LUFA HID Class driver interface configuration and state information. This structure is
  *  passed to all HID Class driver functions, so that multiple instances of the same class
  *  within a device can be differentiated from one another.
@@ -146,6 +153,109 @@ void EVENT_USB_Device_ControlRequest(void)
 {
 	HID_Device_ProcessControlRequest(&Keyboard_HID_Interface);
 	HID_Device_ProcessControlRequest(&Mouse_HID_Interface);
+
+	// TODO: Bounds check the transfers to make sure we don't overflow our
+	// eeprom buffers.
+	if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_VENDOR | REQREC_DEVICE)) {
+		// Vendor message for us: accept the setup
+		Endpoint_ClearSETUP();
+
+		// Read requests
+		switch(USB_ControlRequest.bRequest){
+		case READ_NUM_PROGRAMS:
+			Endpoint_Write_8(NUM_PROGRAMS);
+			goto end_write;
+		case READ_LAYOUT_ID:
+			Endpoint_Write_8(LAYOUT_ID);
+			goto end_write;
+		case READ_MAPPING_SIZE:
+			Endpoint_Write_8(NUM_LOGICAL_KEYS);
+			goto end_write;
+		case READ_CONFIG_FLAGS: {
+			configuration_flags fs = config_get_flags();
+			Endpoint_Write_8(*((uint8_t*)&fs));
+			goto end_write;
+		}
+		case READ_MACRO_MAX_KEYS:
+			Endpoint_Write_8(MACRO_MAX_KEYS);
+			goto end_write;
+		case READ_PROGRAMS_SIZE:
+			Endpoint_Write_16_LE(PROGRAMS_SIZE);
+			goto end_write;
+		case READ_MACRO_INDEX_SIZE:
+			Endpoint_Write_16_LE(MACRO_INDEX_SIZE);
+			goto end_write;
+		case READ_MACRO_STORAGE_SIZE:
+			Endpoint_Write_16_LE(MACROS_SIZE);
+		end_write:
+			Endpoint_ClearIN(); // Finish sending to host
+			Endpoint_ClearStatusStage(); // and wait for and clear the status ack
+			break;
+		case READ_PROGRAMS:
+			Endpoint_Write_Control_SEStream_LE(config_get_programs(), USB_ControlRequest.wLength);
+			goto ack_write_status;
+		case READ_MACRO_INDEX:
+			Endpoint_Write_Control_EStream_LE(macro_idx_get_storage(), USB_ControlRequest.wLength);
+			goto ack_write_status;
+		case READ_MACRO_STORAGE:
+			Endpoint_Write_Control_SEStream_LE(macros_get_storage(), USB_ControlRequest.wLength);
+			goto ack_write_status;
+		case READ_DEFAULT_MAPPING:
+			Endpoint_Write_Control_PStream_LE((uint8_t*)logical_to_hid_map_default, USB_ControlRequest.wLength);
+			goto ack_write_status;
+		case READ_MAPPING:
+			Endpoint_Write_Control_EStream_LE(config_get_mapping(), USB_ControlRequest.wLength);
+		ack_write_status:
+			// Stream write functions already wait for the host's status ack, so we
+			// just have to clear it.
+			Endpoint_ClearOUT();
+			break;
+
+		default:
+			// OK, we don't know what this request was, tell the host to reset us.
+			// TODO: check that it's OK to call after clearing setup
+			Endpoint_StallTransaction();
+		}
+	}
+	else if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_VENDOR | REQREC_DEVICE)) {
+		// Write or message requests
+		Endpoint_ClearSETUP();
+		switch(USB_ControlRequest.bRequest){
+			// write requests
+		case WRITE_PROGRAMS:
+			Endpoint_Read_Control_SEStream_LE(config_get_programs(), USB_ControlRequest.wLength);
+			goto ack_read_status;
+		case WRITE_MACRO_INDEX:
+			Endpoint_Read_Control_EStream_LE(macro_idx_get_storage(), USB_ControlRequest.wLength);
+			goto ack_read_status;
+		case WRITE_MACRO_STORAGE:
+			Endpoint_Read_Control_SEStream_LE(macros_get_storage(), USB_ControlRequest.wLength);
+			goto ack_read_status;
+		case WRITE_MAPPING:
+			Endpoint_Read_Control_EStream_LE(config_get_mapping(), USB_ControlRequest.wLength);
+		ack_read_status:
+			// stream read functions already waited for the host to be ready:
+			// just send the status ack
+			Endpoint_ClearIN();
+			break;
+		// Message only requests with no data transfer: just need to ack
+		case WRITE_CONFIG_FLAGS: {
+			uint8_t flags = USB_ControlRequest.wValue & 0xff;
+			config_save_flags(*(configuration_flags*)&flags);
+			goto clear_status;
+		}
+		case RESET_DEFAULTS:
+			config_reset_defaults();
+			goto clear_status;
+		case RESET_FULLY:
+			config_reset_fully();
+		clear_status:
+			Endpoint_ClearStatusStage();
+			break;
+		default:
+			Endpoint_StallTransaction();
+		}
+	}
 }
 
 /** Event handler for the USB device Start Of Frame event. */

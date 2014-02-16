@@ -1,0 +1,134 @@
+
+void main(){
+	// wait for keys to be released
+	while(checkKey(0)){}
+
+	byte state;
+	state = 0;
+	while(1){
+		byte r = waitKey(0, 0); // wait for a key to be pressed
+		if(r == 0){
+			play(25, 100s); // wat!
+			continue;
+		}
+
+		if(checkPhysKey(0)){ // a key was pressed, was it our quit key?
+			delay(200s);
+			exit;
+		}
+
+		while(checkKey(r)){} // otherwise, wait for release
+
+		if(state == 0 && r == 0x17){ // T
+			state = 1;
+		}
+		else if(state == 1 && r == 0x08){ // E
+			state = 2;
+		}
+		else if(state == 2 && r == 0x17){ //T
+			state = 3;
+		}
+		else if(state == 3 && r == 0x15){ // R
+			state = 4;
+		}
+		else if(state == 4 && r == 0x0C){ // I
+			state = 5;
+		}
+		else if(state == 5 && r == 0x16){ //S
+			playtune();
+			state = 0;
+		}
+		else{
+			state = 0; // reset
+		}
+	}
+}
+
+void play(byte note, short len){
+	buzzAt(len+1, note); // add an extra millisecond so we can move directly from one note to the next
+	delay(len);
+}
+
+void playtune(){
+	short c = 200s;
+	short q = c/2;
+	short dc = c + q;
+	short sb = c * 2;
+
+	byte Gsharp = (byte)150s;
+	byte A = (byte)142s;
+	byte B = 126;
+	byte C = 119;
+	byte D = 106;
+	byte E = 95;
+	byte F = 90;
+	byte G = 80;
+	byte Gsharp7 = 75;
+	byte A7 = 71;      // 18 bytes of stack
+
+	play(E, c);
+	play(B, q);
+	play(C, q);
+	play(D, c);
+	play(C, q);
+	play(B, q);
+	play(A, c);
+	play(A, q);
+	play(C, q);
+	play(E, c);
+	play(D, q);
+	play(C, q);
+	play(B, dc);
+	play(C, q);
+	play(D, c);
+	play(E, c);
+	play(C, c);
+	play(A, c);
+	play(A, c);
+
+	delay(c); //?
+
+	play(D, dc);
+	play(F, q);
+	play(A7, c);
+	play(G, q);
+	play(F, q);
+	play(E, dc);
+	play(C, q);
+	play(E, c);
+	play(D, q);
+	play(C, q);
+	play(B, c);
+	play(B, q);
+	play(C, q);
+	play(D, c);
+	play(E, c);
+	play(C, c);
+	play(A, c);
+	play(A, c);
+
+	delay(c);
+
+	play(E, sb);
+	play(C, sb);
+	play(D, sb);
+	play(B, sb);
+	play(C, sb);
+	play(A, sb);
+	play(Gsharp, sb);
+	play(B, c);
+	delay(c);
+
+	play(E, sb);
+	play(C, sb);
+	play(D, sb);
+	play(B, sb);
+	play(C, c);
+	play(E, c); //(?)
+	play(A7, c);
+	play(A7, c);
+	play(Gsharp7, sb);
+	delay(sb);
+	
+}
+

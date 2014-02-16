@@ -50,11 +50,16 @@
 
 #include <extrareport.h>
 
-/**
- * Size in bytes of macro storage (including end offset)
- */
-#define MACROS_SIZE 1024
+#include "macro_index.h"
 
+#ifndef NO_EXTERNAL_STORAGE
+	/**
+	 * Size in bytes of macro storage (including end offset)
+	 */
+	#define MACROS_SIZE 1024
+#else
+	#define MACROS_SIZE 0
+#endif
 
 typedef struct _macro_data {
 	uint16_t length;
@@ -65,12 +70,12 @@ typedef struct _macro_data {
  * Get the underlying macro data in EEEXT. (To be read/written as a
  * whole by the client application)
  */
-uint8_t* macros_get_storage();
+uint8_t* macros_get_storage(void);
 
 /**
  * Resets the macro storage - to be called from config_reset_fully
  */
-void macros_reset_defaults();
+void macros_reset_defaults(void);
 
 /**
  * Starts recording a macro identified by the given key. Adds it to
@@ -85,13 +90,13 @@ bool macros_start_macro(macro_idx_key* key);
  * rolls back the macro creation and removes the entry from the index.
  * This is also used to delete a macro.
  */
-void macros_commit_macro();
+void macros_commit_macro(void);
 
 /**
  * Aborts the currently recording macro which was started with
  * macros_start_macro()
  */
-void macros_abort_macro();
+void macros_abort_macro(void);
 
 /**
  * Appends the argument HID keycode to the macro being recorded.

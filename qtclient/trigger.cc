@@ -177,7 +177,13 @@ QPair<QByteArray, QByteArray> Trigger::encodeTriggers(const QList<Trigger>& trig
 		storageBytesRequired += et.storageRequired();
 	}
 
-	if (storageBytesRequired > storageSize) {
+	if (storageSize == 0 && storageBytesRequired == 2){
+		// We have no macro storage available, and we're not trying to save any
+		// actual macro content: in this case we need to skip storing the macro
+		// end offset pointer.
+		storageBytesRequired = 0;
+	}
+	else if (storageBytesRequired > storageSize) {
 		throw InsufficentStorageException(storageBytesRequired, storageSize, "macro storage");
 	}
 
@@ -194,7 +200,9 @@ QPair<QByteArray, QByteArray> Trigger::encodeTriggers(const QList<Trigger>& trig
 	uint8_t *storageBase = reinterpret_cast<uint8_t*>(storageBytes.data());
 	// Prepend the end macro offset total length to the storage for the keyboard's 'next macro' cursor:
 	// subtract 2 since macro offsets start after this field.
-	writeLittleEndian<uint16_t>(storageBase, storageBytesRequired - 2);
+	if(storageBytesRequired != 0){
+		writeLittleEndian<uint16_t>(storageBase, storageBytesRequired - 2);
+	}
 
 	uint8_t *storageCursor = storageBase;
 

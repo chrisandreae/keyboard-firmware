@@ -199,15 +199,15 @@ static void handle_state_normal(void){
 				keystate_get_keys(keys, PHYSICAL);
 				logical_keycode other = (keys[0] == LOGICAL_KEY_PROGRAM) ? keys[1] : keys[0];
 				switch(other){
-				case LOGICAL_KEY_F11:
+				case SPECIAL_LKEY_MACRO_RECORD:
 					current_state = STATE_WAITING;
 					next_state = STATE_MACRO_RECORD_TRIGGER;
 					break;
-				case LOGICAL_KEY_F12:
+				case SPECIAL_LKEY_REMAP:
 					current_state = STATE_WAITING;
 					next_state = STATE_PROGRAMMING_SRC;
 					break;
-				case LOGICAL_KEY_PRINTSCREEN: {
+				case SPECIAL_LKEY_REBOOT: {
 					uint8_t i = BUZZER_DEFAULT_TONE;
 						// cause watchdog reboot (into bootloader if progm is still pressed)
 					while(1){
@@ -220,7 +220,7 @@ static void handle_state_normal(void){
 					}
 				}
 #if USE_BUZZER
-				case LOGICAL_KEY_BACKSLASH: {
+				case SPECIAL_LKEY_TOGGLE_BUZZER: {
 					configuration_flags flags = config_get_flags();
 					flags.key_sound_enabled = !flags.key_sound_enabled;
 					config_save_flags(flags);
@@ -231,7 +231,7 @@ static void handle_state_normal(void){
 					break;
 				}
 #endif
-				case LOGICAL_KEY_F7:
+				case SPECIAL_LKEY_RESET_CONFIG:
 					config_reset_defaults();
 					current_state = STATE_WAITING;
 					next_state = STATE_NORMAL;
@@ -243,7 +243,7 @@ static void handle_state_normal(void){
 			break;
 		case 3:
 			// full reset
-			if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_F7, LOGICAL_KEY_LSHIFT)){
+			if(keystate_check_keys(2, PHYSICAL, SPECIAL_LKEY_RESET_CONFIG, SPECIAL_LKEY_RESET_FULLY)){
 				config_reset_fully();
 				current_state = STATE_WAITING;
 				next_state = STATE_NORMAL;
@@ -307,10 +307,13 @@ static void handle_state_normal(void){
 			macro_idx_entry_data md = macro_idx_get_data(h);
 			switch(md.type){
 			case PROGRAM: {
+#if PROGRAMS_SIZE > 0
 				vm_start(md.data, key.keys[0]); // TODO: l_key is no longer relevant, is not great to use just the first.
 				break;
+#endif
 			}
 			case MACRO: {
+#if MACROS_SIZE > 0
 				if(macros_start_playback(md.data)){
 					current_state = STATE_MACRO_PLAY;
 				}
@@ -318,6 +321,7 @@ static void handle_state_normal(void){
 					buzzer_start_f(200, BUZZER_FAILURE_TONE);
 				}
 				break;
+#endif
 			}
 			}
 		}
@@ -327,7 +331,7 @@ static void handle_state_normal(void){
 static void handle_state_programming(void){
 	static hid_keycode program_src_hkey = 0;
 
-	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F12)){
+	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, SPECIAL_LKEY_REMAP)){
 		current_state = STATE_WAITING;
 		next_state = STATE_NORMAL;
 	}
@@ -360,9 +364,10 @@ static void handle_state_programming(void){
 }
 
 static void handle_state_macro_record_trigger(){
+#if MACROS_SIZE > 0 // Allow macro recording only if there's storage for it.
 	static macro_idx_key key;
 	static uint8_t last_count = 0;
-	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F11)){
+	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, SPECIAL_LKEY_MACRO_RECORD)){
 		current_state = STATE_WAITING;
 		next_state = STATE_NORMAL;
 		return;
@@ -394,6 +399,9 @@ static void handle_state_macro_record_trigger(){
 			next_state = STATE_MACRO_RECORD;
 		}
 		else{
+#else
+		{{
+#endif
 			// failed to start macro
 			current_state = STATE_WAITING;
 			next_state = STATE_NORMAL;
@@ -429,7 +437,7 @@ static void handle_state_macro_record(){
 	}
 
 	// handle stopping
-	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, LOGICAL_KEY_F11)){
+	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, SPECIAL_LKEY_MACRO_RECORD)){
 		recording_macro = false;
 		keystate_register_change_hook(0);
 		macros_commit_macro();

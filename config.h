@@ -49,12 +49,17 @@
 #include "hardware.h"
 #include "keystate.h"
 
-// Number of programs we support. We always permit concurrent program
-// execution, so we limit the number of programs to the number of VMs.
-#define NUM_PROGRAMS 6
+#ifndef NO_EXTERNAL_STORAGE
+	// Number of programs we support. We always permit concurrent program
+	// execution, so we limit the number of programs to the number of VMs.
+	#define NUM_PROGRAMS 6
 
-// size in bytes of program storage (including index)
-#define PROGRAMS_SIZE 1024
+	// size in bytes of program storage (including index)
+	#define PROGRAMS_SIZE 1024
+#else
+	#define NUM_PROGRAMS 0
+	#define PROGRAMS_SIZE 0
+#endif
 
 // Configuration is saved in the eeprom
 typedef struct _configuration_flags {
@@ -78,10 +83,10 @@ uint8_t config_load_layout(uint8_t num);
 configuration_flags config_get_flags(void);
 void config_save_flags(configuration_flags state);
 
-uint8_t* config_get_programs();
+uint8_t* config_get_programs(void);
 
 struct _program;
 const struct _program* config_get_program(uint8_t idx);
-void config_reset_program_defaults();
+void config_reset_program_defaults(void);
 
 #endif // __CONFIG_H

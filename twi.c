@@ -49,12 +49,23 @@
 #ifndef BITBANG_TWI
 #include <util/twi.h>
 
+void twi_init(void) {
+	// 0 prescaler
+	TWSR &= ~( (1<<TWPS1)|(1<<TWPS0) );
+	// set the bit rate based on TWI_FREQ
+	// twifreq = F_CPU/(16 + 2 * TWBR * (4^prescaler))
+	TWBR = ((F_CPU / TWI_FREQ) - 16) / 2;
+}
+
 void twi_start(){
 	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
 	while ((TWCR & (1<<TWINT)) == 0);
 }
-void twi_stop(){
+void twi_stop(twi_wait wait){
 	TWCR = (1<<TWINT) | (1<<TWSTO) | (1<<TWEN);
+	if(wait == WAIT){
+		while (TWCR & (1<<TWSTO));
+	}
 }
 uint8_t twi_read_byte(twi_ack ack){
 	TWCR = (1<<TWINT) | (1<<TWEN);
@@ -64,6 +75,7 @@ uint8_t twi_read_byte(twi_ack ack){
 	while ((TWCR & (1<<TWINT)) == 0);
 	return TWDR;
 }
+
 twi_ack twi_write_byte(uint8_t val){
 	TWDR = val;
 	TWCR = (1<<TWINT)|(1<<TWEN);
@@ -72,7 +84,7 @@ twi_ack twi_write_byte(uint8_t val){
 	// upper 5 bits from TWSR register describe our whole status
 	// We only care whether we have ack or nack-or-fail
 	// after some type of send - SLA+R, SLA+W or data
-	uint8_t status = TWSR & 0xf8;
+	uint8_t status = TW_STATUS;
 	// our compatible API only cares about ack/nack
 	if(status == TW_MT_DATA_ACK || // 0x28
 	   status == TW_MT_SLA_ACK  || // 0x18
@@ -99,6 +111,12 @@ static inline void twi_scl_high(void){
 }
 static inline void twi_scl_low(void){
 	EEPROM_DDR |= EEPROM_SCL;
+}
+
+void twi_init(void){
+	// Serial eeprom lines have external pull-ups, so 0 = output-low(1,0) / 1 = input-highz(0,0)
+	EEPROM_PORT &= ~(EEPROM_SCL | EEPROM_SDA); // initially leave high-z
+	EEPROM_DDR  &= ~(EEPROM_SCL | EEPROM_SDA);
 }
 
 void twi_start(){

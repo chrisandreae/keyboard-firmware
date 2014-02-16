@@ -58,14 +58,18 @@
 # To rebuild project do "make clean" then "make all".
 #----------------------------------------------------------------------------
 
+# Select hardware variant
+HARDWARE_VARIANT = ERGODOX
+
+# By default, the Ergodox doesn't have any external eeprom. Unless one is added,
+# disable external storage.
+HAS_EXTERNAL_STORAGE = 0
 
 # MCU name
-MCU = at90usb162
-
+MCU = atmega32u4
 
 # Target architecture (see library "Board Types" documentation).
 ARCH = AVR8
-
 
 # Target board (see library "Board Types" documentation, NONE for projects not requiring
 # LUFA board drivers). If USER is selected, put custom board drivers in a directory called
@@ -134,7 +138,6 @@ include $(LUFA_PATH)/LUFA/makefile
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c                                                 \
 	  Descriptors.c                                               \
-	  Descriptors.c												  \
 	  twi.c														  \
 	  printing.c												  \
 	  keystate.c												  \
@@ -144,10 +147,12 @@ SRC = $(TARGET).c                                                 \
 	  leds.c													  \
 	  hardware.c												  \
 	  interpreter.c												  \
+	  macro_index.c												  \
 	  macro.c													  \
 	  extrareport.c												  \
 	  sort.c													  \
 	  lufa/lufa_main.c                                            \
+	  lufa/eeext_endpoint_stream.c                                \
 	  $(LUFA_SRC_USB)                                             \
 	  $(LUFA_SRC_USBCLASS)
 
@@ -191,7 +196,12 @@ EXTRAINCDIRS = $(LUFA_PATH)/
 #     gnu89 = c89 plus GCC extensions
 #     c99   = ISO C99 standard (not yet fully implemented)
 #     gnu99 = c99 plus GCC extensions
-CSTANDARD = -std=c99
+CSTANDARD = -std=gnu99
+
+DEFS = -DHARDWARE_VARIANT=$(HARDWARE_VARIANT)
+ifneq ($(HAS_EXTERNAL_STORAGE),1)
+  DEFS += -DNO_EXTERNAL_STORAGE
+endif
 
 
 # Place -D or -U options here for C sources
@@ -200,18 +210,21 @@ CDEFS += -DF_USB=$(F_USB)UL
 CDEFS += -DBOARD=BOARD_$(BOARD) -DARCH=ARCH_$(ARCH)
 CDEFS += $(LUFA_OPTS)
 CDEFS += -DBUILD_FOR_LUFA
+CDEFS += $(DEFS)
 
 # Place -D or -U options here for ASM sources
 ADEFS  = -DF_CPU=$(F_CPU)
 ADEFS += -DF_USB=$(F_USB)UL
 ADEFS += -DBOARD=BOARD_$(BOARD) -DARCH=ARCH_$(ARCH)
 ADEFS += $(LUFA_OPTS)
+ADEFS += $(DEFS)
 
 # Place -D or -U options here for C++ sources
 CPPDEFS  = -DF_CPU=$(F_CPU)UL
 CPPDEFS += -DF_USB=$(F_USB)UL
 CPPDEFS += -DBOARD=BOARD_$(BOARD) -DARCH=ARCH_$(ARCH)
 CPPDEFS += $(LUFA_OPTS)
+CPPDEFS += $(DEFS)
 #CPPDEFS += -D__STDC_LIMIT_MACROS
 #CPPDEFS += -D__STDC_CONSTANT_MACROS
 
@@ -237,6 +250,7 @@ CFLAGS += -fno-strict-aliasing
 CFLAGS += -Wall
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wno-unused-but-set-variable
+CFLAGS += -Werror=implicit-function-declaration
 #CFLAGS += -mshort-calls
 #CFLAGS += -fno-unit-at-a-time
 #CFLAGS += -Wundef
@@ -245,7 +259,6 @@ CFLAGS += -Wno-unused-but-set-variable
 CFLAGS += -Wa,-adhlns=$(<:%.c=$(OBJDIR)/%.lst)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += $(CSTANDARD)
-
 
 #---------------- Compiler Options C++ ----------------
 #  -g*:          generate debugging information
@@ -613,7 +626,7 @@ extcoff: $(TARGET).elf
 %.hex: %.elf
 	@echo
 	@echo $(MSG_FLASH) $@
-	$(OBJCOPY) -O $(FORMAT) -R .eeprom -R .fuse -R .lock $< $@
+	$(OBJCOPY) -O $(FORMAT) -j .text -j .data $< $@
 
 %.eep: %.elf
 	@echo

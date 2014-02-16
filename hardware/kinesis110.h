@@ -160,6 +160,14 @@ enum logical_keys {
 	// The keypad layer duplicates the previous 84 keys
 };
 
+// Which logical keys to use for special in-built combinations
+#define SPECIAL_LKEY_MACRO_RECORD  LOGICAL_KEY_F11
+#define SPECIAL_LKEY_REMAP         LOGICAL_KEY_F12
+#define SPECIAL_LKEY_REBOOT        LOGICAL_KEY_PRINTSCREEN
+#define SPECIAL_LKEY_TOGGLE_BUZZER LOGICAL_KEY_BACKSLASH
+#define SPECIAL_LKEY_RESET_CONFIG  LOGICAL_KEY_F7
+#define SPECIAL_LKEY_RESET_FULLY   LOGICAL_KEY_LSHIFT
+
 extern const logical_keycode matrix_to_logical_map[MATRIX_ROWS][MATRIX_COLS] PROGMEM;
 
 /* For each key, maps an index position to a default HID key code. */
