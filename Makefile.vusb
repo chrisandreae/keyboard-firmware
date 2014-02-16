@@ -8,6 +8,7 @@
 
 # Select hardware variant
 HARDWARE_VARIANT = KINESIS
+HAS_EXTERNAL_STORAGE = 1
 
 DEVICE  = atmega32
 AVRDUDE_DEVICE = atmega32
@@ -20,6 +21,10 @@ AVRDUDE = avrdude -c usbasp -p $(AVRDUDE_DEVICE) # edit this line for your progr
 
 CFLAGS  = -I. -Ivusb -Ivusb/usbdrv -DDEBUG_LEVEL=0 -DHARDWARE_VARIANT=$(HARDWARE_VARIANT) -DBUILD_FOR_VUSB -std=gnu99 -ffunction-sections
 CFLAGS += -fshort-enums -fno-strict-aliasing -fpack-struct -funsigned-bitfields
+
+ifneq ($(HAS_EXTERNAL_STORAGE),1)
+  CFLAGS += -DNO_EXTERNAL_STORAGE
+endif
 
 OBJDIR = obj
 

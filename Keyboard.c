@@ -307,10 +307,13 @@ static void handle_state_normal(void){
 			macro_idx_entry_data md = macro_idx_get_data(h);
 			switch(md.type){
 			case PROGRAM: {
+#if PROGRAMS_SIZE > 0
 				vm_start(md.data, key.keys[0]); // TODO: l_key is no longer relevant, is not great to use just the first.
 				break;
+#endif
 			}
 			case MACRO: {
+#if MACROS_SIZE > 0
 				if(macros_start_playback(md.data)){
 					current_state = STATE_MACRO_PLAY;
 				}
@@ -318,6 +321,7 @@ static void handle_state_normal(void){
 					buzzer_start_f(200, BUZZER_FAILURE_TONE);
 				}
 				break;
+#endif
 			}
 			}
 		}
@@ -360,6 +364,7 @@ static void handle_state_programming(void){
 }
 
 static void handle_state_macro_record_trigger(){
+#if MACROS_SIZE > 0 // Allow macro recording only if there's storage for it.
 	static macro_idx_key key;
 	static uint8_t last_count = 0;
 	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, SPECIAL_LKEY_MACRO_RECORD)){
@@ -394,6 +399,9 @@ static void handle_state_macro_record_trigger(){
 			next_state = STATE_MACRO_RECORD;
 		}
 		else{
+#else
+		{{
+#endif
 			// failed to start macro
 			current_state = STATE_WAITING;
 			next_state = STATE_NORMAL;

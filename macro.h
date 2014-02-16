@@ -52,11 +52,14 @@
 
 #include "macro_index.h"
 
-/**
- * Size in bytes of macro storage (including end offset)
- */
-#define MACROS_SIZE 1024
-
+#ifndef NO_EXTERNAL_STORAGE
+	/**
+	 * Size in bytes of macro storage (including end offset)
+	 */
+	#define MACROS_SIZE 1024
+#else
+	#define MACROS_SIZE 0
+#endif
 
 typedef struct _macro_data {
 	uint16_t length;

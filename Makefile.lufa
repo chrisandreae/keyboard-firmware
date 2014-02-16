@@ -61,6 +61,10 @@
 # Select hardware variant
 HARDWARE_VARIANT = ERGODOX
 
+# By default, the Ergodox doesn't have any external eeprom. Unless one is added,
+# disable external storage.
+HAS_EXTERNAL_STORAGE = 0
+
 # MCU name
 MCU = atmega32u4
 
@@ -194,6 +198,11 @@ EXTRAINCDIRS = $(LUFA_PATH)/
 #     gnu99 = c99 plus GCC extensions
 CSTANDARD = -std=gnu99
 
+DEFS = -DHARDWARE_VARIANT=$(HARDWARE_VARIANT)
+ifneq ($(HAS_EXTERNAL_STORAGE),1)
+  DEFS += -DNO_EXTERNAL_STORAGE
+endif
+
 
 # Place -D or -U options here for C sources
 CDEFS  = -DF_CPU=$(F_CPU)UL
@@ -201,21 +210,21 @@ CDEFS += -DF_USB=$(F_USB)UL
 CDEFS += -DBOARD=BOARD_$(BOARD) -DARCH=ARCH_$(ARCH)
 CDEFS += $(LUFA_OPTS)
 CDEFS += -DBUILD_FOR_LUFA
-CDEFS += -DHARDWARE_VARIANT=$(HARDWARE_VARIANT)
+CDEFS += $(DEFS)
 
 # Place -D or -U options here for ASM sources
 ADEFS  = -DF_CPU=$(F_CPU)
 ADEFS += -DF_USB=$(F_USB)UL
 ADEFS += -DBOARD=BOARD_$(BOARD) -DARCH=ARCH_$(ARCH)
 ADEFS += $(LUFA_OPTS)
-ADEFS += -DHARDWARE_VARIANT=$(HARDWARE_VARIANT)
+ADEFS += $(DEFS)
 
 # Place -D or -U options here for C++ sources
 CPPDEFS  = -DF_CPU=$(F_CPU)UL
 CPPDEFS += -DF_USB=$(F_USB)UL
 CPPDEFS += -DBOARD=BOARD_$(BOARD) -DARCH=ARCH_$(ARCH)
 CPPDEFS += $(LUFA_OPTS)
-CPPDEFS += -DHARDWARE_VARIANT=$(HARDWARE_VARIANT)
+CPPDEFS += $(DEFS)
 #CPPDEFS += -D__STDC_LIMIT_MACROS
 #CPPDEFS += -D__STDC_CONSTANT_MACROS
 
@@ -250,7 +259,6 @@ CFLAGS += -Werror=implicit-function-declaration
 CFLAGS += -Wa,-adhlns=$(<:%.c=$(OBJDIR)/%.lst)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += $(CSTANDARD)
-
 
 #---------------- Compiler Options C++ ----------------
 #  -g*:          generate debugging information
