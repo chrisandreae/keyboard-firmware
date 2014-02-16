@@ -10,8 +10,13 @@
 
 #include "keyboardcomm.h"
 
-const uint16_t valid_vid_pid_pairs[][2] = {{0x16c0, 0x27db}, {0x1d50, 0x6028}};
-
+static const struct {
+	uint16_t vid;
+	uint16_t pid;
+} valid_ids[] = {
+	{0x16c0, 0x27db}, // VUSB IDs used by Kinesis modification
+	{0x1d50, 0x6028}, // IDs used by Ergodox
+};
 
 const char *KeyboardCommError::nameException(KeyboardCommError::Cause c) {
 	switch (c) {
@@ -20,6 +25,15 @@ const char *KeyboardCommError::nameException(KeyboardCommError::Cause c) {
 	default:
 		return "Unknown Error";
 	}
+}
+
+bool KeyboardComm::isValidID(const uint16_t vid, const uint16_t pid) {
+	const int n_ids = sizeof(valid_ids) / sizeof(*valid_ids);
+	for(int i = 0; i < n_ids; ++i) {
+		if (vid == valid_ids[i].vid && pid == valid_ids[i].pid)
+			return true;
+	}
+	return false;
 }
 
 QList<USBDevice> KeyboardComm::enumerate(libusb_context *context) {
@@ -36,15 +50,8 @@ QList<USBDevice> KeyboardComm::enumerate(libusb_context *context) {
 			LIBUSBCheckResult(
 			    libusb_get_device_descriptor(dev, &desc));
 
-			int n_ids = sizeof(valid_vid_pid_pairs) / sizeof(*valid_vid_pid_pairs);
-			bool valid_id = false;
-			for(int i = 0; i < n_ids; ++i){
-				if (desc.idVendor == valid_vid_pid_pairs[i][0] && desc.idProduct == valid_vid_pid_pairs[i][1]){
-					valid_id = true;
-					break;
-				}
-			}
-			if(!valid_id) continue;
+			if (!isValidID(desc.idVendor, desc.idProduct))
+				continue;
 
 			USBDeviceHandle d(dev);
 			const unsigned char requiredPrefix[] = "andreae.gen.nz:";
