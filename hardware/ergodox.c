@@ -253,7 +253,6 @@ static uint8_t init_mcp23018(void){
 
 	return 1;
  err:
-	PORTD |= (1<<6); // signal error by lighting up the internal LED
 	twi_stop(NOWAIT);
 	return 0;
 }
@@ -295,10 +294,6 @@ void ports_init(void){
 
 	// initialize the MCP23018
 	init_mcp23018();
-
-		// turn on the internal LED to debug
-		/* if(matrix_row == 1) PORTD |= (1<<6); */
-		/* else PORTD &= ~(1<<6); */
 }
 
 // Init high
@@ -340,7 +335,6 @@ void matrix_select_row(uint8_t matrix_row){
 
 	return;
  err:
-	PORTD |= (1<<6); // signal error by lighting up the internal LED
 	twi_stop(NOWAIT);
 }
 
