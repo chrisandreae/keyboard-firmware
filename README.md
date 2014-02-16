@@ -149,7 +149,7 @@ GHC Haskell compiler is required to build.
 To compile a program:
   ````keyc -oprogram.k program.kc````
 
-See ````compiler/example.kc```` for an example program.
+See ````compiler/examples/```` for some example programs.
 
 A program is a set of global variable and function declarations. A function
 named ````main```` must be present.  Control structures are C-like (if, while,

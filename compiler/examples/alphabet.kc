@@ -1,6 +1,7 @@
 void main(){
 	byte b;
 	byte k = 0x04; // "A"
+	byte caps = 0;
 
 	// wait for initial key to be released
 	while(checkPhysKey(0)){
@@ -16,6 +17,15 @@ void main(){
 			break;
 		}
 
-		if(++k > 29) k = 4;
+		if(++k > 29){
+			k = 4;
+			caps = !caps;
+			if(caps){
+				pressKey(0xe1);
+			}
+			else{
+				releaseKey(0xe1);
+			}
+		}
 	}
 }

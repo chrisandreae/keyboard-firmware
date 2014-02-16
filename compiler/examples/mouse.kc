@@ -1,0 +1,24 @@
+void main(){
+	// wait for initial key to be released
+	while(checkPhysKey(0)){
+	}
+
+	// now loop and press each key in sequence
+	while(1){
+		pressMouseButtons(1);
+		delayC(500s);
+		moveMouse(20, 20);
+		delayC(500s);
+		releaseMouseButtons(1);
+		delayC(500s);
+		moveMouse(20, -20);
+		delayC(500s);
+	}
+}
+
+void delayC(short t){
+	if(waitPhysKey(0, t)){
+		delay(200s);
+		exit;
+	}
+}
