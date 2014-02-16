@@ -43,5 +43,15 @@
   this software.
 */
 
-#include "hardware/ergodox.c"
-// #include "hardware/kinesis110.c"
+#include "hardware.h"
+
+// Select the specific keyboard hardware
+#if HARDWARE_VARIANT == KINESIS
+	#include "hardware/kinesis.c"
+#elif HARDWARE_VARIANT == KINESIS110
+	#include "hardware/kinesis110.c"
+#elif HARDWARE_VARIANT == ERGODOX
+	#include "hardware/ergodox.c"
+#else
+	#error "Unknown hardware variant selected"
+#endif

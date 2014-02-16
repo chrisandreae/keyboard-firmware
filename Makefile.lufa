@@ -58,14 +58,14 @@
 # To rebuild project do "make clean" then "make all".
 #----------------------------------------------------------------------------
 
+# Select hardware variant
+HARDWARE_VARIANT = ERGODOX
 
 # MCU name
 MCU = atmega32u4
 
-
 # Target architecture (see library "Board Types" documentation).
 ARCH = AVR8
-
 
 # Target board (see library "Board Types" documentation, NONE for projects not requiring
 # LUFA board drivers). If USER is selected, put custom board drivers in a directory called
@@ -201,18 +201,21 @@ CDEFS += -DF_USB=$(F_USB)UL
 CDEFS += -DBOARD=BOARD_$(BOARD) -DARCH=ARCH_$(ARCH)
 CDEFS += $(LUFA_OPTS)
 CDEFS += -DBUILD_FOR_LUFA
+CDEFS += -DHARDWARE_VARIANT=$(HARDWARE_VARIANT)
 
 # Place -D or -U options here for ASM sources
 ADEFS  = -DF_CPU=$(F_CPU)
 ADEFS += -DF_USB=$(F_USB)UL
 ADEFS += -DBOARD=BOARD_$(BOARD) -DARCH=ARCH_$(ARCH)
 ADEFS += $(LUFA_OPTS)
+ADEFS += -DHARDWARE_VARIANT=$(HARDWARE_VARIANT)
 
 # Place -D or -U options here for C++ sources
 CPPDEFS  = -DF_CPU=$(F_CPU)UL
 CPPDEFS += -DF_USB=$(F_USB)UL
 CPPDEFS += -DBOARD=BOARD_$(BOARD) -DARCH=ARCH_$(ARCH)
 CPPDEFS += $(LUFA_OPTS)
+CPPDEFS += -DHARDWARE_VARIANT=$(HARDWARE_VARIANT)
 #CPPDEFS += -D__STDC_LIMIT_MACROS
 #CPPDEFS += -D__STDC_CONSTANT_MACROS
 

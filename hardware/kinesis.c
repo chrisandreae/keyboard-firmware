@@ -42,7 +42,7 @@
 */
 
 #include <util/delay.h>     /* for _delay_ms() */
-#include "kinesis.h"
+#include "twi.h"
 
 #define KEY_NONE NO_KEY
 // because the matrix is not tightly packed, we want a map from matrix

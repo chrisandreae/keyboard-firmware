@@ -46,9 +46,19 @@
 #ifndef __HARDWARE_H
 #define __HARDWARE_H
 
-// Select the specific keyboard hardware
+#define KINESIS    1
+#define KINESIS110 2
+#define ERGODOX    3
 
-#include "hardware/ergodox.h"
-// #include "hardware/kinesis110.h"
+// Select the specific keyboard hardware
+#if HARDWARE_VARIANT == KINESIS
+	#include "hardware/kinesis.h"
+#elif HARDWARE_VARIANT == KINESIS110
+	#include "hardware/kinesis110.h"
+#elif HARDWARE_VARIANT == ERGODOX
+	#include "hardware/ergodox.h"
+#else
+	#error "Unknown hardware variant selected"
+#endif
 
 #endif // __HARDWARE_H

@@ -6,16 +6,19 @@
 # Copyright: (c) 2008 by OBJECTIVE DEVELOPMENT Software GmbH, 2012 by Chris Andreae
 # License: GNU GPL v2 (see GPL2.txt)
 
+# Select hardware variant
+HARDWARE_VARIANT = KINESIS
+
 DEVICE  = atmega32
 AVRDUDE_DEVICE = atmega32
 
 FUSE_L  = 0xFF
 FUSE_H  = 0xC1
 
-F_CPU   = 16000000	# in Hz 
+F_CPU   = 16000000	# in Hz
 AVRDUDE = avrdude -c usbasp -p $(AVRDUDE_DEVICE) # edit this line for your programmer
 
-CFLAGS  = -I. -Ivusb -Ivusb/usbdrv -DDEBUG_LEVEL=0 -DBUILD_FOR_VUSB -std=gnu99 -ffunction-sections
+CFLAGS  = -I. -Ivusb -Ivusb/usbdrv -DDEBUG_LEVEL=0 -DHARDWARE_VARIANT=$(HARDWARE_VARIANT) -DBUILD_FOR_VUSB -std=gnu99 -ffunction-sections
 CFLAGS += -fshort-enums -fno-strict-aliasing -fpack-struct -funsigned-bitfields
 
 OBJDIR = obj
