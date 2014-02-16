@@ -139,17 +139,21 @@ void KeyboardPresenter::uploadAction() {
 				 << hexdump(mapping) << endl;
 		comm.setMapping(mapping);
 
-		qDebug() << "Uploading programs:" << endl
-				 << hexdump(programs) << endl;
-		comm.setPrograms(programs);
+		if(programs.length() > 0) {
+			qDebug() << "Uploading programs:" << endl
+					 << hexdump(programs) << endl;
+			comm.setPrograms(programs);
+		}
 
-		qDebug() << "Uplaoding macro index:" << endl
+		qDebug() << "Uploading macro index:" << endl
 				 << hexdump(encodedMacros.first) << endl;
 		comm.setMacroIndex(encodedMacros.first);
 
-		qDebug() << "Uploading macro data: " << endl
-				 << hexdump(encodedMacros.second) << endl;
-		comm.setMacroStorage(encodedMacros.second);
+		if(encodedMacros.second.length() > 0) {
+			qDebug() << "Uploading macro data: " << endl
+					 << hexdump(encodedMacros.second) << endl;
+			comm.setMacroStorage(encodedMacros.second);
+		}
 	}
 	catch (LIBUSBError& e) {
 		qDebug() << "LIBUSBError setting mapping: " << e.what();
