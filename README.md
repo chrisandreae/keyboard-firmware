@@ -99,7 +99,7 @@ Resets all keyboard customizations (current layout, saved layouts, macros, progr
 
 Kinesis: ````Program + F11````
 
-Ergodox: ````Program + P````
+Ergodox: ````Program + M````
 
 Press the above key combination to enter macro recording mode. Then, press and
 release a combination of up to four keys as a trigger for the macro. Then, type
