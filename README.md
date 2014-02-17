@@ -75,9 +75,10 @@ press the above programming-mode key combination to leave programming mode.
 * Load saved layout            = ````Progrm + [1 - 0] + L````
 * Delete saved layout          = ````Progrm + [1 - 0] + D````
 
-Layouts are stored as their difference from the default layout: the more keys
-that are remapped, the larger a saved layout will be. In total, there is space
-for 256 key remappings shared between all shared layouts.
+You can save up to 10 layouts, each associated with a number key. Layouts are
+stored as their difference from the default layout: the more keys that are
+remapped, the larger a saved layout will be. In total, there is space for 256
+key remappings shared between all saved layouts.
 
 ### Reset to default layout
 
