@@ -7,10 +7,10 @@
 
 namespace {
 class XMLLayoutHandler : public QXmlDefaultHandler {
-	Layout& mLayout;
+	Layout* mLayout;
 
 public:
-	XMLLayoutHandler(Layout& layout)
+	XMLLayoutHandler(Layout* layout)
 		: mLayout(layout)
 	{}
 
@@ -23,8 +23,8 @@ public:
 		Q_UNUSED(qName);
 
 		if (localName == "keyboard") {
-			mLayout.layout = atts.value("layout");
-			mLayout.imageName = atts.value("image");
+			mLayout->layout = atts.value("layout");
+			mLayout->imageName = atts.value("image");
 		}
 		else if (localName == "key") {
 			Layout::Key k = { atts.value("name"),
@@ -33,7 +33,7 @@ public:
 			                        atts.value("w").toInt(),
 			                        atts.value("h").toInt())
 			};
-			mLayout.keys.push_back(k);
+			mLayout->keys.push_back(k);
 		}
 		return true;
 	}
@@ -45,7 +45,7 @@ Layout Layout::readLayout(int layoutID) {
 
 	QString layoutXml =
 		QString(":layout/%1.xml").arg(layoutID);
-	XMLLayoutHandler handler(layout);
+	XMLLayoutHandler handler(&layout);
 	QXmlSimpleReader xmlReader;
 	QFile layoutXmlFile(layoutXml);
 	QXmlInputSource source(&layoutXmlFile);
