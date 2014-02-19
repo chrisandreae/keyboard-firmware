@@ -41,6 +41,9 @@ void LayoutWidget::paintEvent(QPaintEvent *ev) {
 }
 
 void LayoutWidget::paintScaledLabel(QPainter& painter, const QString label, const QRect rect) {
+	if (label.count() == 0)
+		return;
+
 	QFont defaultFont = painter.font();
 	QTextOption buttonTextOption;
 	buttonTextOption.setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
