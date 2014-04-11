@@ -349,24 +349,24 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 
 			break;
 		case HID_DTYPE_HID:
-			if (!(wIndex))
+			if (wIndex == 1)
 			{
 				Address = &ConfigurationDescriptor.HID1_KeyboardHID;
 				Size    = sizeof(USB_HID_Descriptor_HID_t);
 			}
-			else
+			else if(wIndex == 2)
 			{
 				Address = &ConfigurationDescriptor.HID2_MouseHID;
 				Size    = sizeof(USB_HID_Descriptor_HID_t);
 			}
 			break;
 		case HID_DTYPE_Report:
-			if (!(wIndex))
+			if (wIndex == 1)
 			{
 				Address = &KeyboardReport;
 				Size    = sizeof(KeyboardReport);
 			}
-			else
+			else if(wIndex == 2)
 			{
 				Address = &MouseReport;
 				Size    = sizeof(MouseReport);
