@@ -232,8 +232,6 @@ void keystate_get_keys(logical_keycode* l_keys, lkey_type ktype){
 void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
 	uint8_t UsedKeyCodes = 0;
 	uint8_t rollover = false;
-	// todo: macro mode: if i'm in macro mode, ignore my state and fire the next events in the macro
-
 	// check key state
 	for(int i = 0; i < KEYSTATE_COUNT; ++i){
 		if(key_states[i].state){
