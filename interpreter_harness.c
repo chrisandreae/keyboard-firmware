@@ -7,7 +7,8 @@
 typedef uint8_t hid_keycode;
 typedef uint8_t logical_keycode;
 #define NO_KEY 0xFF
-typedef struct _kbdr {int Modifier; int KeyCode[6];} KeyboardReport_Data_t;
+#define KEYBOARDREPORT_KEY_COUNT 6
+typedef struct _kbdr {int Modifier; int KeyCode[KEYBOARDREPORT_KEY_COUNT];} KeyboardReport_Data_t;
 typedef struct _msr {uint8_t X; uint8_t Y; uint8_t Button;} MouseReport_Data_t;
 
 #include "interpreter.h"

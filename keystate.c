@@ -237,7 +237,7 @@ void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
 	// check key state
 	for(int i = 0; i < KEYSTATE_COUNT; ++i){
 		if(key_states[i].state){
-			if(UsedKeyCodes == 6){
+			if(UsedKeyCodes == KEYBOARDREPORT_KEY_COUNT){
 				rollover = true;
 				break;
 			}
@@ -261,7 +261,7 @@ void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
 		}
 	}
 	if(rollover){
-		for(int i = 0; i < 6; ++i)
+		for(int i = 0; i < KEYBOARDREPORT_KEY_COUNT; ++i)
 			KeyboardReport->KeyCode[i] = HID_KEYBOARD_SC_ERROR_ROLLOVER;
 	 }
 }

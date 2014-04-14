@@ -111,14 +111,14 @@ void ExtraKeyboardReport_toggle(ExtraKeyboardReport* r, hid_keycode key){
 void ExtraKeyboardReport_append(ExtraKeyboardReport* extra, KeyboardReport_Data_t* report){
 	// find free slots in the report
 	uint8_t report_next, report_start;
-	for(report_next = 0; report_next < 6 && report->KeyCode[report_next]; ++report_next);
+	for(report_next = 0; report_next < KEYBOARDREPORT_KEY_COUNT && report->KeyCode[report_next]; ++report_next);
 	report_start = report_next;
 
 	// add in modifier keys
 	report->Modifier |= extra->modifiers;
 
 	// as long as there are free slots, add in keys from extra report that are not already present.
-	for(uint8_t k = 0; report_next < 6 && k < EXTRA_REPORT_KEY_COUNT; ++k){
+	for(uint8_t k = 0; report_next < KEYBOARDREPORT_KEY_COUNT && k < EXTRA_REPORT_KEY_COUNT; ++k){
 		hid_keycode keycode = extra->keys[k];
 		if(keycode == NO_KEY) continue;
 		for(uint8_t j = 0; j < report_start; ++j){

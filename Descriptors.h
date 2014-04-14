@@ -80,13 +80,15 @@
 			int8_t  Wheel;
 		} __attribute__((packed)) MouseReport_Data_t;
 
+		#define KEYBOARDREPORT_KEY_COUNT 6
+
 		typedef struct
 		{
 			uint8_t Modifier; /**< Keyboard modifier byte, indicating pressed modifier keys (a combination of
 							   *   \c HID_KEYBOARD_MODIFER_* masks).
 							   */
 			uint8_t Reserved; /**< Reserved for OEM use, always set to 0. */
-			uint8_t KeyCode[6]; /**< Key codes of the currently pressed keys. */
+			uint8_t KeyCode[KEYBOARDREPORT_KEY_COUNT]; /**< Key codes of the currently pressed keys. */
 		} __attribute__((packed)) KeyboardReport_Data_t;
 
 	/* Macros: */

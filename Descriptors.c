@@ -109,7 +109,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM KeyboardReport[] =
 		HID_RI_USAGE_PAGE(8, 0x07), /* Keyboard */
 		HID_RI_USAGE_MINIMUM(8, 0x00), /* Reserved (no event indicated) */
 		HID_RI_USAGE_MAXIMUM(8, 0x65), /* Keyboard Application */
-		HID_RI_REPORT_COUNT(8, 0x06),
+		HID_RI_REPORT_COUNT(8, KEYBOARDREPORT_KEY_COUNT),
 		HID_RI_REPORT_SIZE(8, 0x08),
 		HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_ARRAY | HID_IOF_ABSOLUTE),
 		HID_RI_END_COLLECTION(0),
