@@ -111,12 +111,10 @@ void USB_KeepAlive(uint8_t poll){
 	}
 }
 
-void USB_Perform_Update(uint8_t update_kbd, uint8_t update_mouse){
-	if(update_mouse)
-		HID_Device_USBTask(&Mouse_HID_Interface);
+void USB_Perform_Update(void){
+	HID_Device_USBTask(&Mouse_HID_Interface);
 
-	if(update_kbd)
-		HID_Device_USBTask(&Keyboard_HID_Interface);
+	HID_Device_USBTask(&Keyboard_HID_Interface);
 
 	USB_KeepAlive(true);
 }

@@ -171,20 +171,7 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 			vm_step_all();
 		}
 
-		/* Limit frequency of mouse reports. Unlike keyboard reports,
-		   identical reports won't be ignored by the class driver, so
-		   report speed affects mouse movement speed. */
-		uint8_t mouse_slice = (uptimems() & 0x8);
-		uint8_t perform_mouse_update = 0;
-		if(!mouse_slice && update.mouse){
-			perform_mouse_update = 1;
-			update.mouse = 0;
-		}
-		else if(!update.mouse && mouse_slice){
-			update.mouse = 1;
-		}
-
-		USB_Perform_Update(1, perform_mouse_update);
+		USB_Perform_Update();
 	}
 }
 

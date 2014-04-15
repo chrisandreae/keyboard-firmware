@@ -405,14 +405,14 @@ void USB_KeepAlive(uint8_t poll){
 	}
 }
 
-void USB_Perform_Update(uint8_t update_kbd, uint8_t update_mouse){
+void USB_Perform_Update(void){
 	USB_KeepAlive(true);
 
 	static bool sending_keyboard = 0;
 	static bool sending_mouse = 0;
 
 	// Keyboard
-	if(!sending_keyboard && update_kbd){
+	if(!sending_keyboard){
 		// Update, set sending_keyboard if the report is different to last time
 		sending_keyboard = update_and_compare(&KeyboardReportData, &PrevKeyboardHIDReportBuffer, sizeof(KeyboardReport_Data_t), (void(*)(void*)) &Fill_KeyboardReport);
 	}
@@ -430,7 +430,7 @@ void USB_Perform_Update(uint8_t update_kbd, uint8_t update_mouse){
 	}
 
 	// Mouse
-	if(!sending_mouse && update_mouse){
+	if(!sending_mouse){
 		// Update, set sending_mouse if the report is different to last time
 		sending_mouse = update_and_compare(&MouseReportData, &PrevMouseHIDReportBuffer, sizeof(MouseReport_Data_t), (void(*)(void*)) &Fill_MouseReport);
 		// Mouse reports need to repeat for the cursor to continue to move, so always send if there is a movement component to the report

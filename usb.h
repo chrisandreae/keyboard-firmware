@@ -23,6 +23,6 @@ void USB_KeepAlive(uint8_t poll);
  * Performs a USB update, scanning keyboard/mouse and responding
  * to interrupt requests. Includes KeepAlive.
  */
-void USB_Perform_Update(uint8_t update_kbd, uint8_t update_mouse);
+void USB_Perform_Update(void);
 
 #endif // __USB_H
