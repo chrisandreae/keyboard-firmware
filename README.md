@@ -147,7 +147,7 @@ subdirectory.
 ## Compiler and Virtual Machine
 
 The keyboard can run small compiled programs written in a C-like language. To
-build the compiler, run 'cabal build' in the ````compiler/```` subdirectory. The
+build the compiler, run `cabal build` in the ````compiler/```` subdirectory. The
 GHC Haskell compiler is required to build.
 
 To compile a program:
