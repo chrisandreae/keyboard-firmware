@@ -54,6 +54,8 @@
 #include "printing.h"
 #include "serial_eeprom.h"
 #include "buzzer.h"
+#include "config.h"
+#include "sort.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -95,6 +97,23 @@ void macro_idx_reset_defaults(){
 		eeprom_update_block(&tmp, &macro_index[i], sizeof(macro_idx_entry));
 		USB_KeepAlive(true);
 	}
+}
+
+bool macro_idx_format_key(macro_idx_key* key, uint8_t key_count){
+	// Keypad shift can't be included in a macro trigger if we want macros in
+	// the keypad layer to work with both shift and toggle.
+	for(uint8_t i = 0; i < key_count; ++i){
+		if(config_get_definition(key->keys[i]) == SPECIAL_HID_KEY_KEYPAD_SHIFT){
+			key->keys[i] = NO_KEY;
+		}
+	}
+	insertionsort_uint8(key->keys, key_count);
+
+	for(uint8_t i = key_count; i < MACRO_MAX_KEYS; ++i){
+		key->keys[i] = NO_KEY;
+	}
+
+	return key->keys[0] != NO_KEY;
 }
 
 // Internal management functions:

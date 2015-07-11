@@ -68,9 +68,8 @@ const logical_keycode matrix_to_logical_map[MATRIX_ROWS][MATRIX_COLS] PROGMEM = 
 
 
 const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM = {
-	SPECIAL_HID_KEY_KEYPAD,							   //	LOGICAL_KEY_KEYPAD
 	SPECIAL_HID_KEY_PROGRAM,						   //	LOGICAL_KEY_PROGRAM
-	// non-keypad layer
+	SPECIAL_HID_KEY_KEYPAD_TOGGLE,					   //	LOGICAL_KEY_KEYPAD
 	HID_KEYBOARD_SC_A,								   //	LOGICAL_KEY_A
 	HID_KEYBOARD_SC_B,								   //	LOGICAL_KEY_B
 	HID_KEYBOARD_SC_C,								   //	LOGICAL_KEY_C
@@ -156,6 +155,8 @@ const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM = {
 	HID_KEYBOARD_SC_SLASH_AND_QUESTION_MARK,		   //	LOGICAL_KEY_SLASH
 	HID_KEYBOARD_SC_RIGHT_SHIFT,					   //	LOGICAL_KEY_RSHIFT
 		/////////////////////////////////////////////////                              *** keypad mode default differs to base layer
+	SPECIAL_HID_KEY_PROGRAM,						   //	LOGICAL_KEY_PROGRAM
+	SPECIAL_HID_KEY_KEYPAD_TOGGLE,					   //	LOGICAL_KEY_KEYPAD
 	HID_KEYBOARD_SC_A,								   //  LOGICAL_KEY_KP_A,
 	HID_KEYBOARD_SC_B,								   //  LOGICAL_KEY_KP_B,
 	HID_KEYBOARD_SC_C,								   //  LOGICAL_KEY_KP_C,

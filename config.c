@@ -62,7 +62,7 @@
 #include <util/delay.h>
 
 // Eeprom sentinel value - if this is not set at startup, re-initialize the eeprom.
-#define EEPROM_SENTINEL 42
+#define EEPROM_SENTINEL 43
 uint8_t eeprom_sentinel_byte EEMEM;
 
 // Persistent configuration (e.g. sound enabled)
@@ -101,6 +101,10 @@ uint8_t* config_get_programs(){
 
 hid_keycode config_get_definition(logical_keycode l_key){
 	return eeprom_read_byte(&logical_to_hid_map[l_key]);
+}
+
+hid_keycode config_get_default_definition(logical_keycode l_key){
+	return pgm_read_byte_near(&logical_to_hid_map_default[l_key]);
 }
 
 void config_save_definition(logical_keycode l_key, hid_keycode h_key){
@@ -177,7 +181,7 @@ void config_save_flags(configuration_flags state){
 
 static const char MSG_NO_LAYOUT[] PROGMEM = "No layout";
 
-uint8_t config_delete_layout(uint8_t num){
+bool config_delete_layout(uint8_t num){
 	if(num >= NUM_KEY_MAPPING_INDICES){
 		printing_set_buffer(MSG_NO_LAYOUT, BUF_PGM);
 		return false;
@@ -222,7 +226,7 @@ uint8_t config_delete_layout(uint8_t num){
 	return true;
 }
 
-uint8_t config_save_layout(uint8_t num){
+bool config_save_layout(uint8_t num){
 	if(num >= NUM_KEY_MAPPING_INDICES){
 		printing_set_buffer(MSG_NO_LAYOUT, BUF_PGM);
 		return false;
@@ -269,7 +273,7 @@ uint8_t config_save_layout(uint8_t num){
 	}
 }
 
-uint8_t config_load_layout(uint8_t num){
+bool config_load_layout(uint8_t num){
 	if(num >= NUM_KEY_MAPPING_INDICES){
 		printing_set_buffer(MSG_NO_LAYOUT, BUF_PGM);
 		return false;

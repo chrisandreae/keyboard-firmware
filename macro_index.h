@@ -57,7 +57,7 @@
 
 // Macro indices
 typedef struct _macro_idx_key {
-	hid_keycode keys[MACRO_MAX_KEYS];
+	logical_keycode keys[MACRO_MAX_KEYS];
 } macro_idx_key;
 
 typedef enum _macro_idx_entry_type { MACRO, PROGRAM } macro_idx_entry_type;
@@ -81,6 +81,12 @@ uint8_t* macro_idx_get_storage(void);
  * Erases the macro index - to be called from config_reset_fully
  */
 void macro_idx_reset_defaults(void);
+
+/**
+ * Given a macro_idx_key with the `keys` array populated with `key_count`
+ * keycodes, format it into a lookup key and return true if it's valid.
+ */
+bool macro_idx_format_key(macro_idx_key* key, uint8_t key_count);
 
 /**
  * Looks up a key combination in the macro index.  Returns opaque

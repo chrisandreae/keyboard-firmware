@@ -71,14 +71,15 @@ typedef struct _configuration_flags {
 hid_keycode* config_get_mapping(void);
 
 hid_keycode config_get_definition(logical_keycode l_key);
+hid_keycode config_get_default_definition(logical_keycode l_key);
 void config_save_definition(logical_keycode l_key, hid_keycode h_key);
 
 void config_init(void);
 void config_reset_defaults(void);
 void config_reset_fully(void);
-uint8_t config_delete_layout(uint8_t num);
-uint8_t config_save_layout(uint8_t num);
-uint8_t config_load_layout(uint8_t num);
+bool config_delete_layout(uint8_t num);
+bool config_save_layout(uint8_t num);
+bool config_load_layout(uint8_t num);
 
 configuration_flags config_get_flags(void);
 void config_save_flags(configuration_flags state);

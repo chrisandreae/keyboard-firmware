@@ -235,16 +235,11 @@ static const char *usages[] = {
 	"Mouse_Down",                      //0xee
 	"Mouse_Left",                      //0xef
 	"Mouse_Right",                     //0xf0
-	"Prog_1",                           //0xf1
-	"Prog_2",                           //0xf2
-	"Prog_3",                           //0xf3
-	"Prog_4",                           //0xf4
-	"Prog_5",                           //0xf5
-	"Prog_6",                           //0xf6
-	"Macro",                          //0xf7
-	"", "", "", "", "",               // F8-Fc Reserved
-	"Progrm",                        // 0xfd (Non-Remappable)
-	"Keypad",                         // 0xfe (Non-Remappable)
+	"", "",	"",	"",	"",	"",
+	"",	"", "", "", "",               // 0xf1-0xfb Reserved
+	"Keypad_Shift",                   // 0xfc
+	"Keypad_Toggle",                  // 0xfd
+	"Progrm",                         // 0xfe
 	"No_Key"                          // 0xff
 };
 

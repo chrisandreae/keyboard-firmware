@@ -123,15 +123,6 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 			update.keys = 1;
 		}
 
-		// in all non-wait states we want to handle the keypad layer button
-#ifdef KEYPAD_LAYER
-		if(current_state != STATE_WAITING && keystate_check_key(LOGICAL_KEY_KEYPAD, LOGICAL)){
-			keystate_toggle_keypad();
-			next_state = current_state;
-			current_state = STATE_WAITING;
-		}
-#endif
-
 		switch(current_state){
 		case STATE_NORMAL:
 			handle_state_normal();
@@ -176,30 +167,33 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 }
 
 static void handle_state_normal(void){
-	// check for special keyboard (pre-mapping) key combinations for state transitions
+	// check for special keyboard key combinations for state transitions
+	if(key_press_count >= 2 && key_press_count <= 3){
+		hid_keycode keys[3];
+		keystate_get_keys(keys, HID);
+		insertionsort_uint8(keys, key_press_count);
 
-	if(key_press_count >= 2 && keystate_check_key(LOGICAL_KEY_PROGRAM, LOGICAL)){
-		switch(key_press_count){
-		case 2:
-			{
-				logical_keycode keys[2];
-				keystate_get_keys(keys, PHYSICAL);
-				logical_keycode other = (keys[0] == LOGICAL_KEY_PROGRAM) ? keys[1] : keys[0];
-				switch(other){
-				case SPECIAL_LKEY_MACRO_RECORD:
+		if(keys[key_press_count - 1] == SPECIAL_HID_KEY_PROGRAM){
+			// Potentially a special program key combination
+			switch(key_press_count){
+			case 2:
+				switch(keys[0]){
+				case SPECIAL_HKEY_MACRO_RECORD:
 					current_state = STATE_WAITING;
 					next_state = STATE_MACRO_RECORD_TRIGGER;
-					break;
-				case SPECIAL_LKEY_REMAP:
+					return;
+				case SPECIAL_HKEY_REMAP:
 					current_state = STATE_WAITING;
 					next_state = STATE_PROGRAMMING_SRC;
-					break;
-				case SPECIAL_LKEY_REBOOT: {
+					return;
+				case SPECIAL_HKEY_REBOOT: {
 					uint8_t i = BUZZER_DEFAULT_TONE;
-						// cause watchdog reboot (into bootloader if progm is still pressed)
+					// cause watchdog reboot (into bootloader if progm is still pressed)
 					while(1){
+#if USE_BUZZER
 						// Beep until rebooted
 						buzzer_start_f(100, i);
+#endif
 						i -= 10;
 						_delay_ms(100);
 						Update_Millis(100);
@@ -207,7 +201,7 @@ static void handle_state_normal(void){
 					}
 				}
 #if USE_BUZZER
-				case SPECIAL_LKEY_TOGGLE_BUZZER: {
+				case SPECIAL_HKEY_TOGGLE_BUZZER: {
 					configuration_flags flags = config_get_flags();
 					flags.key_sound_enabled = !flags.key_sound_enabled;
 					config_save_flags(flags);
@@ -215,69 +209,65 @@ static void handle_state_normal(void){
 
 					current_state = STATE_WAITING;
 					next_state = STATE_NORMAL;
-					break;
+					return;
 				}
 #endif
-				case SPECIAL_LKEY_RESET_CONFIG:
+				case SPECIAL_HKEY_RESET_CONFIG:
 					config_reset_defaults();
 					current_state = STATE_WAITING;
 					next_state = STATE_NORMAL;
-					break;
+					return;
 				default:
 					break;
 				}
-			}
-			break;
-		case 3:
-			// full reset
-			if(keystate_check_keys(2, PHYSICAL, SPECIAL_LKEY_RESET_CONFIG, SPECIAL_LKEY_RESET_FULLY)){
-				config_reset_fully();
-				current_state = STATE_WAITING;
-				next_state = STATE_NORMAL;
-			}
-			else{
-				logical_keycode keys[3];
-				keystate_get_keys(keys, PHYSICAL);
-
-				// save/load/delete state : PGM + {S/L/D} + {0-9}
-				logical_keycode type = NO_KEY; // S/L/D
-				logical_keycode pos = NO_KEY;  //0-9
-				for(int i = 0; i < 3; ++i){
-					logical_keycode ki = keys[i];
-					if(ki == LOGICAL_KEY_S || ki == LOGICAL_KEY_L || ki == LOGICAL_KEY_D){
-						type = ki;
-					}
-					else if(ki >= LOGICAL_KEY_1 && ki <= LOGICAL_KEY_0){
-						pos = ki;
-					}
-				}
-				if(type == NO_KEY || pos == NO_KEY) break;
-				int index = pos - LOGICAL_KEY_1;
-				int r;
-				if(type == LOGICAL_KEY_S) {
-					r = config_save_layout(index);
-				} else if(type == LOGICAL_KEY_L) {
-					r = config_load_layout(index);
-				} else {
-					r = config_delete_layout(index);
-				}
-				if(r){
-					buzzer_start_f(200, BUZZER_SUCCESS_TONE); // high buzz for success
+				break;
+			case 3:
+				if(keys[SPECIAL_HKEY_RESET_CONFIG_POS] == SPECIAL_HKEY_RESET_CONFIG &&
+                   keys[!SPECIAL_HKEY_RESET_CONFIG_POS] == SPECIAL_HKEY_RESET_FULLY){
+					// full reset
+					config_reset_fully();
 					current_state = STATE_WAITING;
 					next_state = STATE_NORMAL;
+					return;
 				}
-				else{
-					// failure - we have put an error msg in print_buffer
-					buzzer_start_f(200, BUZZER_FAILURE_TONE); // low buzz for error
-					current_state = STATE_PRINTING;
-					next_state = STATE_NORMAL;
-				}
-			}
-			break;
-		default:
-			break;
-		}
+				else if(keys[1] >= HID_KEYBOARD_SC_1_AND_EXCLAMATION && keys[1] <= HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS){
+					// operation on saved layout n
+					uint8_t index = keys[1] - HID_KEYBOARD_SC_1_AND_EXCLAMATION;
 
+					bool success;
+					switch(keys[0]){
+					case HID_KEYBOARD_SC_S:
+						success = config_save_layout(index);
+						break;
+					case HID_KEYBOARD_SC_L:
+						success = config_load_layout(index);
+						break;
+					case HID_KEYBOARD_SC_D:
+						success = config_delete_layout(index);
+						break;
+					default:
+						goto no_combo;
+					}
+				
+					if(success){
+						buzzer_start_f(200, BUZZER_SUCCESS_TONE); // high buzz for success
+						current_state = STATE_WAITING;
+						next_state = STATE_NORMAL;
+					}
+					else{
+						// failure - we have put an error msg in print_buffer
+						buzzer_start_f(200, BUZZER_FAILURE_TONE); // low buzz for error
+						current_state = STATE_PRINTING;
+						next_state = STATE_NORMAL;
+					}
+					return;
+				no_combo:;
+				}
+				break;
+			default:
+				break;
+			}
+		}
 	}
 
 	// otherwise, check macro/program triggers
@@ -285,10 +275,10 @@ static void handle_state_normal(void){
 		// Read keys
 		macro_idx_key key;
 		keystate_get_keys(key.keys, LOGICAL);
-		insertionsort_uint8(key.keys, key_press_count);
-		for(uint8_t i = key_press_count; i < MACRO_MAX_KEYS; ++i){
-			key.keys[i] = NO_KEY;
-		}
+
+		bool valid = macro_idx_format_key(&key, key_press_count);
+		if(!valid) return;
+
 		macro_idx_entry* h = macro_idx_lookup(&key);
 		if(h){
 			macro_idx_entry_data md = macro_idx_get_data(h);
@@ -315,30 +305,55 @@ static void handle_state_normal(void){
 	}
 }
 
+
+
 static void handle_state_programming(void){
 	static hid_keycode program_src_hkey = 0;
 
-	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, SPECIAL_LKEY_REMAP)){
-		current_state = STATE_WAITING;
-		next_state = STATE_NORMAL;
+	if(key_press_count == 0 || key_press_count > 2) return;
+
+	logical_keycode lkeys[2];
+	hid_keycode hkeys[2];
+
+	keystate_get_keys(lkeys, LOGICAL);
+	for(int i = 0; i < key_press_count; ++i){
+		hkeys[i] = config_get_definition(lkeys[i]);
 	}
 
-	if(key_press_count != 1){
+	if(key_press_count == 2){
+		// We rely here on the SPECIAL_HID codes for program and keypad being larger
+		// than any real HID key.
+		uint8_t lesser_idx = (hkeys[0] < hkeys[1]) ? 0 : 1;
+
+		// check for quit
+		if(hkeys[lesser_idx] == SPECIAL_HKEY_REMAP && hkeys[!lesser_idx] == SPECIAL_HID_KEY_PROGRAM){
+			current_state = STATE_WAITING;
+			next_state = STATE_NORMAL;
+			return;
+		}
+
+		// Check for keypad shift. If not pressed, it's an invalid 2-key
+		// combination: return. Otherwise, we have a single keycode in the
+		// keypad layer: place it in index 0 and continue.
+		if(hkeys[!lesser_idx] != SPECIAL_HID_KEY_KEYPAD_SHIFT){
+			return;
+		}
+		if(lesser_idx != 0){
+			lkeys[0] = lkeys[lesser_idx];
+			hkeys[0] = hkeys[lesser_idx];
+		}
+	}
+
+	// can't interactively reprogram a special "noremap" key type such as program or keypad.
+	if(SPECIAL_HID_KEY_NOREMAP(hkeys[0])){
 		return;
 	}
 
-	logical_keycode lkey;
-	keystate_get_keys(&lkey, LOGICAL); // Will only write one key, as key_press_count == 1
-
-	hid_keycode default_hkey = pgm_read_byte_near(&logical_to_hid_map_default[lkey]);
-
-	// can't reprogram a "special" key type (i.e program, keypad), but NO_KEY is ok.
-	if(default_hkey >= SPECIAL_HID_KEYS_NOREMAP_START && default_hkey != NO_KEY){
-		return;
-	}
+	// Otherwise we're ready to remap the logical position in lkeys[0]
+	logical_keycode lkey = lkeys[0];
 
 	if(current_state == STATE_PROGRAMMING_SRC){
-		program_src_hkey = default_hkey;
+		program_src_hkey = config_get_default_definition(lkey);
 		next_state = STATE_PROGRAMMING_DST;
 		current_state = STATE_WAITING;
 	}
@@ -354,12 +369,12 @@ static void handle_state_macro_record_trigger(){
 #if MACROS_SIZE > 0 // Allow macro recording only if there's storage for it.
 	static macro_idx_key key;
 	static uint8_t last_count = 0;
-	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, SPECIAL_LKEY_MACRO_RECORD)){
+	if(keystate_check_keys(2, HID, SPECIAL_HID_KEY_PROGRAM, SPECIAL_HKEY_MACRO_RECORD)){
 		current_state = STATE_WAITING;
 		next_state = STATE_NORMAL;
 		return;
 	}
-	else if(keystate_check_key(LOGICAL_KEY_PROGRAM, PHYSICAL) || keystate_check_key(LOGICAL_KEY_KEYPAD, PHYSICAL)){
+	else if(keystate_check_any_key(2, HID, SPECIAL_HID_KEY_PROGRAM, SPECIAL_HID_KEY_KEYPAD_TOGGLE)){
 		return; // ignore
 	}
 	else if(key_press_count > MACRO_MAX_KEYS){
@@ -375,13 +390,14 @@ static void handle_state_macro_record_trigger(){
 		last_count = key_press_count;
 	}
 	else{
-		// last is our trigger. Sort and clear remaining keys
-		insertionsort_uint8(key.keys, last_count);
-		for(uint8_t i = last_count; i < MACRO_MAX_KEYS; ++i){
-			key.keys[i] = NO_KEY;
-		}
+		// Last recorded `key` is our trigger.
+		bool valid = macro_idx_format_key(&key, last_count);
 		last_count = 0;
-		if(macros_start_macro(&key)){
+
+		if(!valid){
+			return; // only keypad shift was pressed: keep trying to record a trigger.
+		}
+		else if(macros_start_macro(&key)){
 			current_state = STATE_WAITING;
 			next_state = STATE_MACRO_RECORD;
 		}
@@ -399,8 +415,8 @@ static void handle_state_macro_record_trigger(){
 static bool recording_macro = false;
 
 static void macro_record_hook(logical_keycode key, bool press){
-	if(keystate_check_key(LOGICAL_KEY_PROGRAM, PHYSICAL) || keystate_check_key(LOGICAL_KEY_KEYPAD, PHYSICAL)){
-		return; // ignore all events when program or keypad are pressed
+	if(keystate_check_key(SPECIAL_HID_KEY_PROGRAM, HID)){
+		return; // ignore all events if program is pressed
 	}
 	hid_keycode h_key = config_get_definition(key);
 	if(h_key >= SPECIAL_HID_KEYS_START){
@@ -409,7 +425,7 @@ static void macro_record_hook(logical_keycode key, bool press){
 	bool success = macros_append(h_key);
 	if(!success){
 		recording_macro = false;
-		keystate_register_change_hook(0);
+		keystate_register_change_hook(NULL);
 		buzzer_start_f(200, BUZZER_FAILURE_TONE);
 		macros_abort_macro();
 		current_state = STATE_WAITING;
@@ -424,7 +440,7 @@ static void handle_state_macro_record(){
 	}
 
 	// handle stopping
-	if(keystate_check_keys(2, PHYSICAL, LOGICAL_KEY_PROGRAM, SPECIAL_LKEY_MACRO_RECORD)){
+	if(keystate_check_keys(2, HID, SPECIAL_HID_KEY_PROGRAM, SPECIAL_HKEY_MACRO_RECORD)){
 		recording_macro = false;
 		keystate_register_change_hook(0);
 		macros_commit_macro();
@@ -499,10 +515,9 @@ void Process_KeyboardLEDReport(uint8_t report){
 static void ledstate_update(void){
 	uint8_t LEDMask = 0;
 
-#ifdef KEYPAD_LAYER
-		if(keypad_mode)
-			LEDMask |= LEDMASK_KEYPAD;
-#endif
+	if(keystate_is_keypad_mode()){
+		LEDMask |= LEDMASK_KEYPAD;
+	}
 
 	switch(current_state){
 	case STATE_PROGRAMMING_SRC:
