@@ -69,7 +69,7 @@ static vmstate vms[NUM_PROGRAMS];
 
 static int vm_init_vm(vmstate* vm, const program* p){
 	vm->state = VMSTOPPED;
-	memset(vm, 0x0, sizeof(vm));
+	memset(vm, 0x0, sizeof(vmstate));
 	ExtraKeyboardReport_clear(&vm->keyboardreport);
 
 	vm->program = p;
