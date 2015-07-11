@@ -184,11 +184,11 @@ The system library includes the following functions:
   Causes the argument (unsigned byte) HID key to be released, if it was being
   pressed by this program.
 
-* ````void checkKey(byte h_keycode)````
+* ````byte checkKey(byte h_keycode)````
   Checks the current state for any key mapped to the argument (unsigned byte) HID
   keycode, returns 1 or 0.
 
-* ````void checkPhysKey(byte p_keycode)````
+* ````byte checkPhysKey(byte p_keycode)````
   Checks the current state for the argument (unsigned byte) physical key. An
   argument of 0 means the the key that triggered the program. Returns 1 or 0.
 
