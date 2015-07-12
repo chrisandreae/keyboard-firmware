@@ -167,17 +167,28 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 }
 
 static void handle_state_normal(void){
-	// check for special keyboard key combinations for state transitions
-	if(key_press_count >= 2 && key_press_count <= 3){
-		hid_keycode keys[3];
-		keystate_get_keys(keys, HID);
-		insertionsort_uint8(keys, key_press_count);
+	if(key_press_count == 0 || key_press_count > MACRO_MAX_KEYS){
+		return;
+	}
 
-		if(keys[key_press_count - 1] == SPECIAL_HID_KEY_PROGRAM){
+	// Read current logical keys into macro trigger structure
+	macro_idx_key macro_key;
+	keystate_get_keys(macro_key.keys, LOGICAL);
+
+	// check for special program key combinations
+	if(key_press_count >= 2 && key_press_count <= 3){
+		hid_keycode hid_keys[3];
+		for(uint8_t i = 0; i < key_press_count; ++i){
+			hid_keys[i] = config_get_definition(macro_key.keys[i]);
+		}
+
+		insertionsort_uint8(hid_keys, key_press_count);
+
+		if(hid_keys[key_press_count - 1] == SPECIAL_HID_KEY_PROGRAM){
 			// Potentially a special program key combination
 			switch(key_press_count){
 			case 2:
-				switch(keys[0]){
+				switch(hid_keys[0]){
 				case SPECIAL_HKEY_MACRO_RECORD:
 					current_state = STATE_WAITING;
 					next_state = STATE_MACRO_RECORD_TRIGGER;
@@ -222,20 +233,20 @@ static void handle_state_normal(void){
 				}
 				break;
 			case 3:
-				if(keys[SPECIAL_HKEY_RESET_CONFIG_POS] == SPECIAL_HKEY_RESET_CONFIG &&
-                   keys[!SPECIAL_HKEY_RESET_CONFIG_POS] == SPECIAL_HKEY_RESET_FULLY){
+				if(hid_keys[SPECIAL_HKEY_RESET_CONFIG_POS] == SPECIAL_HKEY_RESET_CONFIG &&
+                   hid_keys[!SPECIAL_HKEY_RESET_CONFIG_POS] == SPECIAL_HKEY_RESET_FULLY){
 					// full reset
 					config_reset_fully();
 					current_state = STATE_WAITING;
 					next_state = STATE_NORMAL;
 					return;
 				}
-				else if(keys[1] >= HID_KEYBOARD_SC_1_AND_EXCLAMATION && keys[1] <= HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS){
+				else if(hid_keys[1] >= HID_KEYBOARD_SC_1_AND_EXCLAMATION && hid_keys[1] <= HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS){
 					// operation on saved layout n
-					uint8_t index = keys[1] - HID_KEYBOARD_SC_1_AND_EXCLAMATION;
+					uint8_t index = hid_keys[1] - HID_KEYBOARD_SC_1_AND_EXCLAMATION;
 
 					bool success;
-					switch(keys[0]){
+					switch(hid_keys[0]){
 					case HID_KEYBOARD_SC_S:
 						success = config_save_layout(index);
 						break;
@@ -271,36 +282,30 @@ static void handle_state_normal(void){
 	}
 
 	// otherwise, check macro/program triggers
-	if(key_press_count && key_press_count <= MACRO_MAX_KEYS){
-		// Read keys
-		macro_idx_key key;
-		keystate_get_keys(key.keys, LOGICAL);
+	bool valid = macro_idx_format_key(&macro_key, key_press_count);
+	if(!valid) return;
 
-		bool valid = macro_idx_format_key(&key, key_press_count);
-		if(!valid) return;
-
-		macro_idx_entry* h = macro_idx_lookup(&key);
-		if(h){
-			macro_idx_entry_data md = macro_idx_get_data(h);
-			switch(md.type){
-			case PROGRAM: {
+	macro_idx_entry* h = macro_idx_lookup(&macro_key);
+	if(h){
+		macro_idx_entry_data md = macro_idx_get_data(h);
+		switch(md.type){
+		case PROGRAM: {
 #if PROGRAMS_SIZE > 0
-				vm_start(md.data, key.keys[0]); // TODO: l_key is no longer relevant, is not great to use just the first.
-				break;
+			vm_start(md.data, macro_key.keys[0]); // TODO: l_key is no longer relevant, is not great to use just the first.
+			break;
 #endif
-			}
-			case MACRO: {
+		}
+		case MACRO: {
 #if MACROS_SIZE > 0
-				if(macros_start_playback(md.data)){
-					current_state = STATE_MACRO_PLAY;
-				}
-				else{
-					buzzer_start_f(200, BUZZER_FAILURE_TONE);
-				}
-				break;
+			if(macros_start_playback(md.data)){
+				current_state = STATE_MACRO_PLAY;
+			}
+			else{
+				buzzer_start_f(200, BUZZER_FAILURE_TONE);
+			}
+			break;
 #endif
-			}
-			}
+		}
 		}
 	}
 }
