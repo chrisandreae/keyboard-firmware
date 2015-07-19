@@ -1,5 +1,4 @@
 <keyboard layout="kinesis" layoutid="1" image="kinesis.png">
-  <keypad w="64" h="38" x="345" y="20"/>
   <layout>
 	<key name="PROGRAM"		  x="720" y="2" w="29" h="38"/>
 	<key name="KEYPAD"		  x="685" y="2" w="29" h="38"/>

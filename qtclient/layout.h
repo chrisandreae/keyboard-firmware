@@ -25,8 +25,6 @@ public:
 	QString imageName;
 	QList<Layout::Key> keys;
 
-	QRect keypadToggle;
-
 	static Layout readLayout(int layoutID);
 	int mappingSize() const {
 		return keys.count() * 2;

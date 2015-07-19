@@ -26,12 +26,6 @@ public:
 			mLayout.layout = atts.value("layout");
 			mLayout.imageName = atts.value("image");
 		}
-		else if (localName == "keypad") {
-			mLayout.keypadToggle = QRect(atts.value("x").toInt(),
-										 atts.value("y").toInt(),
-										 atts.value("w").toInt(),
-										 atts.value("h").toInt());
-		}
 		else if (localName == "key") {
 			Layout::Key k = { atts.value("name"),
 			                  QRect(atts.value("x").toInt(),

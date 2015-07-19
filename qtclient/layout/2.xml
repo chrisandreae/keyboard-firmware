@@ -1,5 +1,4 @@
 <keyboard layout="ergodox" layoutid="2" image="ergodox.png">
-  <keypad w="48" h="48" x="352" y="15"/>
   <layout>
 	<key name="KEYPAD"	  w="48" h="48"  x="352" y="15"	/>
 	<key name="PROGRAM"	  w="47" h="48"  x="623" y="15"	/>
