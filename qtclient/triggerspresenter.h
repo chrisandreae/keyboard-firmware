@@ -8,6 +8,7 @@
 #include "trigger.h"
 
 class KeyboardModel;
+class Layout;
 
 class TriggersPresenter : public QObject {
 	Q_OBJECT
@@ -15,6 +16,7 @@ class TriggersPresenter : public QObject {
 	TriggersView *mView;
 	QList<Trigger>* mTriggers;
 	QSharedPointer<KeyboardModel> mModel;
+	const Layout *mLayout;
 
 public:
 	TriggersPresenter();
@@ -32,6 +34,8 @@ public:
 	void setTriggerProgram(int index, uint16_t program);
 
 	void toggleKeyInTrigger(int index, LogicalKeycode logicalKeycode);
+	void setTriggerLayer(int index, unsigned layer);
+	unsigned layerForTrigger(int index) const;
 
 	int appendTrigger();
 	void removeTrigger(int);

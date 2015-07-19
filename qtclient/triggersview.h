@@ -51,7 +51,9 @@ public slots:
 	void handleModelChange(const QModelIndex& topLeft,
 						   const QModelIndex& bottomRight);
 	void handleModelReset();
+
 	void handleLogicalKeyClicked(LogicalKeycode position);
+	void handleLayerChanged(unsigned currentLayer);
 
 	void appendTrigger();
 	void removeTrigger();
