@@ -17,10 +17,9 @@ class QMouseEvent;
 class QPixmap;
 
 class LayoutWidget : public QLabel {
-	Q_OBJECT
+	Q_OBJECT;
 
-	bool mKeypadLayerSelected;
-	QColor mKeypadLayerColor;
+	QColor mOverlayColor;
 	QColor mSelectedColor;
 
 	const Layout *mLayout;
@@ -38,29 +37,32 @@ class LayoutWidget : public QLabel {
 public:
 	LayoutWidget(QWidget *parent = NULL)
 		: QLabel(parent)
-		, mKeypadLayerSelected(false)
 		, mLayout(NULL)
 		, mScale(1.0f)
 	{
 		setAlignment(Qt::AlignLeft | Qt::AlignTop);
 		mSelectedColor = QColor::fromRgbF(1, 0, 0, 0.2);
-		mKeypadLayerColor = QColor::fromRgbF(0, 0, 1, 0.2);
+		mOverlayColor = Qt::transparent;
 	}
 
 	void setScale(float f) { mScale = f; }
+	void setOverlayColor(const QColor& overlay) {
+		mOverlayColor = overlay;
+	}
 	void setKeyboardLayout(const Layout& layout);
 	void setMapping(const QByteArray& mapping);
 
-	void setSelection(const QSet<LogicalKeycode>& selectedKeys);
-	void setSelection(LogicalKeycode selectedKey);
+	void setSelection(const QSet<PhysicalKeycode>& selectedKeys);
+	void setSelection(PhysicalKeycode selectedKey);
 
 	void paintEvent(QPaintEvent *ev);
 	void mousePressEvent(QMouseEvent *ev);
 
 signals:
-	void logicalKeyClicked (LogicalKeycode logicalKeycode);
 	void physicalKeyClicked(PhysicalKeycode physicalKeycode);
 
+private:
+	void paintScaledLabel(QPainter& painter, const QString label, const QRect rect);
 };
 
 #endif

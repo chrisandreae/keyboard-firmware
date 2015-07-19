@@ -29,6 +29,7 @@ HEADERS += \
 	programspresenter.h \
 	vm.h \
 	layoutwidget.h \
+	layeredlayoutwidget.h \
 	triggersview.h \
 	triggerspresenter.h \
 	triggersitemmodel.h \
@@ -54,6 +55,7 @@ SOURCES += \
 	programsitemmodel.cc \
 	programspresenter.cc \
 	layoutwidget.cc \
+	layeredlayoutwidget.cc \
 	triggersview.cc \
 	triggerspresenter.cc \
 	triggersitemmodel.cc \

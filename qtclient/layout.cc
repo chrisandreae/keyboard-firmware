@@ -27,9 +27,10 @@ public:
 			mLayout.imageName = atts.value("image");
 		}
 		else if (localName == "keypad") {
-			mLayout.keypad.keyIndex = atts.value("keyindex").toInt();
-			mLayout.keypad.layerStart = atts.value("layerstart").toInt();
-			mLayout.keypad.layerSize = atts.value("layersize").toInt();
+			mLayout.keypadToggle = QRect(atts.value("x").toInt(),
+										 atts.value("y").toInt(),
+										 atts.value("w").toInt(),
+										 atts.value("h").toInt());
 		}
 		else if (localName == "key") {
 			Layout::Key k = { atts.value("name"),
@@ -66,7 +67,7 @@ QString Layout::namePosition(const LogicalKeycode logicalKeycode) const {
 	PhysicalKeycode physicalKeycode;
 	bool keypad = isKeypadLayer(logicalKeycode);
 	if (keypad) {
-		physicalKeycode = logicalKeycode - this->keypad.layerSize;
+		physicalKeycode = logicalKeycode - keys.count();
 	}
 	else {
 		physicalKeycode = logicalKeycode;

@@ -9,7 +9,7 @@
 #include "layout.h"
 
 class LayoutPresenter;
-class LayoutWidget;
+class LayeredLayoutWidget;
 class KeySelectionView;
 
 class LayoutView : public QWidget {
@@ -17,13 +17,12 @@ class LayoutView : public QWidget {
 	Q_DISABLE_COPY(LayoutView)
 
 	LayoutPresenter *mPresenter;
-	LayoutWidget *mLayoutWidget;
+	LayeredLayoutWidget *mLayoutWidget;
 
 	KeySelectionView *mKeySelectionView;
 
 	QColor mKeypadColor;
 	QColor mSelectedColor;
-	bool mShowingMainLayer;
 
 	LogicalKeycode mUpdatingLogicalKeyIndex;
 

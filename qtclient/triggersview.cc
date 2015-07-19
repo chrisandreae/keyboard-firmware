@@ -12,7 +12,7 @@
 #include "triggerspresenter.h"
 #include "triggersitemmodel.h"
 #include "triggersitemdelegate.h"
-#include "layoutwidget.h"
+#include "layeredlayoutwidget.h"
 #include "util.h"
 
 TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent) 
@@ -43,7 +43,7 @@ TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent)
 	layout->addWidget(mRemoveTriggerButton, 1, 1);
 	connect(mRemoveTriggerButton, SIGNAL(clicked()), this, SLOT(removeTrigger()));
 
-	mTriggerSetWidget = new LayoutWidget;
+	mTriggerSetWidget = new LayeredLayoutWidget;
 	mTriggerSetWidget->setScale(0.4f);
 	layout->addWidget(mTriggerSetWidget, 2, 0);
 
