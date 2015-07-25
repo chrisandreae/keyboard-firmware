@@ -54,7 +54,7 @@
 #include "buzzer.h"
 #include "leds.h"
 
-#include "serial_eeprom.h"
+#include "storage.h"
 #include "interpreter.h"
 #include "macro_index.h"
 #include "macro.h"
@@ -87,12 +87,6 @@ static void handle_state_programming(void);
 static void handle_state_macro_record_trigger(void);
 static void handle_state_macro_record(void);
 static void ledstate_update(void);
-
-static void print_pgm_message(const char* buffer, state next){
-	printing_set_buffer(buffer, BUF_PGM);
-	current_state = STATE_PRINTING;
-	next_state = next;
-}
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
@@ -153,7 +147,9 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 			// macro playback is handled entirely by macros_fill_next_report()
 			break;
 		default: {
-			print_pgm_message(PGM_MSG("Unexpected state"), STATE_NORMAL);
+			printing_set_buffer(CONST_MSG("Unexpected state"), CONSTANT_STORAGE);
+			current_state = STATE_PRINTING;
+			next_state = STATE_NORMAL;
 			break;
 		}
 		}
@@ -290,10 +286,10 @@ static void handle_state_normal(void){
 		macro_idx_entry_data md = macro_idx_get_data(h);
 		switch(md.type){
 		case PROGRAM: {
-#if PROGRAMS_SIZE > 0
+#if PROGRAM_SIZE > 0
 			vm_start(md.data, macro_key.keys[0]); // TODO: l_key is no longer relevant, is not great to use just the first.
-			break;
 #endif
+			break;
 		}
 		case MACRO: {
 #if MACROS_SIZE > 0
@@ -303,8 +299,8 @@ static void handle_state_normal(void){
 			else{
 				buzzer_start_f(200, BUZZER_FAILURE_TONE);
 			}
-			break;
 #endif
+			break;
 		}
 		}
 	}

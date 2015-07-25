@@ -24,10 +24,10 @@
 #include "interpreter.h"
 #include "config.h"
 #include "buzzer.h"
-#include "serial_eeprom.h"
 #include "macro_index.h"
 #include "macro.h"
 #include "usb_vendor_interface.h"
+#include "storage.h"
 
 // Use GCC built-in memory operations
 #define memcmp(a,b,c) __builtin_memcmp(a,b,c)
@@ -50,16 +50,14 @@ static MouseReport_Data_t MouseReportData;
 
 typedef enum _transfer_action {
 	LED_REPORT,
-	WRITE_EEEXT,
-	READ_EEEXT,
-	WRITE_EEPROM,
-	READ_EEPROM,
-	READ_PROGMEM,
+	READ,
+	WRITE,
 } transfer_action;
 
 static union {
 	struct {
 		transfer_action type;
+		storage_type storage;
 		uint8_t* addr;
 		uint16_t remaining;
 	} state;
@@ -134,7 +132,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 		/* byte sized transfers */
 
 		case READ_NUM_PROGRAMS:
-			transfer.byte = NUM_PROGRAMS;
+			transfer.byte = PROGRAM_COUNT;
 			goto transfer_byte;
 		case READ_LAYOUT_ID:
 			transfer.byte = LAYOUT_ID;
@@ -157,7 +155,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			/* Word sized transfers */
 
 		case READ_PROGRAMS_SIZE:
-			transfer.word = PROGRAMS_SIZE;
+			transfer.word = PROGRAM_SIZE;
 			goto transfer_word;
 		case READ_MACRO_INDEX_SIZE:
 			transfer.word = MACRO_INDEX_SIZE;
@@ -172,33 +170,36 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			/* callback transfers */
 
 		case WRITE_PROGRAMS:
-			transfer.state.type = WRITE_EEEXT;
+			transfer.state.type = WRITE;
 			transfer_callback = &vm_init;
 			goto programs_rw;
 		case READ_PROGRAMS:
-			transfer.state.type = READ_EEEXT;
+			transfer.state.type = READ;
 		programs_rw:
+			transfer.state.storage = PROGRAM_STORAGE;
 			transfer.state.addr = config_get_programs();
 			transfer.state.remaining = rq->wLength.word;
 			return USB_NO_MSG;
 
 
 		case WRITE_MACRO_INDEX:
-			transfer.state.type = WRITE_EEPROM;
+			transfer.state.type = WRITE;
 			goto macro_index_rw;
 		case READ_MACRO_INDEX:
-			transfer.state.type = READ_EEPROM;
+			transfer.state.type = READ;
 		macro_index_rw:
+			transfer.state.storage = MACRO_INDEX_STORAGE;
 			transfer.state.addr = macro_idx_get_storage();
 			transfer.state.remaining = rq->wLength.word;
 			return USB_NO_MSG;
 
 		case WRITE_MACRO_STORAGE:
-			transfer.state.type = WRITE_EEEXT;
+			transfer.state.type = WRITE;
 			goto macro_storage_rw;
 		case READ_MACRO_STORAGE:
-			transfer.state.type = READ_EEEXT;
+			transfer.state.type = READ;
 		macro_storage_rw:
+			transfer.state.storage = MACROS_STORAGE;
 			transfer.state.addr = macros_get_storage();
 			transfer.state.remaining = rq->wLength.word;
 			return USB_NO_MSG;
@@ -209,15 +210,17 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]){
 			break;
 		}
 		case WRITE_MAPPING:
-			transfer.state.type = WRITE_EEPROM;
+			transfer.state.type = WRITE;
 			goto mapping_rw1;
 		case READ_DEFAULT_MAPPING:
-			transfer.state.type = READ_PROGMEM;
+			transfer.state.type = READ;
+			transfer.state.storage = CONSTANT_STORAGE;
 			transfer.state.addr = (uint8_t*) logical_to_hid_map_default;
 			goto mapping_rw2;
 		case READ_MAPPING:
-			transfer.state.type = READ_EEPROM;
+			transfer.state.type = READ;
 		mapping_rw1:
+			transfer.state.storage = MAPPING_STORAGE;
 			transfer.state.addr = config_get_mapping();
 		mapping_rw2:
 			transfer.state.remaining = min_u16(NUM_LOGICAL_KEYS, rq->wLength.word);
@@ -244,22 +247,28 @@ uchar usbFunctionWrite(uchar *data, uchar len) {
 	uint8_t ret = 1;
 
 	switch(transfer.state.type){
-	case WRITE_EEEXT: {
-		serial_eeprom_err r = serial_eeprom_write_step(transfer.state.addr, data, write_sz,
-													   transfer.state.remaining == write_sz);
-		if(r != SUCCESS){
-			buzzer_start(200);
-			break; // end transfer if failed
+	case WRITE: {
+		storage_err (*write_fn)(void*, const void*, uint8_t, uint8_t);
+
+		switch(transfer.state.storage){
+		case avr_eeprom:
+			write_fn = &avr_eeprom_write_step;
+			break;
+		case i2c_eeprom:
+			write_fn = &i2c_eeprom_write_step;
+			break;
+		default:
+			goto err;
 		}
-	}
-		goto end_write_step;
-	case WRITE_EEPROM:
-		eeprom_update_block(data, transfer.state.addr, write_sz);
-	end_write_step:
+
+		storage_err r = write_fn(transfer.state.addr, data, write_sz, transfer.state.remaining == write_sz);
+		if(r != SUCCESS){ goto err; }
+
 		transfer.state.addr += write_sz;
 		transfer.state.remaining -= write_sz;
 		ret = (transfer.state.remaining == 0);
 		break;
+	}
 	case LED_REPORT:
 		Process_KeyboardLEDReport(data[0]);
 		break;
@@ -272,6 +281,10 @@ uchar usbFunctionWrite(uchar *data, uchar len) {
 		transfer_callback = (void*) 0x0;
 	}
 	return ret;
+
+ err:
+	buzzer_start(200);
+	return 1; // end transfer if failed
 }
 
 #include <buzzer.h>
@@ -280,27 +293,40 @@ uchar usbFunctionWrite(uchar *data, uchar len) {
 // returns bytes put in buffer
 uchar usbFunctionRead(uchar* data, uchar len) {
 	uint8_t read_sz = len <= transfer.state.remaining ? len : transfer.state.remaining;
-	int16_t r;
+	size_t r;
 
 	switch(transfer.state.type){
-	case READ_EEEXT:
-		r = serial_eeprom_read(transfer.state.addr, data, read_sz);
-		if(r == -1) return 0; // no bytes sent, error
-		goto end_read_step;
-	case READ_PROGMEM:
-		for(int i = 0; i < read_sz; ++i){
-			data[i] = pgm_read_byte_near(&transfer.state.addr[i]);
+	case READ: {
+		size_t (*read_fn)(const void*, void*, size_t);
+
+		switch(transfer.state.storage){
+		case avr_eeprom:
+			read_fn = &avr_eeprom_read;
+			break;
+		case avr_pgm:
+			read_fn = &avr_pgm_read;
+			break;
+		case i2c_eeprom:
+			read_fn = &i2c_eeprom_read;
+			break;
+		default:
+			goto err;
 		}
-		goto end_read_step;
-	case READ_EEPROM:
-		eeprom_read_block(data, transfer.state.addr, read_sz);
-	end_read_step:
-		transfer.state.addr += read_sz;
-		transfer.state.remaining -= read_sz;
-		return read_sz;
+
+		r = read_fn(transfer.state.addr, data, read_sz);
+		if(r == -1) goto err;
+
+		transfer.state.addr += r;
+		transfer.state.remaining -= r;
+		return r;
+	}
 	default:
 		return 0;
 	}
+
+ err:
+	buzzer_start(200);
+	return 0; // no bytes sent, error
 }
 
 

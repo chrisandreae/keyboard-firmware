@@ -50,6 +50,7 @@
 #include "config.h"
 #include "buzzer.h"
 #include "interpreter.h"
+#include "storage.h"
 
 #include <stdarg.h>
 
@@ -162,7 +163,7 @@ void keystate_update(void){
 			// logical code: otherwise we won't register a keypress unless both
 			// are pressed: one position will be debouncing up and the other
 			// down.
-			logical_keycode l_key = pgm_read_byte_near(&matrix_to_logical_map[matrix_row][matrix_col]);
+			logical_keycode l_key = storage_read_byte(CONSTANT_STORAGE, &matrix_to_logical_map[matrix_row][matrix_col]);
 			if(l_key == NO_KEY) goto next_matrix; // empty space in the sparse matrix
 
 			hid_keycode h_key = config_get_definition(l_key);

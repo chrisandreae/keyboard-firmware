@@ -58,14 +58,14 @@
 #include <string.h>
 #include "keystate.h"
 #include "buzzer.h"
-#include "serial_eeprom.h"
+#include "storage.h"
 #include "config.h"
 #include "interpreter.h"
 #include "extrareport.h"
 
 #endif
 
-static vmstate vms[NUM_PROGRAMS];
+static vmstate vms[PROGRAM_COUNT];
 
 static int vm_init_vm(vmstate* vm, const program* p){
 	vm->state = VMSTOPPED;
@@ -75,8 +75,8 @@ static int vm_init_vm(vmstate* vm, const program* p){
 	vm->program = p;
 
 	uint8_t nmethods;
-	if(serial_eeprom_read((uint8_t*)&p->nmethods, (uint8_t*)&nmethods, 1) != 1){
-		return serial_eeprom_errno;
+	if(storage_read(PROGRAM_STORAGE, (uint8_t*)&p->nmethods, (uint8_t*)&nmethods, 1) != 1){
+		return storage_errno;
 	}
 
 	vm->code = &((const bytecode*)p)[sizeof(program) + sizeof(method) * (nmethods - 1)];
@@ -97,8 +97,8 @@ static uint8_t vm_start_vm(vmstate* vm, logical_keycode trigger_lkey){
 	// read in the program header (and first method header)
 	// note that this relies on little-endian architecture.
 	program p;
-	if(serial_eeprom_read((uint8_t*)vm->program, (uint8_t*)&p, sizeof(program)) != sizeof(program)){
-		return serial_eeprom_errno;
+	if(storage_read(PROGRAM_STORAGE, (uint8_t*)vm->program, (uint8_t*)&p, sizeof(program)) != sizeof(program)){
+		return storage_errno;
 	}
 
 	vm->ip = &vm->code[p.methods[0].code_offset];
@@ -113,7 +113,7 @@ static uint8_t vm_start_vm(vmstate* vm, logical_keycode trigger_lkey){
 }
 
 void vm_init(void){
-	for(uint8_t i = 0; i < NUM_PROGRAMS; ++i){
+	for(uint8_t i = 0; i < PROGRAM_COUNT; ++i){
 		const program* p = config_get_program(i);
 		if(p){
 			uint8_t r = vm_init_vm(&vms[i], p);
@@ -132,7 +132,7 @@ uint8_t vm_start(uint8_t idx, logical_keycode trigger_lkey){
 static void vm_step(vmstate* vm);
 
 void vm_step_all(void){
-	for(uint8_t i = 0; i < NUM_PROGRAMS; ++i){
+	for(uint8_t i = 0; i < PROGRAM_COUNT; ++i){
 		if(vms[i].state >= VMRUNNING){
 			vm_step(&vms[i]);
 		}
@@ -141,7 +141,7 @@ void vm_step_all(void){
 
 void vm_append_KeyboardReport(KeyboardReport_Data_t* report){
 	// iterate VMs and append
-	for(uint8_t i = 0; i < NUM_PROGRAMS; ++i){
+	for(uint8_t i = 0; i < PROGRAM_COUNT; ++i){
 		if(vms[i].state < VMRUNNING) continue;
 
 		if(vms[i].state == VMWAITREPORT) vms[i].state = VMRUNNING;
@@ -162,7 +162,7 @@ static int8_t addT(int8_t x, int8_t y){
 
 
 void vm_append_MouseReport(MouseReport_Data_t* report){
-	for(uint8_t i = 0; i < NUM_PROGRAMS; ++i){
+	for(uint8_t i = 0; i < PROGRAM_COUNT; ++i){
 		if(vms[i].state < VMRUNNING) continue;
 		if(vms[i].state == VMWAITMOUSEREPORT) vms[i].state = VMRUNNING;
 
@@ -180,9 +180,10 @@ void vm_append_MouseReport(MouseReport_Data_t* report){
 // returning.  Requires accurate (sizeof()able) pointer type in first
 // argument.
 #define READ_EEPROM_TO(DST, ADDR) {										\
-		uint8_t __r = serial_eeprom_read((uint8_t*)(ADDR),				\
-										 (uint8_t*)(DST),				\
-										 sizeof(*(DST)));				\
+		uint8_t __r = storage_read(PROGRAM_STORAGE,                     \
+		                           (uint8_t*)(ADDR),                    \
+		                           (uint8_t*)(DST),                     \
+		                           sizeof(*(DST)));                     \
 		if(__r != sizeof(*(DST))){										\
 			vm->state = VMCRASHED;										\
 			return;														\

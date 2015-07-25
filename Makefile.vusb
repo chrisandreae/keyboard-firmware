@@ -38,7 +38,10 @@ SRCS = vusb/usbdrv/usbdrv.o    \
 	   printing.o			   \
 	   keystate.o			   \
 	   config.o				   \
-	   serial_eeprom.o		   \
+	   storage.o		       \
+	   storage/i2c_eeprom.o	   \
+	   storage/avr_eeprom.o	   \
+	   storage/avr_pgm.o	   \
 	   buzzer.o				   \
 	   leds.o				   \
 	   hardware.o			   \

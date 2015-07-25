@@ -43,21 +43,41 @@
   this software.
 */
 
-#ifndef __PRINTING_H
-#define __PRINTING_H
+#ifndef __STORAGE_H
+#define __STORAGE_H
 
-#include "Keyboard.h"
-#include "keystate.h"
-#include "storage.h"
+#include <inttypes.h>
 
-#define CONST_MSG(x) ({ static const char __pgm_msg[] STORAGE(CONSTANT_STORAGE) = x; __pgm_msg; })
+typedef enum _storage_type {
+    sram,
+    avr_pgm,
+    avr_eeprom,
+    i2c_eeprom,
+    flash,
+} storage_type;
 
-void printing_set_buffer(const char* buf, storage_type typ);
-bool printing_buffer_empty(void);
+typedef uint8_t storage_err;
+extern storage_err storage_errno;
 
-void printing_Fill_KeyboardReport(KeyboardReport_Data_t* ReportData);
+#define STORAGE_MAGIC_PREFIX(x, y) x ## _ ## y
 
-void char_to_keys(const char nextchar, hid_keycode* nextkey, hid_keycode* nextmod);
-const char* byte_to_str(uint8_t byte);
+#define STORAGE(storage_type)                                  STORAGE_MAGIC_PREFIX(STORAGE_SECTION, storage_type)
 
-#endif // __PRINTING_H
+#define storage_write(storage_type, dst, buf, count)           STORAGE_MAGIC_PREFIX(storage_type, write)(dst, buf, count)
+#define storage_write_byte(storage_type, dst, b)               STORAGE_MAGIC_PREFIX(storage_type, write_byte)(dst, b)
+#define storage_write_short(storage_type, dst, b)              STORAGE_MAGIC_PREFIX(storage_type, write_short)(dst, b)
+#define storage_write_step(storage_type, dst, data, len, last) STORAGE_MAGIC_PREFIX(storage_type, write_step)(dst, data, len, last)
+
+#define storage_read(storage_type, addr, buf, len)             STORAGE_MAGIC_PREFIX(storage_type, read)(addr, buf, len)
+#define storage_read_byte(storage_type, addr)                  STORAGE_MAGIC_PREFIX(storage_type, read_byte)(addr)
+#define storage_read_short(storage_type, addr)                 STORAGE_MAGIC_PREFIX(storage_type, read_short)(addr)
+
+#define storage_memmove(storage_type, dst, src, count)         STORAGE_MAGIC_PREFIX(storage_type, memmove)(dst, src, count)
+#define storage_memset(storage_type, dst, c, len)              STORAGE_MAGIC_PREFIX(storage_type, memset)(dst, c, len)
+
+#include "storage/sram.h"
+#include "storage/avr_eeprom.h"
+#include "storage/i2c_eeprom.h"
+#include "storage/avr_pgm.h"
+
+#endif // __STORAGE_H

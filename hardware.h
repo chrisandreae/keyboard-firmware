@@ -68,5 +68,53 @@
     #define SPECIAL_HKEY_RESET_CONFIG_POS 1
 #endif
 
+// Ensure that storage locations are correctly set up
+#ifndef CONSTANT_STORAGE
+#error "Constant data storage location not defined"
+#endif
+
+#ifndef MAPPING_STORAGE
+#error "Key mapping data storage location not defined"
+#endif
+
+#ifndef SAVED_MAPPING_STORAGE
+#error "Saved mappings data storage location not defined"
+#endif
+
+#ifndef SAVED_MAPPING_COUNT
+#error "Saved mappings count not defined"
+#endif
+
+#ifndef MACRO_INDEX_STORAGE
+#error "Macro index data storage not defined"
+#endif
+
+#ifndef MACRO_INDEX_COUNT
+#error "Macro index count not defined"
+#endif
+
+#ifndef MACROS_STORAGE
+#error "Macro data storage not defined"
+#endif
+
+// Size in bytes of macro storage (including end offset)
+#ifndef MACROS_SIZE
+#error "Macro data storage size not defined"
+#endif
+
+// Size in bytes of program storage (including index)
+#ifndef PROGRAM_STORAGE
+#error "Program data storage not defined"
+#endif
+
+#ifndef PROGRAM_SIZE
+#error "Program	data storage size not defined"
+#endif
+
+// Number of programs we support. We always permit concurrent program
+// execution, so we limit the number of programs to the number of VMs.
+#ifndef PROGRAM_COUNT
+#error "Program interpreter count not defined"
+#endif
 
 #endif // __HARDWARE_H
