@@ -35,6 +35,8 @@ public:
 	virtual void setMacroIndex(const QByteArray& macroindex) = 0;
 	virtual QByteArray getMacroStorage() = 0;
 	virtual void setMacroStorage(const QByteArray& macroStorage) = 0;
+	virtual void reset() = 0;
+	virtual void resetFully() = 0;
 
 	virtual ~DeviceSession(){};
 };

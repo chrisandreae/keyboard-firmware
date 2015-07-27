@@ -21,6 +21,12 @@ KeyboardPresenter::KeyboardPresenter()
 
 	connect(this, SIGNAL(modelChanged(const QSharedPointer<KeyboardModel>&)),
 			&mTriggersPresenter, SLOT(setModel(const QSharedPointer<KeyboardModel>&)));
+
+	connect(this, SIGNAL(modelChanged(const QSharedPointer<KeyboardModel>&)),
+			&mValuesPresenter, SLOT(setModel(const QSharedPointer<KeyboardModel>&)));
+
+	connect(this, SIGNAL(deviceChanged(const QSharedPointer<Device>&)),
+			&mValuesPresenter, SLOT(setDevice(const QSharedPointer<Device>&)));
 }
 
 QList<QPair<QString, QWidget*> > KeyboardPresenter::createSubviewList() {
@@ -31,6 +37,8 @@ QList<QPair<QString, QWidget*> > KeyboardPresenter::createSubviewList() {
 		tr("Programs"), mProgramsPresenter.getWidget());
 	subviews << QPair<QString, QWidget*>(
 		tr("Triggers"), mTriggersPresenter.getWidget());
+	subviews << QPair<QString, QWidget*>(
+		tr("Advanced"), mValuesPresenter.getWidget());
 	return subviews;
 }
 
@@ -74,6 +82,7 @@ void KeyboardPresenter::selectDeviceAction(int index) {
 	}
 	else {
 		mCurrentDevice = mDevices.at(index);
+		emit deviceChanged(mCurrentDevice);
 		mView->showKeyboard();
 		downloadAction();
 	}
@@ -86,13 +95,6 @@ void KeyboardPresenter::downloadAction() {
 		mKeyboardModel = QSharedPointer<KeyboardModel>(
 			new KeyboardModel(session.data()));
 		emit modelChanged(mKeyboardModel);
-		mView->showValues(mKeyboardModel->getLayoutID(),
-		                  mKeyboardModel->getMappingSize(),
-		                  mKeyboardModel->getNumPrograms(),
-		                  mKeyboardModel->getProgramSpaceRaw(),
-		                  mKeyboardModel->getProgramSpace(),
-		                  mKeyboardModel->getMacroIndexSize(),
-		                  mKeyboardModel->getMacroStorageSize());
 	}
 	catch (DeviceError& devError) {
 		qDebug() << "Error downloading settings: " << devError.what();

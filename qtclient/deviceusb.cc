@@ -142,3 +142,11 @@ QByteArray DeviceSessionUSB::getMacroStorage() {
 void DeviceSessionUSB::setMacroStorage(const QByteArray& macroStorage) {
 	doVendorRequest(WRITE_MACRO_STORAGE, Write, const_cast<QByteArray&>(macroStorage));
 }
+
+void DeviceSessionUSB::reset() {
+	doVendorRequest(RESET_DEFAULTS, Write, nullptr, 0);
+}
+
+void DeviceSessionUSB::resetFully() {
+	doVendorRequest(RESET_FULLY, Write, nullptr, 0);
+}

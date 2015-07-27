@@ -20,6 +20,7 @@ HEADERS += \
 	keyboardmodel.h \
 	keyboardpresenter.h \
 	keyboardvalues.h \
+	valuespresenter.h \
 	keyboardview.h \
 	layout.h \
 	layoutpresenter.h \
@@ -51,6 +52,7 @@ SOURCES += \
 	keyboardmodel.cc \
 	keyboardpresenter.cc \
 	keyboardvalues.cc \
+	valuespresenter.cc \
 	keyboardview.cc \
 	layoutpresenter.cc \
 	layoutview.cc \

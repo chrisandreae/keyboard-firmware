@@ -34,13 +34,6 @@ public:
 				 QList<QPair<QString, QWidget*> > subviews);
 
 	void updateDevices(const QStringList& names);
-	void showValues(uint8_t mLayoutID,
-					uint8_t mMappingSize,
-					uint8_t mNumPrograms,
-					uint16_t mProgramSpaceRaw,
-					uint16_t mProgramSpace,
-					uint16_t mMacroIndexSize,
-					uint16_t mMacroStorageSize);
 
 	void showNoKeyboard();
 	void showKeyboard();

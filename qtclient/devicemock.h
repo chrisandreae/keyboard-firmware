@@ -44,6 +44,8 @@ public:
 	virtual void setMacroIndex(const QByteArray& macroindex) override;
 	virtual QByteArray getMacroStorage() override;
 	virtual void setMacroStorage(const QByteArray& macroStorage) override;
+	virtual void reset() override;
+	virtual void resetFully() override;
 };
 
 

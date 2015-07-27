@@ -12,6 +12,7 @@
 #include "layoutpresenter.h"
 #include "programspresenter.h"
 #include "triggerspresenter.h"
+#include "valuespresenter.h"
 
 class KeyboardModel;
 
@@ -30,6 +31,7 @@ class KeyboardPresenter : public QObject {
 	LayoutPresenter mLayoutPresenter;
 	ProgramsPresenter mProgramsPresenter;
 	TriggersPresenter mTriggersPresenter;
+	ValuesPresenter mValuesPresenter;
 
 	QList<QPair<QString, QWidget*> > createSubviewList();
 
@@ -39,6 +41,7 @@ public:
 
 signals:
 	void modelChanged(const QSharedPointer<KeyboardModel>&);
+	void deviceChanged(const QSharedPointer<Device>&);
 
 public slots:
 	void showAction();

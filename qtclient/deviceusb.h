@@ -89,6 +89,9 @@ public:
 
 	QByteArray getMacroStorage();
 	void setMacroStorage(const QByteArray& macroStorage);
+
+	void reset();
+	void resetFully();
 };
 
 class DeviceUSB : public Device {
