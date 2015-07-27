@@ -1,12 +1,12 @@
 #include <QDebug>
 
 #include "keyboardmodel.h"
-#include "keyboardcomm.h"
+#include "device.h"
 #include "trigger.h"
 
 #include "libusb_wrappers.h"
 
-KeyboardModel::KeyboardModel(KeyboardComm *keyboard)
+KeyboardModel::KeyboardModel(DeviceSession *keyboard)
 	: mLayoutID(keyboard->getLayoutID())
 	, mMappingSize(keyboard->getMappingSize())
 	, mNumPrograms(keyboard->getNumPrograms())

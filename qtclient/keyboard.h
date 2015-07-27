@@ -1,3 +1,6 @@
+#ifndef KEYBOARD_H
+#define KEYBOARD_H
+
 // TODO stop copying from keyboard.c
 
 typedef enum _vendor_request {
@@ -28,3 +31,5 @@ typedef enum _vendor_request {
 	OATH_SET_TIME,
 } vendor_request;
 
+
+#endif

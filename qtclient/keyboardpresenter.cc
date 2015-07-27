@@ -50,28 +50,17 @@ void KeyboardPresenter::updateDeviceListAction() {
 	QStringList names;
 
 	mDevices = KeyboardComm::enumerate();
-	QList<USBDevice> devices = mDevices;
-	for (QList<USBDevice>::iterator it = devices.begin();
-		 it != devices.end();
-		 ++it)
+	const KeyboardComm::DeviceList& devices = mDevices;
+	for (KeyboardComm::DeviceList::const_iterator it = devices.constBegin();
+	     it != devices.constEnd();
+         ++it)
 	{
 		try {
-			libusb_device *dev = *it;
-			libusb_device_descriptor desc;
-			LIBUSBCheckResult(
-				libusb_get_device_descriptor(dev, &desc));
-
-			USBDeviceHandle devHandle(dev);
-			char productBuf[256] = {0};
-			LIBUSBCheckResult(
-				libusb_get_string_descriptor_ascii(devHandle, desc.iProduct,
-												   (unsigned char*) productBuf,
-												   sizeof(productBuf) - 1));
-
-			names.push_back(QString(productBuf));
+			names.push_back((*it)->getName());
 		}
-		catch (LIBUSBError& e) {
-			qWarning() << "LIBUSBError during update: " << e.what();
+		catch (const DeviceError& e) {
+			names.push_back("ERROR");
+			qWarning() << "DeviceError during update: " << e.what();
 		}
 	}
 
@@ -80,24 +69,22 @@ void KeyboardPresenter::updateDeviceListAction() {
 
 void KeyboardPresenter::selectDeviceAction(int index) {
 	if (index == -1) {
+		mCurrentDevice.clear();
 		mView->showNoKeyboard();
-		return;
 	}
 	else {
+		mCurrentDevice = mDevices.at(index);
 		mView->showKeyboard();
+		downloadAction();
 	}
-
-	mUSBDevice.reset(new USBDevice(mDevices.at(index)));
-	downloadAction();
 }
 
 void KeyboardPresenter::downloadAction() {
-	if (!mUSBDevice) return;
+	if (!mCurrentDevice) return;
 	try {
-		KeyboardComm comm(*mUSBDevice);
-
+		QSharedPointer<DeviceSession> session = mCurrentDevice->newSession();
 		mKeyboardModel = QSharedPointer<KeyboardModel>(
-			new KeyboardModel(&comm));
+			new KeyboardModel(session.data()));
 		emit modelChanged(mKeyboardModel);
 		mView->showValues(mKeyboardModel->getLayoutID(),
 		                  mKeyboardModel->getMappingSize(),
@@ -107,15 +94,15 @@ void KeyboardPresenter::downloadAction() {
 		                  mKeyboardModel->getMacroIndexSize(),
 		                  mKeyboardModel->getMacroStorageSize());
 	}
-	catch (LIBUSBError& usbError) {
-		qDebug() << "Error downloading settings: " << usbError.what();
+	catch (DeviceError& devError) {
+		qDebug() << "Error downloading settings: " << devError.what();
 	}
 }
 
 
 
 void KeyboardPresenter::uploadAction() {
-	if (!mUSBDevice) return;
+	if (!mCurrentDevice) return;
 
 	QByteArray mapping = *mKeyboardModel->getMapping();
 	QByteArray programs =
@@ -130,32 +117,32 @@ void KeyboardPresenter::uploadAction() {
 								mKeyboardModel->getMacroStorageSize());
 
 	try {
-		KeyboardComm comm(*mUSBDevice);
+		QSharedPointer<DeviceSession> session = mCurrentDevice->newSession();
 
 		// qDebug() has an implicit endl, we add an extra one for a
 		// gap between dumps.
 
 		qDebug() << "Uploading mapping:" << endl
 				 << hexdump(mapping) << endl;
-		comm.setMapping(mapping);
+		session->setMapping(mapping);
 
 		if(programs.length() > 0) {
 			qDebug() << "Uploading programs:" << endl
 					 << hexdump(programs) << endl;
-			comm.setPrograms(programs);
+			session->setPrograms(programs);
 		}
 
 		qDebug() << "Uploading macro index:" << endl
 				 << hexdump(encodedMacros.first) << endl;
-		comm.setMacroIndex(encodedMacros.first);
+		session->setMacroIndex(encodedMacros.first);
 
 		if(encodedMacros.second.length() > 0) {
 			qDebug() << "Uploading macro data: " << endl
 					 << hexdump(encodedMacros.second) << endl;
-			comm.setMacroStorage(encodedMacros.second);
+			session->setMacroStorage(encodedMacros.second);
 		}
 	}
-	catch (LIBUSBError& e) {
-		qDebug() << "LIBUSBError setting mapping: " << e.what();
+	catch (DeviceError& e) {
+		qDebug() << "DeviceError uploading: " << e.what();
 	}
 }
