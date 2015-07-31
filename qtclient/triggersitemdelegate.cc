@@ -1,4 +1,5 @@
 #include <QtGui>
+#include <QComboBox>
 
 #include "triggersitemdelegate.h"
 #include "trigger.h"
