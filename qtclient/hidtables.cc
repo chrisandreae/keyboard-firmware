@@ -93,7 +93,7 @@ static const char *usages[] = {
 	"Kpd-",                           // 0x56
 	"Kpd+",                           // 0x57
 	"Kpd_Enter",                      // 0x58
-	"Kpd1_End",                       // 0x59
+	"Kpd1",                           // 0x59
 	"Kpd2",                           // 0x5a
 	"Kpd3",                           // 0x5b
 	"Kpd4",                           // 0x5c
@@ -107,7 +107,7 @@ static const char *usages[] = {
 	"Nonus_\\|",                      // 0x64
 	"Appli-_cation",                  // 0x65
 	"Power",                          // 0x66
-	"Equal_Sign",                     // 0x67
+	"Kpd=",                           // 0x67
 	"F13",                            // 0x68
 	"F14",                            // 0x69
 	"F15",                            // 0x6a
