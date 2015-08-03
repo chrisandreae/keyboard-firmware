@@ -350,13 +350,13 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 #define INPUT_PIN5_PIN  PINC
 #define INPUT_PIN5_PORT PORTC
 #define INPUT_PIN5_DDR  DDRC
-#define INPUT_PIN5 (1<<6)
+#define INPUT_PIN5 (1<<7)
 
 // program key
 #define INPUT_PIN6_PIN  PINC
 #define INPUT_PIN6_PORT PORTC
 #define INPUT_PIN6_DDR  DDRC
-#define INPUT_PIN6 (1<<7)
+#define INPUT_PIN6 (1<<6)
 
 // FS1 and FS2 are PF0 and PF1
 
