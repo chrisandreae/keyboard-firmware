@@ -55,7 +55,7 @@
 #include <stdarg.h>
 
 // State of active keys. Keep track of all pressed or debouncing keys.
-static key_state key_states[KEYSTATE_COUNT];
+static key_state key_states[NUM_PHYSICAL_KEYS];
 
 static keystate_change_hook keystate_change_hook_fn = 0;
 
@@ -67,10 +67,10 @@ struct {
 } keypad_state;
 
 void keystate_init(void){
-	for(uint8_t i = 0 ; i < KEYSTATE_COUNT; ++i){
-		key_states[i].l_key    = NO_KEY;
-		key_states[i].state    = 0;
-		key_states[i].debounce = 0;
+	for(physical_keycode k = 0; k < NUM_PHYSICAL_KEYS; ++k){
+		key_states[k].state    = 0;
+		key_states[k].valid    = 1;
+		key_states[k].debounce = 0;
 	}
 }
 
@@ -78,29 +78,46 @@ bool keystate_is_keypad_mode(void){
 	return (keypad_state.toggle != 0) || (keypad_state.shift_count != 0);
 }
 
-static inline void keystate_set_key(key_state* key){
+static inline logical_keycode keystate_apply_keypad_layer(physical_keycode key, bool layer){
+	if(layer){
+		key += KEYPAD_LAYER_SIZE;
+	}
+	return key;
+}
+
+static inline void keystate_set_key(physical_keycode key){
 	++key_press_count;
-	key->state = 1;
-	if(keystate_change_hook_fn) keystate_change_hook_fn(key->l_key, true);
+	key_states[key].state = 1;
+	key_states[key].valid = 1;
+
+	if(keystate_change_hook_fn){
+		logical_keycode l_key = keystate_apply_keypad_layer(key, keystate_is_keypad_mode());
+		keystate_change_hook_fn(l_key, true);
+	}
+
 	#if USE_BUZZER
 	if(config_get_flags().key_sound_enabled)
 		buzzer_start(3);
 	#endif
 }
 
-static inline uint8_t keystate_clear_key(key_state* key){
-	uint8_t old_state = key->state;
-	logical_keycode old_key = key->l_key;
+static inline uint8_t keystate_clear_key(physical_keycode key){
+	key_state old_state = key_states[key];
 
-	key->l_key = NO_KEY;
-	key->state = 0;
+	key_states[key].state = 0;
+	key_states[key].valid = 1;
 
-	if(old_state){ // if it had been pressed
+	if(old_state.state && old_state.valid){ // if it had been pressed
 		key_press_count--;
-		if(keystate_change_hook_fn) keystate_change_hook_fn(old_key, false);
+		if(keystate_change_hook_fn){
+			logical_keycode l_key = keystate_apply_keypad_layer(key, keystate_is_keypad_mode());
+			keystate_change_hook_fn(l_key, false);
+		}
+		return 1;
 	}
-
-	return old_state;
+	else {
+		return 0;
+	}
 }
 
 // Called when a keypad key (either toggle or shift) changes state. If the key
@@ -108,7 +125,7 @@ static inline uint8_t keystate_clear_key(key_state* key){
 // are no longer valid in the new mode are reset. Returns true if the keypad
 // state changed.
 static uint8_t keystate_update_keypad(hid_keycode keypad_key, uint8_t state){
-	uint8_t prev_keypad_mode = keystate_is_keypad_mode();
+	bool prev_keypad_mode = keystate_is_keypad_mode();
 
 	switch(keypad_key){
 	case SPECIAL_HID_KEY_KEYPAD_TOGGLE:
@@ -128,23 +145,19 @@ static uint8_t keystate_update_keypad(hid_keycode keypad_key, uint8_t state){
 	if(prev_keypad_mode == keypad_mode){ return false; }
 
 	// Otherwise, clear all currently tracked keys that are now no longer available
-	for(int i = 0; i < KEYSTATE_COUNT; ++i){
-		logical_keycode l_key = key_states[i].l_key;
-		hid_keycode h_key = config_get_definition(l_key);
+	for(physical_keycode p_key = 0; p_key < NUM_PHYSICAL_KEYS; ++p_key){
+		hid_keycode h_key = config_get_definition(p_key);
 
-		// if the tracked key is valid in the new mode, continue
-		if(SPECIAL_HID_KEY_NOREMAP(h_key)){
+		// if the tracked key is valid in the new mode, or key already invalidated, continue
+		if(SPECIAL_HID_KEY_NOREMAP(h_key) || !key_states[p_key].valid){
 			continue;
 		}
-		else if(keypad_mode){
-			if(l_key >= KEYPAD_LAYER_SIZE) continue; // safe
+		key_states[p_key].valid = 0;
+		key_press_count--;
+		if(keystate_change_hook_fn){
+			logical_keycode l_key = keystate_apply_keypad_layer(p_key, prev_keypad_mode);
+			keystate_change_hook_fn(l_key, false);
 		}
-		else{
-			if(l_key < KEYPAD_LAYER_SIZE) continue;
-		}
-
-		// otherwise clear the key state
-		keystate_clear_key(&key_states[i]);
 	}
 	return true;
 }
@@ -158,97 +171,64 @@ void keystate_update(void){
 
 		for(uint8_t matrix_col = 0; matrix_col < MATRIX_COLS; ++matrix_col){
 
-			// look up the logical key for the matrix code
-			// Note that only one matrix position should map to any given
-			// logical code: otherwise we won't register a keypress unless both
-			// are pressed: one position will be debouncing up and the other
-			// down.
-			logical_keycode l_key = storage_read_byte(CONSTANT_STORAGE, &matrix_to_logical_map[matrix_row][matrix_col]);
-			if(l_key == NO_KEY) goto next_matrix; // empty space in the sparse matrix
+			// look up the physical keycode for the matrix code
+			// Note that only one matrix position should map to any given code:
+			//  otherwise we won't register a keypress unless both are pressed:
+			//  one position will be debouncing up and the other down.
+			physical_keycode p_key = storage_read_byte(CONSTANT_STORAGE, &matrix_to_logical_map[matrix_row][matrix_col]);
+			if(p_key == NO_KEY) continue; // empty space in the sparse matrix
 
-			hid_keycode h_key = config_get_definition(l_key);
+			hid_keycode h_key = config_get_definition(p_key);
 			bool noremap_key = SPECIAL_HID_KEY_NOREMAP(h_key);
 
-			// Handle layer switch. No-remap (keypad and program) keys are ignored.
-			if(keystate_is_keypad_mode() && !noremap_key){
-				l_key += KEYPAD_LAYER_SIZE;
-			}
-
 			uint8_t reading = matrix_read_column(matrix_col);
+			key_state* key = &key_states[p_key];
 
-			uint8_t free_slot = NO_KEY;
+			key->debounce = DEBOUNCE_MASK & ((key->debounce << 1) | reading);
 
-			// Scan the current keystates. If we find an entry for our key, update it.
-			// if we don't, and the key is pressed, add it to a free slot.
-			for(uint8_t j = 0; j < KEYSTATE_COUNT; ++j){
-				key_state* key = &key_states[j];
-				if(free_slot == NO_KEY && key->l_key == NO_KEY){ // found a free slot
-					free_slot = j;
-				}
-				else if(key->l_key == l_key){ //found our key
-					// update the debounce mask with the current reading
-					key->debounce = DEBOUNCE_MASK & ((key->debounce << 1) | reading);
-
-					if(key->debounce == 0x00){
-						// key is not pressed (either debounced-down or never made it up), remove it
-						uint8_t old_state = keystate_clear_key(key);
-						if(old_state && noremap_key){
-							uint8_t changed = keystate_update_keypad(h_key, false);
-							if(changed){ matrix_col = 0; matrix_row = 0; }
-						}
-					}
-					else{
-						if(key->state == 0 && key->debounce == DEBOUNCE_MASK){
-							keystate_set_key(key);
-							if(noremap_key){
-								uint8_t changed = keystate_update_keypad(h_key, true);
-								if(changed){ matrix_col = 0; matrix_row = 0; }
-							}
-						}
-					}
-					goto next_matrix; // done with this reading
+			if(key->debounce == 0x00){
+				// key is not pressed (either debounced-down or never made it up), remove it
+				uint8_t old_state = keystate_clear_key(p_key);
+				if(old_state && noremap_key){
+					uint8_t changed = keystate_update_keypad(h_key, false);
+					if(changed){ matrix_col = 0; matrix_row = 0; }
 				}
 			}
-			// key was not in the state, so previously not pressed.
-			// If pressed now, record a new key if there's space.
-			if(reading && free_slot != NO_KEY){
-				key_state* key = &key_states[free_slot];
-				key->l_key = l_key;
-				key->state = 0;
-				key->debounce = 0x1;
+			else if(key->state == 0 && key->debounce == DEBOUNCE_MASK){
+				keystate_set_key(p_key);
+				if(noremap_key){
+					uint8_t changed = keystate_update_keypad(h_key, true);
+					if(changed){ matrix_col = 0; matrix_row = 0; }
+				}
 			}
-		next_matrix:;
 		}
 	}
 }
 
-static inline keycode keystate_process_keycode(logical_keycode raw_key, keycode_type ktype){
+	// needs rewrite for full state.
+	
+static inline keycode keystate_process_keycode(physical_keycode raw_key, keycode_type ktype){
 	keycode key = raw_key;
-	switch(ktype){
-	case PHYSICAL:
-		if(key >= KEYPAD_LAYER_SIZE){ key -= KEYPAD_LAYER_SIZE; }
-		break;
-	case HID:
+	if(ktype != PHYSICAL){
+		key = keystate_apply_keypad_layer(key, keystate_is_keypad_mode());
+	}
+	if(ktype == HID){
 		key = config_get_definition(key);
-		break;
-	case LOGICAL:
-		break;
 	}
 	return key;
 }
 
 bool keystate_check_key(keycode target_key, keycode_type ktype){
-	for(int i = 0; i < KEYSTATE_COUNT; ++i){
-		logical_keycode raw_key = key_states[i].l_key;
-		keycode key = keystate_process_keycode(raw_key, ktype);
-
-		if(key == target_key){
-			return key_states[i].state;
+	for(physical_keycode p_key = 0; p_key < NUM_PHYSICAL_KEYS; ++p_key){
+		if(key_states[p_key].state == 1 && key_states[p_key].valid == 1){
+			keycode key = keystate_process_keycode(p_key, ktype);
+			if(key == target_key){
+				return true;
+			}
 		}
 	}
 	return false;
 }
-
 /** returns true if all argument keys are down */
 bool keystate_check_keys(uint8_t count, keycode_type ktype, ...){
 	if(count > key_press_count) return false; // trivially know it's impossible
@@ -296,30 +276,29 @@ bool keystate_check_any_key(uint8_t count, keycode_type ktype, ...){
  */
 void keystate_get_keys(keycode* keys, keycode_type ktype){
 	int ki = 0;
-	for(int i = 0; i < KEYSTATE_COUNT && ki < key_press_count; ++i){
-		if(key_states[i].state){
-			logical_keycode raw_key = key_states[i].l_key;
-			keycode key = keystate_process_keycode(raw_key, ktype);
-
+	for(physical_keycode p_key = 0; p_key < NUM_PHYSICAL_KEYS; ++p_key){
+		if(key_states[p_key].state == 1 && key_states[p_key].valid == 1){
+			keycode key = keystate_process_keycode(p_key, ktype);
 			keys[ki++] = key;
 		}
 	}
 }
 
 void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
-	uint8_t UsedKeyCodes = 0;
+	uint8_t used_key_codes = 0;
 	uint8_t rollover = false;
 	// check key state
-	for(int i = 0; i < KEYSTATE_COUNT; ++i){
-		if(key_states[i].state){
-			if(UsedKeyCodes == KEYBOARDREPORT_KEY_COUNT){
+	for(physical_keycode p_key = 0; p_key < NUM_PHYSICAL_KEYS; ++p_key){
+		if(key_states[p_key].state == 1 && key_states[p_key].valid == 1){
+			if(used_key_codes == KEYBOARDREPORT_KEY_COUNT){
 				rollover = true;
 				break;
 			}
-			logical_keycode l_key = key_states[i].l_key;
-			hid_keycode h_key = config_get_definition(l_key);
 
-			if(h_key == SPECIAL_HID_KEY_PROGRAM) rollover = true; // Simple way to ensure program key combinations never cause typing
+			hid_keycode h_key = keystate_process_keycode(p_key, HID);
+
+			// Simple way to ensure program key combinations never cause typing
+			if(h_key == SPECIAL_HID_KEY_PROGRAM) rollover = true;
 
 			// check for special and modifier keys
 			if(h_key >= SPECIAL_HID_KEYS_START){
@@ -331,7 +310,7 @@ void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
 				KeyboardReport->Modifier |= (1 << shift);
 			}
 			else{
-				KeyboardReport->KeyCode[UsedKeyCodes++] = h_key;
+				KeyboardReport->KeyCode[used_key_codes++] = h_key;
 			}
 		}
 	}
@@ -383,10 +362,10 @@ void keystate_Fill_MouseReport(MouseReport_Data_t* MouseReport){
 
 	// check key state
 	int moving = 0;
-	for(int i = 0; i < KEYSTATE_COUNT; ++i){
-		if(key_states[i].state){
-			logical_keycode l_key = key_states[i].l_key;
-			hid_keycode h_key = config_get_definition(l_key);
+	for(physical_keycode p_key = 0; p_key < NUM_PHYSICAL_KEYS; ++p_key){
+		if(key_states[p_key].state == 1 && key_states[p_key].valid == 1){
+			hid_keycode h_key = keystate_process_keycode(p_key, HID);
+
 			if(h_key >= SPECIAL_HID_KEYS_MOUSE_START && h_key <= SPECIAL_HID_KEYS_MOUSE_END){
 				switch(h_key){
 				case SPECIAL_HID_KEY_MOUSE_BTN1:
@@ -434,37 +413,17 @@ void keystate_Fill_MouseReport(MouseReport_Data_t* MouseReport){
 		mousedown_time = 1;
 }
 
-hid_keycode keystate_check_hid_key(hid_keycode key){
-	for(int i = 0; i < KEYSTATE_COUNT; ++i){
-		if(key_states[i].state){
-			logical_keycode l_key = key_states[i].l_key;
-			hid_keycode h_key = config_get_definition(l_key);
-			if(key == 0 || key == h_key) return h_key;
-		}
-	}
-	return 0xFF;
-}
-
-/**
- * writes up to key_press_count currently pressed HID keycodes to the
- * output buffer keys. If exclude_special is set, do not write any
- * special keycodes. Returns number of keycodes written.
- */
-int keystate_get_hid_keys(hid_keycode* h_keys, bool exclude_special){
-	int ki = 0;
-	for(int i = 0; i < KEYSTATE_COUNT && ki < key_press_count; ++i){
-		if(key_states[i].state){
-			logical_keycode l_key = key_states[i].l_key;
-			hid_keycode h_key = config_get_definition(l_key);
-			if(exclude_special && h_key >= SPECIAL_HID_KEYS_START){
-				continue;
+hid_keycode keystate_check_hid_key(hid_keycode target_key){
+	for(physical_keycode p_key = 0; p_key < NUM_PHYSICAL_KEYS; ++p_key){
+		if(key_states[p_key].state == 1 && key_states[p_key].valid == 1){
+			keycode h_key = keystate_process_keycode(p_key, HID);
+			if(h_key == 0 || h_key == target_key){
+				return h_key;
 			}
-			h_keys[ki++] = h_key;
 		}
 	}
-	return ki;
+	return NO_KEY;
 }
-
 
 void keystate_register_change_hook(keystate_change_hook hook){
 	keystate_change_hook_fn = hook;

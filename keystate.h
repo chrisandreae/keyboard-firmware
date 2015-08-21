@@ -54,18 +54,17 @@
 // A raw keyboard matrix code maps to a index in the (keyboard specific) logical key positions table.
 // We then look up a HID keycode for this position using the key_defaults/key_config tables.
 typedef uint8_t keycode;
+typedef keycode physical_keycode;
 typedef keycode logical_keycode;
 typedef keycode hid_keycode;
 
 typedef struct _key_state {
-	logical_keycode l_key;
 	unsigned char state:1;
-	unsigned char debounce:7; // bit vector of last n physical reports: debounced state asserted when they're all the same
+	unsigned char valid:1;
+	unsigned char debounce:6; // bit vector of last n physical reports: debounced state asserted when they're all the same
 } key_state;
 
 // constants
-
-#define KEYSTATE_COUNT 14 // maximum keys we track at once
 
 #define DEBOUNCE_MASK 0x07 // care about last 3 physical reports
 
@@ -143,13 +142,6 @@ void keystate_Fill_MouseReport(MouseReport_Data_t* MouseReport);
  * NO_KEY.
  */
 hid_keycode keystate_check_hid_key(hid_keycode key);
-
-/**
- * Writes up to key_press_count currently pressed HID keycodes to the
- * output buffer keys. If exclude_special is set, do not write any
- * special keycodes. Returns number of keycodes written.
- */
-int keystate_get_hid_keys(hid_keycode* h_keys, bool exclude_special);
 
 /**
  * Check for keys bound to programs, if found call vm_start
