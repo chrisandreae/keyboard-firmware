@@ -144,14 +144,29 @@ static uint8_t keystate_update_keypad(hid_keycode keypad_key, uint8_t state){
 
 	if(prev_keypad_mode == keypad_mode){ return false; }
 
-	// Otherwise, clear all currently tracked keys that are now no longer available
+	// Otherwise, invalidate all currently tracked keys that are now no longer available
 	for(physical_keycode p_key = 0; p_key < NUM_PHYSICAL_KEYS; ++p_key){
-		hid_keycode h_key = config_get_definition(p_key);
-
-		// if the tracked key is valid in the new mode, or key already invalidated, continue
-		if(SPECIAL_HID_KEY_NOREMAP(h_key) || !key_states[p_key].valid){
+		// ignore untracked and invalidated
+		if(key_states[p_key].state == 0 || key_states[p_key].valid == 0){
 			continue;
 		}
+		logical_keycode prev_key = keystate_apply_keypad_layer(p_key, prev_keypad_mode);
+		hid_keycode prev_h_key   = config_get_definition(prev_key);
+
+		// ignore special keys that don't participate in layers
+		if(SPECIAL_HID_KEY_NOREMAP(prev_h_key)){
+			continue;
+		}
+
+		logical_keycode new_key  = keystate_apply_keypad_layer(p_key, keypad_mode);
+		hid_keycode new_h_key    = config_get_definition(new_key);
+
+		// if the tracked key is valid in the new mode, continue
+		if(prev_h_key == new_h_key){
+			continue;
+		}
+
+		// otherwise invalidate
 		key_states[p_key].valid = 0;
 		key_press_count--;
 		if(keystate_change_hook_fn){
@@ -186,7 +201,7 @@ void keystate_update(void){
 
 			key->debounce = DEBOUNCE_MASK & ((key->debounce << 1) | reading);
 
-			if(key->debounce == 0x00){
+			if(key->state == 1 && key->debounce == 0x00){
 				// key is not pressed (either debounced-down or never made it up), remove it
 				uint8_t old_state = keystate_clear_key(p_key);
 				if(old_state && noremap_key){
