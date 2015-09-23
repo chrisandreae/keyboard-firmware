@@ -16,16 +16,12 @@ import Data.List
 import Data.Int
 
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 
-import Control.Monad.State(State)
 import qualified Control.Monad.State as State
 
-import Data.Map(Map)
-import qualified Data.Map as Map
 
 import Data.Graph.Inductive.Graph
-import Data.Graph.Inductive.Basic
 import Data.Graph.Inductive.PatriciaTree -- implementation: provides Gr
 
 -- Blocked IR

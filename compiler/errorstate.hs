@@ -1,15 +1,13 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module ErrorState where
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.State
 
-import Errors
-
-newtype ThrowsState et st a = ThrowsState { unThrowsState :: ErrorT et (State st) a }
-                  deriving (Monad, MonadState st, MonadError et, MonadPlus, Functor)
+newtype ThrowsState et st a = ThrowsState { unThrowsState :: ExceptT et (State st) a }
+                  deriving (Applicative, Monad, MonadState st, MonadError et, Functor)
 
 runThrowsState :: st -> ThrowsState et st a -> ((Either et a), st)
-runThrowsState st x = runState (runErrorT $ unThrowsState x) st
+runThrowsState st x = runState (runExceptT $ unThrowsState x) st
 
 execThrowsState :: st -> ThrowsState et st a -> Either et st
 execThrowsState st x = let (result, resultState) = runThrowsState st x
@@ -28,8 +26,8 @@ instance MonadTrans (ThrowsState et) where
 -- then using our functions from Monad and MonadError: (liftThrows =
 -- either throwError return)
 liftThrows :: Either et b -> ThrowsState et st b
-liftThrows = ThrowsState . ErrorT . return
+liftThrows = ThrowsState . ExceptT . return
 
-guardError :: Error et => et -> Bool -> ThrowsState et st ()
+guardError :: et -> Bool -> ThrowsState et st ()
 guardError _ True = return ()
 guardError e False = throwError e

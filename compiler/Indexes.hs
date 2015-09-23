@@ -1,11 +1,8 @@
 module Indexes where
-import BasicTypes
 import Errors
-import ErrorState
 
 import Text.Printf
-import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 
 import Data.Map(Map)
 import qualified Data.Map as Map
@@ -20,7 +17,8 @@ mapLookup s k = (maybeToError (MapLookupError s (show k))) . (Map.lookup k)
 
 nestedMapLookup :: (Ord a, Show a) => String -> a -> [(Map a b)] -> ThrowsError b
 nestedMapLookup s k [] = throwError $ MapLookupError s (show k)
-nestedMapLookup s k (m:ms) = (mapLookup s k m) `mplus` (nestedMapLookup s k ms) -- mplus for Either e selects the second argument if the first fails
+nestedMapLookup s k (m:ms) = (mapLookup s k m)
+                             `catchError` (\_ -> nestedMapLookup s k ms)
 
 -- Index type (int-indexed map with append)
 

@@ -12,7 +12,7 @@ import Data.Int
 
 import Data.Maybe
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 
 import Control.Monad.State(State)
 import qualified Control.Monad.State as State
@@ -366,8 +366,8 @@ buildTExpression :: Expression -> ThrowsBindingState TExpression
 
 buildTExpression e@(Assignment (VariableAccess varName) e2) = do
   (tStor, typ) <- (lookupLocalVar varName >>= mkStor TLocalStore)
-                  `mplus` (lookupGlobalVar varName >>= mkStor TGlobalStore)
-                  `mplus` (throwError $ UndefinedVarError varName (show e))
+                  `catchError` (\_ -> lookupGlobalVar varName >>= mkStor TGlobalStore)
+                  `catchError` (\_ -> throwError $ UndefinedVarError varName (show e))
   tE2' <- buildTExpression e2 >>= typePromoteCheck typ
   return $ tStor tE2'
   where
@@ -435,8 +435,8 @@ buildTExpression (ByteLiteral val) = do
 
 buildTExpression (VariableAccess varName) = do
   (lookupLocalVar varName >>= mkLoad TLocalLoad)
-  `mplus` (lookupGlobalVar varName >>= mkLoad TGlobalLoad)
-  `mplus` (throwError $ UndefinedVarError varName "context not implemented")
+  `catchError` (\_ -> lookupGlobalVar varName >>= mkLoad TGlobalLoad)
+  `catchError` (\_ -> throwError $ UndefinedVarError varName "context not implemented")
   where
     mkLoad constr (TVariable vid typ) = return $ constr typ vid
 
@@ -448,7 +448,9 @@ buildTExpression m@(MethodInvocation methName args) = do
   return $ constr tArgs'
   where
     resolveInvocation :: Ident -> ThrowsBindingState (([TExpression] -> TExpression), [Type])
-    resolveInvocation mName = resolveMethod mName `mplus` resolveSyscall mName `mplus` (throwError $ UndefinedMethodError methName (show m))
+    resolveInvocation mName = resolveMethod mName
+                                `catchError` \_ -> (resolveSyscall mName)
+                                `catchError` \_ -> (throwError $ UndefinedMethodError methName (show m))
     resolveMethod mName = do
       (TMethod mId retType argTypes _ _ _) <- lookupMethod mName
       return ((TMethodCall retType mId), argTypes)
