@@ -60,6 +60,32 @@
 // configuration program over USB to identify the layout.
 #define LAYOUT_ID 2
 
+/* Storage layout */
+#define CONSTANT_STORAGE           avr_pgm
+#define MAPPING_STORAGE            avr_eeprom
+
+#ifdef NO_EXTERNAL_STORAGE
+	#define SAVED_MAPPING_STORAGE      avr_eeprom
+	#define SAVED_MAPPING_COUNT        128          // 2-byte entries
+	#define MACRO_INDEX_STORAGE        avr_eeprom
+	#define MACRO_INDEX_COUNT          10           // 6-byte entries
+	#define MACROS_STORAGE             avr_eeprom
+	#define MACROS_SIZE                256
+	#define PROGRAM_STORAGE            avr_eeprom
+	#define PROGRAM_SIZE               256
+	#define PROGRAM_COUNT              2
+#else
+	#define SAVED_MAPPING_STORAGE      avr_eeprom
+	#define SAVED_MAPPING_COUNT        256          // 2-byte entries
+	#define MACRO_INDEX_STORAGE        avr_eeprom
+	#define MACRO_INDEX_COUNT          50           // 6-byte entries
+	#define MACROS_STORAGE             i2c_eeprom
+	#define MACROS_SIZE                1024
+	#define PROGRAM_STORAGE            i2c_eeprom
+	#define PROGRAM_SIZE               1024
+	#define PROGRAM_COUNT              6
+#endif
+
 #define NUM_PHYSICAL_KEYS 76
 #define NUM_LOGICAL_KEYS  NUM_PHYSICAL_KEYS * 2
 #define KEYPAD_LAYER_SIZE NUM_PHYSICAL_KEYS

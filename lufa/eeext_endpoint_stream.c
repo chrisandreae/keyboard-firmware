@@ -1,10 +1,7 @@
 #include "storage/i2c_eeprom.h"
 
-static uint8_t i2c_eeprom_read_byte(const uint8_t* addr){
-	uint8_t b;
-	i2c_eeprom_read(addr, &b, 1);
-	return b;
-}
+// Uses i2c_eeprom private write start function
+i2c_eeprom_err i2c_eeprom_start_write(void*);
 
 // i2c_eeprom_write_step will only start a write when starting a page. If the
 // caller isn't starting a page, it needs to start the write itself.

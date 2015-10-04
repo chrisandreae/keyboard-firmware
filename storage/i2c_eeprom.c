@@ -64,7 +64,7 @@
  * eeprom. If the eeprom is not responding, keep trying for up to the
  * eeprom write delay in case it is busy.
  */
-static i2c_eeprom_err i2c_eeprom_start_write(void* addr){
+i2c_eeprom_err i2c_eeprom_start_write(void* addr){
 	const intptr_t iaddr = (intptr_t) addr;
 
 	// [ 1 | A2 | A1 | A0 | B2 | B1 | B0 | R/W ] A0-2 = device address, B0-2 = 3 MSB of 11-bit device address

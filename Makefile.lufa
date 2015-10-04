@@ -142,7 +142,10 @@ SRC = $(TARGET).c                                                 \
 	  printing.c												  \
 	  keystate.c												  \
 	  config.c													  \
-	  serial_eeprom.o											  \
+	  storage.o													  \
+	  storage/i2c_eeprom.o										  \
+	  storage/avr_eeprom.o										  \
+	  storage/avr_pgm.o											  \
 	  buzzer.c													  \
 	  leds.c													  \
 	  hardware.c												  \

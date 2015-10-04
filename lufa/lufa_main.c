@@ -161,7 +161,7 @@ void EVENT_USB_Device_ControlRequest(void)
 		// Read requests
 		switch(USB_ControlRequest.bRequest){
 		case READ_NUM_PROGRAMS:
-			Endpoint_Write_8(NUM_PROGRAMS);
+			Endpoint_Write_8(PROGRAM_COUNT);
 			goto end_write;
 		case READ_LAYOUT_ID:
 			Endpoint_Write_8(LAYOUT_ID);
@@ -178,7 +178,7 @@ void EVENT_USB_Device_ControlRequest(void)
 			Endpoint_Write_8(MACRO_MAX_KEYS);
 			goto end_write;
 		case READ_PROGRAMS_SIZE:
-			Endpoint_Write_16_LE(PROGRAMS_SIZE);
+			Endpoint_Write_16_LE(PROGRAM_SIZE);
 			goto end_write;
 		case READ_MACRO_INDEX_SIZE:
 			Endpoint_Write_16_LE(MACRO_INDEX_SIZE);
