@@ -254,6 +254,7 @@ CFLAGS += -Wall
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wno-unused-but-set-variable
 CFLAGS += -Werror=implicit-function-declaration
+CFLAGS += -fwrapv
 #CFLAGS += -mshort-calls
 #CFLAGS += -fno-unit-at-a-time
 #CFLAGS += -Wundef

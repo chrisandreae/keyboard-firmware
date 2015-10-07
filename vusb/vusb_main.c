@@ -368,6 +368,7 @@ int main(void) {
 	}
 	usbDeviceConnect();
 
+	sei();
 	Keyboard_Main();
 }
 

@@ -61,7 +61,6 @@
 
 #include "sort.h"
 
-#include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -97,8 +96,6 @@ void __attribute__((noreturn)) Keyboard_Main(void)
 	keystate_init();
 	config_init();
 	vm_init();
-
-	sei();
 
 	// Low pitched buzz on startup
 	buzzer_start_f(200, 200);

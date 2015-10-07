@@ -55,7 +55,6 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <avr/eeprom.h>
 #include <util/delay.h>
 
 // The macro data itself is in external eeprom

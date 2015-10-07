@@ -46,6 +46,15 @@
 
 #include "keystate.h"
 
+// Use Obdev's free usb id for keyboards discriminated by serial number
+#define USB_VENDOR_ID  0x16c0
+#define USB_PRODUCT_ID 0x27db
+
+// But define different descriptive strings
+#define USB_MANUFACTURER_STRING L"andreae.gen.nz"
+#define USB_PRODUCT_STRING L"Programmable USB Keyboard"
+#define USB_SERIAL_NUMBER_STRING L"andreae.gen.nz:kinesis"
+
 // Unique identifier representing this keyboard's layout and
 // definition of logical_keycode values.  Is reported to the
 // configuration program over USB to identify the layout.

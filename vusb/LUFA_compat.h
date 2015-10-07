@@ -6,6 +6,8 @@
 #ifndef __LUFA_COMPAT_H
 #define __LUFA_COMPAT_H
 
+#include <stddef.h>
+
 #define ATTR_PACKED __attribute__((packed))
 #include <stdint.h>
 
@@ -170,7 +172,7 @@ typedef struct
 {
 	USB_Descriptor_Header_t Header;
 
-#if 0 // (ARCH == ARCH_AVR8)
+#if (ARCH == ARCH_AVR8)
 	wchar_t  UnicodeString[];
 #else
 	uint16_t UnicodeString[];

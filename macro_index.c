@@ -59,7 +59,6 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <avr/eeprom.h>
 #include <util/delay.h>
 
 // The macro lookup index is in internal eeprom

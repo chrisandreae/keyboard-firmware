@@ -20,7 +20,7 @@ F_CPU   = 16000000	# in Hz
 AVRDUDE = avrdude -c usbasp -p $(AVRDUDE_DEVICE) # edit this line for your programmer
 
 CFLAGS  = -I. -Ivusb -Ivusb/usbdrv -DDEBUG_LEVEL=0 -DHARDWARE_VARIANT=$(HARDWARE_VARIANT) -DBUILD_FOR_VUSB -std=gnu99 -ffunction-sections
-CFLAGS += -fshort-enums -fno-strict-aliasing -fpack-struct -funsigned-bitfields
+CFLAGS += -fshort-enums -fno-strict-aliasing -fpack-struct -funsigned-bitfields -fshort-wchar -fwrapv
 
 ifneq ($(HAS_EXTERNAL_STORAGE),1)
   CFLAGS += -DNO_EXTERNAL_STORAGE

@@ -59,7 +59,6 @@
 #include "storage.h"
 
 #include <stdlib.h>
-#include <avr/eeprom.h>
 #include <util/delay.h>
 
 // Eeprom sentinel value - if this is not set at startup, re-initialize the eeprom.

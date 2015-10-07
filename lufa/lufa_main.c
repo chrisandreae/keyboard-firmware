@@ -34,6 +34,11 @@
 
 #include "Keyboard.h"
 
+#include <avr/io.h>
+#include <avr/wdt.h>
+#include <avr/power.h>
+#include <avr/interrupt.h>
+
 #include <LUFA/Version.h>
 #include <LUFA/Drivers/USB/USB.h>
 
@@ -95,6 +100,7 @@ int main(void) {
 
 	USB_Init();
 
+	sei();
 
 	// and enter the keyboard loop
 	Keyboard_Main();
