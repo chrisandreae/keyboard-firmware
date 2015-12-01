@@ -268,7 +268,7 @@ scheduleBlocks graph = do
 
 -- DFS always choosing default edges first - Not an ideal ordering, but fine for now
 orderBlocks :: IRGraph a -> [Node]
-orderBlocks = xdfsWith edgeSelFn node' [1]
+orderBlocks = xdfsWith edgeSelFn node' [0]
   where
     edgeSelFn :: CFun (IRBlock a) IREdge [Node]
     edgeSelFn = (map fst) . lsucSort . lsuc'
