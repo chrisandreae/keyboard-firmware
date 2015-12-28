@@ -98,7 +98,7 @@ static const char *usages[] = {
 	"Kpd3",                           // 0x5b
 	"Kpd4",                           // 0x5c
 	"Kpd5",                           // 0x5d
-	"Kpd5",                           // 0x5e
+	"Kpd6",                           // 0x5e
 	"Kpd7",                           // 0x5f
 	"Kpd8",                           // 0x60
 	"Kpd9",                           // 0x61
