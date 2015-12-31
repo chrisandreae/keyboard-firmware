@@ -176,7 +176,7 @@ static const QString nameInstruction(uint8_t opcode) {
 		return "INVALID_OPCODE";
 }
 
-QString Program::prettyPrintInstruction(const char **p) {
+QString Program::prettyPrintInstruction(const char **p, unsigned rp) {
 	uint8_t opcode = *(*p)++;
 	QString result = nameInstruction(opcode);
 	switch (opcode) {
@@ -196,6 +196,7 @@ QString Program::prettyPrintInstruction(const char **p) {
 			break;
 		}
 	case SCONST:
+		rp = 0;
 	case IFEQ:
 	case IFNE:
 	case IFLT:
@@ -206,7 +207,7 @@ QString Program::prettyPrintInstruction(const char **p) {
 			uint16_t value;
 			memcpy(&value, *p, sizeof(value));
 			*p += sizeof(value);
-			result += " " + QString::number(value, 16);
+			result += " " + QString::number(rp+value, 16);
 			break;
 		}
 
@@ -215,12 +216,7 @@ QString Program::prettyPrintInstruction(const char **p) {
 			int16_t jumpOffset;
 			memcpy(&jumpOffset, *p, sizeof(jumpOffset));
 			*p += sizeof(jumpOffset);
-			result += " ";
-			if (jumpOffset < 0) {
-				jumpOffset = -jumpOffset;
-				result += "-";
-			}
-			result += QString::number(jumpOffset, 16);
+			result += " " + QString::number(rp+jumpOffset, 16);
 			break;
 		}
 
@@ -262,13 +258,14 @@ QString Program::disassemble(const QByteArray& programData) {
 		const char *codePtr = codeStart;
 		while (codePtr < codeEnd) {
 			const char *nextInstruction = codePtr;
-			QString prettyInstruction = Program::prettyPrintInstruction(&nextInstruction);
+			const unsigned codeOffset = codePtr - codeStart;
+			QString prettyInstruction = Program::prettyPrintInstruction(&nextInstruction, codeOffset);
 			QString bytes;
 			for (const char *p = codePtr; p < nextInstruction; ++p) {
 				bytes += QString("%1 ").arg((uint8_t) *p, 2, 16, QLatin1Char('0'));
 			}
 			programDump += QString("%1: %2 %3\n")
-				.arg(codePtr - codeStart, 8, 16, QLatin1Char('0'))
+				.arg(codeOffset, 8, 16, QLatin1Char('0'))
 				.arg(bytes, -15)
 				.arg(prettyInstruction);
 

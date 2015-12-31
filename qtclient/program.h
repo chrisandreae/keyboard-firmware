@@ -35,7 +35,7 @@ public:
 	static QList<Program> readPrograms(const QByteArray& programData, int nPrograms);
 	static QByteArray encodePrograms(const QList<Program>& programs, int nPrograms, int maxSize);
 
-	static QString prettyPrintInstruction(const char **p);
+	static QString prettyPrintInstruction(const char **p, unsigned rp);
 	static QString disassemble(const QByteArray& programData);
 
 	int length() const {
