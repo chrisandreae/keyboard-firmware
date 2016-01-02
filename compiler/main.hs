@@ -3,7 +3,6 @@ import Parser
 import TypedAST
 import BlockIR
 import Output
-import Errors
 
 import System.IO
 import System.Environment
@@ -16,6 +15,7 @@ data Opts = Opts {
   verbose :: Integer
 } deriving (Show)
 
+defaultOpts :: Opts
 defaultOpts = Opts { outputFile = "a.out", verbose = 0 }
 
 options :: [OptDescr (Opts -> Opts)]
@@ -31,6 +31,7 @@ getOptions = do
     (o, n, []  ) -> return (foldl (flip ($)) defaultOpts o, n)
     (_, _, errs) -> ioError (userError (concat errs ++ usageInfo "Usage: keyc [OPTION...] files..." options))
 
+main :: IO ()
 main = do
   (opts, sources) <- getOptions
   when (sources == []) $ ioError (userError $ usageInfo "Usage: keyc [OPTION...] files..." options)
@@ -45,15 +46,13 @@ main = do
     code     <- return $ binaryProgram bytecode
     return (optast, ir, bytecode, code)
 
-  -- handle error
-  when (isError result) $ ioError $ userError $ show $ extractError result
+  case result of
+    Left e -> ioError $ userError $ show e
+    Right (optast, ir, bytecode, code) -> do
+      when (verbose opts > 1) $ putStrLn "======= AST =======" >> print optast
+      when (verbose opts > 0) $ putStrLn "======= IR =======" >> print ir
+      when (verbose opts > 2) $ putStrLn "======= Bytecode =======" >> print bytecode
 
-  let (optast, ir, bytecode, code) = extractValue result
-
-  when (verbose opts > 1) $ putStrLn "======= AST =======" >> print optast
-  when (verbose opts > 0) $ putStrLn "======= IR =======" >> print ir
-  when (verbose opts > 2) $ putStrLn "======= Bytecode =======" >> print bytecode
-
-  outFile <- openBinaryFile (outputFile opts) WriteMode
-  B.hPut outFile code
-  hClose outFile
+      outFile <- openBinaryFile (outputFile opts) WriteMode
+      B.hPut outFile code
+      hClose outFile

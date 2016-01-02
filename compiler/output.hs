@@ -29,12 +29,14 @@ import qualified Data.ByteString.Lazy as B
 data BytecodeProgram = BytecodeProgram Word8 [BytecodeMethod] -- nglobals, methods
 
 instance Show BytecodeProgram where
-  show (BytecodeProgram nGlobals meths) = printf "globals size: %d bytes\n methods:\n\n%s" nGlobals (unlines $ map show meths)
+  show (BytecodeProgram nGlobals meths) =
+    printf "globals size: %d bytes\n methods:\n\n%s" nGlobals (unlines $ map show meths)
 
 data BytecodeMethod = BytecodeMethod Word8 Word8 [Bytecode] -- nlocals, argSize, body
 
 instance Show BytecodeMethod where
-  show (BytecodeMethod nLocals argBytes insns) = printf "=============\nargs size: %d\nlocals size: %d\n\n%s" argBytes nLocals (unlines $ map show insns)
+  show (BytecodeMethod nLocals argBytes insns) =
+    printf "=============\nargs size: %d\nlocals size: %d\n\n%s" argBytes nLocals (unlines $ map show insns)
 
 
 data Bytecode = ImmediateByte Word8
@@ -172,14 +174,16 @@ allocateVarSlots :: [IRVariable] -> (VarAllocation, Word8)
 allocateVarSlots idx = foldl addVar (IntMap.empty, 0) idx
   where
     addVar :: (VarAllocation, Word8) -> IRVariable -> (VarAllocation, Word8)
-    addVar (map, nVars) (TVariable id typ) = ((IntMap.insert id (fromIntegral nVars, typ) map), (nVars + typeSize typ))
+    addVar (m, nVars) (TVariable i typ) =
+      ((IntMap.insert i (fromIntegral nVars, typ) m), (nVars + typeSize typ))
     typeSize Byte  = 1
     typeSize Short = 2
 
 varLookup :: VarAllocation -> Int -> ThrowsError (Int, Type)
 varLookup vs i = maybeToError (MapLookupError "VariableAllocation" (show i)) $ IntMap.lookup i vs
 
--- monad versions of ufold and gmap (note that different from definitions in D.G.I.Monad - correspond to foldM etc)
+-- monad versions of ufold and gmap
+--   (note that different from definitions in D.G.I.Monad - correspond to foldM etc)
 
 ufoldM :: (Graph gr, Monad m) => ((Context a b) -> c -> m c) -> c -> gr a b -> m c
 -- ufoldM f acc g | isEmpty g = return acc
@@ -202,10 +206,11 @@ nmapM f = gmapM (\(p,v,l,s) -> do { l' <- f l; return (p, v, l', s) })
 binaryProgram :: BytecodeProgram -> ByteString
 binaryProgram (BytecodeProgram nGlobals meths) =
   let (index, programData) = calculateMethods 0 meths
-  in (B.pack [nGlobals, fromIntegral $ length meths]) `B.append` (B.concat index) `B.append` (B.concat programData)
+  in (B.pack [nGlobals, fromIntegral $ length meths]) `B.append`
+       (B.concat index) `B.append` (B.concat programData)
   where
     calculateMethods ::  Word16 -> [BytecodeMethod] -> ([ByteString], [ByteString])
-    calculateMethods pos [] = ([], [])
+    calculateMethods _ [] = ([], [])
     calculateMethods pos ((BytecodeMethod nLocals argSize body):rest) =
       let l = fromIntegral $ length body
           offsetL = lowByte $ fromIntegral pos
@@ -223,8 +228,9 @@ outputProgram (IRProgram meths vars) = do
   return $ BytecodeProgram nGlobals methods
 
 outputMethod :: VarAllocation -> IRMethod IRInstruction -> ThrowsError BytecodeMethod
-outputMethod globalMap (IRMethod id aTypes graph vars) = do
-  let (localMap, nLocals) = allocateVarSlots (indexElems vars) -- improve later with liveness analysis + graph coloring
+outputMethod globalMap (IRMethod _ aTypes graph vars) = do
+  -- improve later with liveness analysis + graph coloring
+  let (localMap, nLocals) = allocateVarSlots (indexElems vars)
   bcGraph <- nmapM (outputBlock globalMap localMap) graph
   -- now traverse the graph building up the code as we go
   bytecodes <- scheduleBlocks bcGraph
@@ -236,9 +242,9 @@ outputMethod globalMap (IRMethod id aTypes graph vars) = do
       sizeOf Short = 2
 
 scheduleBlocks :: IRGraph Bytecode -> ThrowsError [Bytecode]
-scheduleBlocks graph = do
-  let nodeOrder = orderBlocks graph
-      (placement, instructions) = scheduleBlocks' nodeOrder IntMap.empty 0 graph
+scheduleBlocks inGraph = do
+  let nodeOrder = orderBlocks inGraph
+      (placement, instructions) = scheduleBlocks' nodeOrder IntMap.empty 0 inGraph
   return $ handleRelocations placement 0 instructions
   where
     -- place blocks from the argument list, recording their placement and adding links:
@@ -250,7 +256,8 @@ scheduleBlocks graph = do
             linkages = map (linkage rest) sucs
             blockData = concat (bytecodes : linkages)
             blockLength = length blockData
-            (placement', restData) = scheduleBlocks' rest (IntMap.insert node pos placement) (pos + blockLength) graph
+            (placement', restData) =
+              scheduleBlocks' rest (IntMap.insert node pos placement) (pos + blockLength) graph
         in (placement', blockData ++ restData)
     -- for DefaultEdge, if it's the next block, no link otherwise GOTO
     -- for ConditionalEdge, a conditional jump
@@ -263,7 +270,9 @@ scheduleBlocks graph = do
     handleRelocations placement pos ((Relocation n):NOP:rest) =
       let targetPos = fromJust $ IntMap.lookup n placement
           offset = fromIntegral $ targetPos - (pos - 1) -- from the jump instruction, not the reloc itself
-      in (ImmediateByte $ lowByte offset) : (ImmediateByte $ highByte offset) : handleRelocations placement (pos + 2) rest
+      in (ImmediateByte $ lowByte offset) :
+           (ImmediateByte $ highByte offset) :
+           handleRelocations placement (pos + 2) rest
     handleRelocations placement pos (h:rest) = h : handleRelocations placement (pos+1) rest
 
 -- DFS always choosing default edges first - Not an ideal ordering, but fine for now
@@ -285,33 +294,35 @@ outputBlock gVars lVars (IRBlock instructions) = do
 
 outputInstruction :: VarAllocation -> VarAllocation -> [Bytecode] -> IRInstruction -> ThrowsError [Bytecode]
 
-outputInstruction _ lVars rest (IRStore id) = do
-  (varSlot, varType) <- varLookup lVars id
+outputInstruction _ lVars rest (IRStore i) = do
+  (varSlot, varType) <- varLookup lVars i
   return $ if varSlot < 4
            then (STORE_n varType varSlot) : rest
            else (ImmediateByte $ fromIntegral varSlot) : (STORE varType) : rest
 
-outputInstruction _ lVars rest (IRLoad id) = do
-  (varSlot, varType) <- varLookup lVars id
+outputInstruction _ lVars rest (IRLoad i) = do
+  (varSlot, varType) <- varLookup lVars i
   return $ if varSlot < 4
            then (LOAD_n varType varSlot) : rest
            else (ImmediateByte $ fromIntegral varSlot) : (LOAD varType) : rest
 
-outputInstruction gVars _ rest (IRGLoad id) = do
-  (varSlot, varType) <- varLookup gVars id
+outputInstruction gVars _ rest (IRGLoad i) = do
+  (varSlot, varType) <- varLookup gVars i
   return $ (ImmediateByte $ fromIntegral varSlot) : (GLOAD varType) : rest
 
-outputInstruction gVars _ rest (IRGStore id) = do
-  (varSlot, varType) <- varLookup gVars id
+outputInstruction gVars _ rest (IRGStore i) = do
+  (varSlot, varType) <- varLookup gVars i
   return $ (ImmediateByte $ fromIntegral varSlot) : (GLOAD varType) : rest
 
-outputInstruction _ _ rest (IRBConst b) = return $ if b >= 0 && b < 4
-                                                   then (BCONST_n b) : rest
-                                                   else (ImmediateByte $ byte b) : BCONST : rest
+outputInstruction _ _ rest (IRBConst b) =
+  return $ if b >= 0 && b < 4
+           then (BCONST_n b) : rest
+           else (ImmediateByte $ byte b) : BCONST : rest
 
-outputInstruction _ _ rest (IRSConst s) = return $ if s >= 0 && s < 4
-                                                   then (SCONST_n s) : rest
-                                                   else (ImmediateByte (highByte s)) : (ImmediateByte (lowByte s)) : SCONST : rest
+outputInstruction _ _ rest (IRSConst s) =
+ return $ if s >= 0 && s < 4
+          then (SCONST_n s) : rest
+          else (ImmediateByte (highByte s)) : (ImmediateByte (lowByte s)) : SCONST : rest
 
 outputInstruction _ _ rest (IRDup typ)  = return $ (DUP typ) : rest
 outputInstruction _ _ rest (IRPop typ)  = return $ (POP typ) : rest
@@ -333,7 +344,7 @@ outputInstruction _ _ rest (IRArith typ IRRshift)     = return $ (RSHIFT typ) : 
 outputInstruction _ _ rest IRB2S = return $ B2S : rest
 outputInstruction _ _ rest IRS2B = return $ S2B : rest
 
-outputInstruction _ _ rest (IRCall id) = return $ (ImmediateByte $ fromIntegral id) : CALL : rest
+outputInstruction _ _ rest (IRCall i) = return $ (ImmediateByte $ fromIntegral i) : CALL : rest
 
 outputInstruction _ _ rest (IRSyscall op) = return $ (SYSCALL op) : rest
 

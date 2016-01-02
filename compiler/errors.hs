@@ -1,5 +1,4 @@
 module Errors where
-import Control.Monad.Except
 import BasicTypes
 
 -- Error handling
@@ -53,24 +52,12 @@ instance Show CompileError where
   showsPrec d (NoMainError)             = showHdr d "NoReturnError" $ showString "(missing function main)"
 
 
-noMsg :: CompileError
-noMsg = DefaultError "An error has occured"
-
 type ThrowsError = Either CompileError
 
-extractValue :: ThrowsError a -> a
-extractValue (Right val) = val
+maybeToError :: e -> Maybe a -> Either e a
+maybeToError _ (Just x)  = Right x
+maybeToError c (Nothing) = Left c
 
-extractError :: ThrowsError a -> CompileError
-extractError (Left val) = val
-
-maybeToError :: (MonadError e m) => e -> Maybe a -> m a
-maybeToError _ (Just x)  = return x
-maybeToError c (Nothing) = throwError c
-
-errorToMaybe :: ThrowsError a -> Maybe a
-errorToMaybe (Right val) = Just val
-errorToMaybe (Left _)    = Nothing
 
 isError :: ThrowsError a -> Bool
 isError (Right _) = False
