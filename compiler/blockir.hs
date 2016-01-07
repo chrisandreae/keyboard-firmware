@@ -16,16 +16,11 @@ import Data.List
 import Data.Int
 
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 
-import Control.Monad.State(State)
 import qualified Control.Monad.State as State
 
-import Data.Map(Map)
-import qualified Data.Map as Map
-
 import Data.Graph.Inductive.Graph
-import Data.Graph.Inductive.Basic
 import Data.Graph.Inductive.PatriciaTree -- implementation: provides Gr
 
 -- Blocked IR
@@ -88,7 +83,9 @@ instance Show a => Show (IRProgram a) where
   show (IRProgram meths vars) = "Methods:\n" ++ (show meths) ++ "Global Variables:\n"  ++ (show vars)
 
 instance Show a => Show (IRMethod a) where
-  show (IRMethod id types blocks locals) = printf "=== method%d(%s) ===\nBlocks:\n%s\nLocals:\n%s\n" id (showlistwithsep ", " types) (showIRGraph blocks) (show locals)
+  show (IRMethod i types blocks locals) =
+    printf "=== method%d(%s) ===\nBlocks:\n%s\nLocals:\n%s\n"
+      i (showlistwithsep ", " types) (showIRGraph blocks) (show locals)
 
 instance Show a => Show (IRBlock a) where
   show (IRBlock insns) = unlines $ map show insns
@@ -124,25 +121,32 @@ noBlock = -1
 buildIR :: TProgram -> ThrowsError (IRProgram IRInstruction)
 buildIR (TProgram tmethIdx gVarIdx _ _) = do
   irMeths <- mapM buildIRMethod $ indexElems tmethIdx
-  let irMethIdx = foldl (\idx m@(IRMethod id _ _ _) -> indexInsert id m idx) newIndex irMeths
+  let irMethIdx = foldl (\idx m@(IRMethod i _ _ _) -> indexInsert i m idx) newIndex irMeths
   return $ IRProgram irMethIdx gVarIdx
+
+emptyState :: BlockingState
+emptyState = BlockingState { blockGraph      = empty,
+                             continueBlockId = noBlock,
+                             breakBlockId    = noBlock }
+
+-- Remove (transitively) nodes with no in edges except for node 0
+cleanGraph :: IRGraph a -> IRGraph a
+cleanGraph g | deadCodeNodes g == [] = g
+             | otherwise             = cleanGraph $ delNodes (deadCodeNodes g) g
+
+deadCodeNodes :: IRGraph a -> [Node]
+deadCodeNodes graph = filter (\n -> n /= 0 && (null $ pre graph n)) (nodes graph)
+
 
 buildIRMethod :: TMethod -> ThrowsError (IRMethod IRInstruction)
 buildIRMethod (TMethod mId rType aTypes varIdx _ tStats) = do
-  let inputState = BlockingState { blockGraph      = empty,
-                                   continueBlockId = noBlock,
-                                   breakBlockId    = noBlock }
-  resultState <- execThrowsState inputState $ do { accum <- newBasicBlock; foldM (flip buildIRStatement) accum tStats >>= commitBasicBlock [] }
+  resultState <- execThrowsState emptyState $ do
+    accum <- newBasicBlock
+    foldM (flip buildIRStatement) accum tStats >>= commitBasicBlock []
   let blockGraph' = cleanGraph (blockGraph resultState)
   blockGraph'' <- checkReturns rType blockGraph'
   return $ IRMethod mId aTypes blockGraph'' varIdx
   where
-    -- Remove (transitively) nodes with no in edges except for node 1
-    cleanGraph :: IRGraph a -> IRGraph a
-    cleanGraph g | deadCodeNodes g == [] = g
-                 | otherwise             = cleanGraph $ delNodes (deadCodeNodes g) g
-    deadCodeNodes :: IRGraph a -> [Node]
-    deadCodeNodes graph = filter (\n -> n /= 1 && (null $ pre graph n)) (nodes graph)
     -- Checks that every block with no out edges has a valid return or
     -- exit and return the graph or error.  If the method has void
     -- return type, add return statements.
@@ -162,11 +166,12 @@ buildIRMethod (TMethod mId rType aTypes varIdx _ tStats) = do
         _          -> True
 
 
--- IRInstructions is a reversed list of instructions (for easy appending), newtyped to prevent mixing with unreversed lists
+-- IRInstructions is a reversed list of instructions (for easy appending),
+--   newtyped to prevent mixing with unreversed lists
 data BlockAccum = BlockAccum Node [IRInstruction]
 
 appendInstructions :: [IRInstruction] -> BlockAccum -> BlockAccum
-appendInstructions is (BlockAccum id rest) = BlockAccum id ((reverse is) ++ rest)
+appendInstructions is (BlockAccum i rest) = BlockAccum i ((reverse is) ++ rest)
 
 appendInstructionsM :: Monad m => [IRInstruction] -> BlockAccum -> m BlockAccum
 appendInstructionsM is acc = return $ appendInstructions is acc
@@ -201,7 +206,8 @@ updateNodes fn gr ns = foldM (updateNode fn) gr ns
 
 updateBlockContents :: BlockAccum -> IRGraph IRInstruction -> ThrowsBlockingState (IRGraph IRInstruction)
 updateBlockContents (BlockAccum blockId revInstrs) bGraph = do
-  -- look up (by decomposing) the given block in the index for its in-edges, check that it was uncommitted (no instructions)
+  -- look up (by decomposing) the given block in the index for its in-edges,
+  --   check that it was uncommitted (no instructions)
   IRBlock oldInsns <- liftThrows $ maybeToError (InternalError "Block doesn't exist") $ lab bGraph blockId
   guardError (InternalError "Updating already committed block") (null oldInsns)
   let newBlock = IRBlock (reverse revInstrs)
@@ -211,14 +217,14 @@ updateBlockContents (BlockAccum blockId revInstrs) bGraph = do
 -- IREdge, puts the accumulated instructions into it, saves it into
 -- the index and returns its block ID
 commitBasicBlock :: [(IREdge, Node)] -> BlockAccum -> ThrowsBlockingState ()
-commitBasicBlock edges accum@(BlockAccum srcId _) = do
+commitBasicBlock inEdges accum@(BlockAccum srcId _) = do
   -- Update the node in the graph
   bGraph' <- State.gets blockGraph >>= updateBlockContents accum
-  let bGraph'' = foldl (\g (elabel, dstId) -> insEdge (srcId, dstId, elabel) g) bGraph' edges
+  let bGraph'' = foldl (\g (elabel, dstId) -> insEdge (srcId, dstId, elabel) g) bGraph' inEdges
   State.modify $ \s -> s { blockGraph = bGraph'' }
 
 idOf :: BlockAccum -> Node
-idOf (BlockAccum id _) = id
+idOf (BlockAccum i _) = i
 
 withLoopEnvironment :: Node -> Node -> ThrowsBlockingState a -> ThrowsBlockingState a
 withLoopEnvironment contId breakId body = do
@@ -271,19 +277,22 @@ buildIRStatement (TWhileStatement cond body) inAccum = do
   -- Then evaluate the condition
   buildConditionalIRExpression bodyId followingId cond condAccum
   -- and the body
-  withLoopEnvironment bodyId followingId $ buildIRStatement body bodyAccum >>= commitBasicBlock [(DefaultEdge, condId)]
+  withLoopEnvironment bodyId followingId $
+    buildIRStatement body bodyAccum >>= commitBasicBlock [(DefaultEdge, condId)]
   return followingAccum
 
-buildIRStatement (TForStatement init cond iter body) inAccum = do
+buildIRStatement (TForStatement initializer cond iter body) inAccum = do
   accs@[condAccum, bodyAccum, followingAccum] <- replicateM 3 newBasicBlock
   let [condId, bodyId, followingId] = map idOf accs
   -- evaluate and commit initializer
-  buildIRExpression VoidContext init inAccum >>= commitBasicBlock [(DefaultEdge, condId)]
+  buildIRExpression VoidContext initializer inAccum >>= commitBasicBlock [(DefaultEdge, condId)]
   -- Then evaluate the condition
   buildConditionalIRExpression bodyId followingId cond condAccum
   -- and the body and the iter
-  withLoopEnvironment bodyId followingId $ do
-    buildIRStatement body bodyAccum >>= buildIRExpression VoidContext iter >>= commitBasicBlock [(DefaultEdge, condId)]
+  withLoopEnvironment bodyId followingId $
+    buildIRStatement body bodyAccum >>=
+    buildIRExpression VoidContext iter >>=
+    commitBasicBlock [(DefaultEdge, condId)]
   -- and return the following block
   return followingAccum
 
@@ -310,7 +319,8 @@ buildIRStatement TReturnStatement inAccum = do
   newBasicBlock -- this block is unreachable and can be safely eliminated
 
 buildIRStatement (TReturnValueStatement expr) inAccum = do
-  buildIRExpression ValueContext expr inAccum >>= appendInstructionsM [IRReturn (typeOf expr)] >>= commitBasicBlock []
+  buildIRExpression ValueContext expr inAccum >>=
+    appendInstructionsM [IRReturn (typeOf expr)] >>= commitBasicBlock []
   newBasicBlock
 
 buildIRStatement (TExpressionStatement expr) inAccum = buildIRExpression VoidContext expr inAccum
@@ -321,42 +331,51 @@ buildIRStatement TEmpty inAccum = return inAccum
 data ExpressionContext = ValueContext -- cond expressions commit their resulting block, so different type signature
                        | VoidContext
 
+mkPrefixInstr :: Type -> PrefixOp -> IRInstruction
+mkPrefixInstr t op  = IRArith t (if op == Preincrement  then IRAdd else IRSubtract)
+mkPostfixInstr :: Type -> PostfixOp -> IRInstruction
+mkPostfixInstr t op = IRArith t (if op == Postincrement then IRAdd else IRSubtract)
+
 buildIRExpression :: ExpressionContext -> TExpression -> BlockAccum -> ThrowsBlockingState BlockAccum
 
 -- Global store
-buildIRExpression ValueContext x@(TGlobalStore t id expr) accum =
-  buildIRExpression ValueContext expr accum >>= appendInstructionsM [IRDup t, IRGStore id]
-buildIRExpression VoidContext (TGlobalStore t id expr) accum =
-  buildIRExpression ValueContext expr accum >>= appendInstructionsM [IRGStore id]
+buildIRExpression ValueContext (TGlobalStore t i expr) accum =
+  buildIRExpression ValueContext expr accum >>= appendInstructionsM [IRDup t, IRGStore i]
+buildIRExpression VoidContext (TGlobalStore _ i expr) accum =
+  buildIRExpression ValueContext expr accum >>= appendInstructionsM [IRGStore i]
 
 -- Local store
-buildIRExpression ValueContext x@(TLocalStore t id expr) accum =
-  buildIRExpression ValueContext expr accum >>= appendInstructionsM [IRDup t, IRStore id]
-buildIRExpression VoidContext (TLocalStore t id expr) accum =
-  buildIRExpression ValueContext expr accum >>= appendInstructionsM [IRStore id]
+buildIRExpression ValueContext (TLocalStore t i expr) accum =
+  buildIRExpression ValueContext expr accum >>= appendInstructionsM [IRDup t, IRStore i]
+buildIRExpression VoidContext (TLocalStore _ i expr) accum =
+  buildIRExpression ValueContext expr accum >>= appendInstructionsM [IRStore i]
 
 -- Global load
-buildIRExpression VoidContext  (TGlobalLoad t id) acc = return acc
-buildIRExpression ValueContext (TGlobalLoad t id) acc = appendInstructionsM [IRGLoad id] acc
+buildIRExpression VoidContext  (TGlobalLoad _ _) acc = return acc
+buildIRExpression ValueContext (TGlobalLoad _ i) acc = appendInstructionsM [IRGLoad i] acc
 
 -- Local load
-buildIRExpression VoidContext  (TLocalLoad t id) acc = return acc
-buildIRExpression ValueContext (TLocalLoad t id) acc = appendInstructionsM [IRLoad id] acc
+buildIRExpression VoidContext  (TLocalLoad _ _) acc = return acc
+buildIRExpression ValueContext (TLocalLoad _ i) acc = appendInstructionsM [IRLoad i] acc
 
 -- Prefix
 
 -- side-effectful - pre-inc/dec: we've checked for lvalue while building the typed AST
-buildIRExpression VoidContext (TPrefixExpression _ op (TGlobalLoad t id)) acc | op == Preincrement || op == Predecrement = do
-  appendInstructionsM [IRGLoad id, irConst t 1, IRArith t (if op == Preincrement then IRAdd else IRSubtract), IRGStore id] acc
+buildIRExpression VoidContext (TPrefixExpression _ op (TGlobalLoad t i)) acc
+  | op == Preincrement || op == Predecrement = do
+    appendInstructionsM [IRGLoad i, irConst t 1, mkPrefixInstr t op, IRGStore i] acc
 
-buildIRExpression ValueContext (TPrefixExpression _ op (TGlobalLoad t id)) acc | op == Preincrement || op == Predecrement = do
-  appendInstructionsM [IRGLoad id, irConst t 1, IRArith t (if op == Preincrement then IRAdd else IRSubtract), IRDup t, IRGStore id] acc
+buildIRExpression ValueContext (TPrefixExpression _ op (TGlobalLoad t i)) acc
+  | op == Preincrement || op == Predecrement = do
+    appendInstructionsM [IRGLoad i, irConst t 1, mkPrefixInstr t op, IRDup t, IRGStore i] acc
 
-buildIRExpression VoidContext (TPrefixExpression _ op (TLocalLoad t id)) acc | op == Preincrement || op == Predecrement = do
-  appendInstructionsM [IRLoad id, irConst t 1, IRArith t (if op == Preincrement then IRAdd else IRSubtract), IRStore id] acc
+buildIRExpression VoidContext (TPrefixExpression _ op (TLocalLoad t i)) acc
+  | op == Preincrement || op == Predecrement = do
+    appendInstructionsM [IRLoad i, irConst t 1, mkPrefixInstr t op, IRStore i] acc
 
-buildIRExpression ValueContext (TPrefixExpression _ op (TLocalLoad t id)) acc | op == Preincrement || op == Predecrement = do
-  appendInstructionsM [IRLoad id, irConst t 1, IRArith t (if op == Preincrement then IRAdd else IRSubtract), IRDup t, IRStore id] acc
+buildIRExpression ValueContext (TPrefixExpression _ op (TLocalLoad t i)) acc
+  | op == Preincrement || op == Predecrement = do
+    appendInstructionsM [IRLoad i, irConst t 1, mkPrefixInstr t op, IRDup t, IRStore i] acc
 
 -- conditional - not (typed IR assures us that we have a TBooleanConversion if necessary)
 buildIRExpression VoidContext  ex@(TPrefixExpression _ Not _) accum = conditionalToVoid ex accum
@@ -371,25 +390,27 @@ buildIRExpression ValueContext (TPrefixExpression t Complement x) accum =
   buildIRExpression ValueContext x accum >>= appendInstructionsM [IRArith t IRComplement]
 
 buildIRExpression ValueContext (TPrefixExpression t Minus x) accum =
-  appendInstructionsM [irConst t 0] accum >>= buildIRExpression ValueContext x >>= appendInstructionsM [IRArith t IRSubtract]
+  appendInstructionsM [irConst t 0] accum >>=
+    buildIRExpression ValueContext x >>= appendInstructionsM [IRArith t IRSubtract]
 
 -- Postfix
-buildIRExpression VoidContext (TPostfixExpression _ (TGlobalLoad t id) op) accum =
-  appendInstructionsM [IRGLoad id, irConst t 1, IRArith t (if op == Postincrement then IRAdd else IRSubtract), IRGStore id] accum
+buildIRExpression VoidContext (TPostfixExpression _ (TGlobalLoad t i) op) accum =
+  appendInstructionsM [IRGLoad i, irConst t 1, mkPostfixInstr t op, IRGStore i] accum
 
-buildIRExpression VoidContext (TPostfixExpression _ (TLocalLoad t id) op) accum =
-  appendInstructionsM [IRLoad id, irConst t 1, IRArith t (if op == Postincrement then IRAdd else IRSubtract), IRStore id] accum
+buildIRExpression VoidContext (TPostfixExpression _ (TLocalLoad t i) op) accum =
+  appendInstructionsM [IRLoad i, irConst t 1, mkPostfixInstr t op, IRStore i] accum
 
-buildIRExpression ValueContext (TPostfixExpression _ (TGlobalLoad t id) op) accum =
-  appendInstructionsM [IRGLoad id, IRDup t, irConst t 1, IRArith t (if op == Postincrement then IRAdd else IRSubtract), IRGStore id] accum
+buildIRExpression ValueContext (TPostfixExpression _ (TGlobalLoad t i) op) accum =
+  appendInstructionsM [IRGLoad i, IRDup t, irConst t 1, mkPostfixInstr t op, IRGStore i] accum
 
-buildIRExpression ValueContext (TPostfixExpression _ (TLocalLoad t id) op) accum =
-  appendInstructionsM [IRLoad id, IRDup t, irConst t 1, IRArith t (if op == Postincrement then IRAdd else IRSubtract), IRStore id] accum
+buildIRExpression ValueContext (TPostfixExpression _ (TLocalLoad t i) op) accum =
+  appendInstructionsM [IRLoad i, IRDup t, irConst t 1, mkPostfixInstr t op, IRStore i] accum
 
 -- Binary
 -- Evaluate booleans (Disj/Conj/comparisons):
-buildIRExpression ValueContext ex@(TBinaryExpression _ _ op _) accum | op `elem` [Disj, Conj, Gt, Ge, Lt, Le, Eq, Ne] =
-  conditionalToBooleanValue ex accum
+buildIRExpression ValueContext ex@(TBinaryExpression _ _ op _) accum
+  | op `elem` [Disj, Conj, Gt, Ge, Lt, Le, Eq, Ne] =
+    conditionalToBooleanValue ex accum
 
 -- Conditionals in void context (need to evaluate them properly for short-circuiting side-effects)
 buildIRExpression VoidContext ex@(TBinaryExpression _ _ Conj _) accum = conditionalToVoid ex accum
@@ -397,12 +418,14 @@ buildIRExpression VoidContext ex@(TBinaryExpression _ _ Disj _) accum = conditio
 
 -- others
 -- In void context we ignore the operator and evaluate for side-effects
-buildIRExpression VoidContext ex@(TBinaryExpression _ lhs _ rhs) accum =
+buildIRExpression VoidContext (TBinaryExpression _ lhs _ rhs) accum =
   buildIRExpression VoidContext lhs accum >>= buildIRExpression VoidContext rhs
 
 -- In value context, we use the values.
-buildIRExpression ValueContext ex@(TBinaryExpression t lhs op rhs) accum =
-  buildIRExpression ValueContext lhs accum >>= buildIRExpression ValueContext rhs >>= appendInstructionsM [opFor op t]
+buildIRExpression ValueContext (TBinaryExpression typ lhs op rhs) accum =
+  buildIRExpression ValueContext lhs accum >>=
+  buildIRExpression ValueContext rhs >>=
+  appendInstructionsM [opFor op typ]
   where
     opFor Add t      = IRArith t IRAdd
     opFor Subtract t = IRArith t IRSubtract
@@ -418,14 +441,14 @@ buildIRExpression ValueContext ex@(TBinaryExpression t lhs op rhs) accum =
 -- Literals
 buildIRExpression ValueContext (TShortLiteral val) accum = appendInstructionsM [IRSConst val] accum
 buildIRExpression ValueContext (TByteLiteral val)  accum = appendInstructionsM [IRBConst val] accum
-buildIRExpression VoidContext (TShortLiteral val)  accum = return accum
-buildIRExpression VoidContext (TByteLiteral val)   accum = return accum
+buildIRExpression VoidContext (TShortLiteral _)    accum = return accum
+buildIRExpression VoidContext (TByteLiteral _)     accum = return accum
 
 -- Method calls
-buildIRExpression ValueContext (TMethodCall t id args) accum =
-  foldM (flip (buildIRExpression ValueContext)) accum args >>= appendInstructionsM [IRCall id]
+buildIRExpression ValueContext (TMethodCall _ i args) accum =
+  foldM (flip (buildIRExpression ValueContext)) accum args >>= appendInstructionsM [IRCall i]
 
-buildIRExpression ValueContext (TSyscall t op args) accum =
+buildIRExpression ValueContext (TSyscall _ op args) accum =
   foldM (flip (buildIRExpression ValueContext)) accum args >>= appendInstructionsM [IRSyscall op]
 
 -- Type conversions
@@ -466,7 +489,8 @@ buildIRExpression VoidContext expr accum = do
     discardValue Void = return
     discardValue t = appendInstructionsM [IRPop t]
 
-buildIRExpression ValueContext expr _ = throwError $ InternalError $ printf "Value context TExpression not matched for IR: %s" (show expr)
+buildIRExpression ValueContext expr _ =
+  throwError $ InternalError $ printf "Value context TExpression not matched for IR: %s" (show expr)
 
 -- Conditional Expression context
 conditionalToBooleanValue :: TExpression -> BlockAccum -> ThrowsBlockingState BlockAccum
@@ -487,7 +511,7 @@ conditionalToVoid ex accum = do
 
 buildConditionalIRExpression :: Node -> Node -> TExpression -> BlockAccum -> ThrowsBlockingState ()
 
-buildConditionalIRExpression ifId elseId (TPrefixExpression t Not expr) accum =
+buildConditionalIRExpression ifId elseId (TPrefixExpression _ Not expr) accum =
   buildConditionalIRExpression elseId ifId expr accum
 
 buildConditionalIRExpression ifId elseId (TBinaryExpression _ lhs Disj rhs) accum = do
@@ -502,7 +526,8 @@ buildConditionalIRExpression ifId elseId (TBinaryExpression _ lhs Conj rhs) accu
   buildConditionalIRExpression rhsId elseId lhs accum
   buildConditionalIRExpression ifId  elseId rhs rhsAccum
 
-buildConditionalIRExpression ifId elseId (TBinaryExpression _ lhs op rhs) accum | elem op [Gt, Ge, Lt, Le, Eq, Ne] = do
+buildConditionalIRExpression ifId elseId (TBinaryExpression _ lhs op rhs) accum
+ | elem op [Gt, Ge, Lt, Le, Eq, Ne] = do
   let t = typeOf lhs -- typedAST ensures lhstype == rhstype
       zLhs  = isZero lhs
       zRhs  = isZero rhs

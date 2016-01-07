@@ -4,6 +4,9 @@ TEMPLATE = app
 TARGET = KeyboardClient
 CONFIG += debug
 QT += xml
+DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x000000
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 RESOURCES += qtclient.rsc
 

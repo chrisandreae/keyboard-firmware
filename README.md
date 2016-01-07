@@ -23,7 +23,7 @@ to Kinesis Advantage/Professional hardware.)
    keyboard layouts.
  * Enhanced text macros that fully support modifier keys and can be triggered by
    any combination of up to four keys.
- * Programming, macro recording and layout save/load can be performed entirely
+ * Programming, macro recording and layout backup save/load can be performed entirely
    on-keyboard with no additional software.
  * Also appears as USB mouse, mouse functions can be be bound to keys.
  * Built-in virtual machine interpreter for running up to six concurrent
@@ -69,16 +69,18 @@ be pressed at any time to switch layers, in order to allow copying keys between
 layers. The keypad and program keys may not be themselves remapped. When done,
 press the above programming-mode key combination to leave programming mode.
 
-### Layout saving/loading
+### Layout backup saving/loading
 
-* Save current layout          = ````Progrm + [1 - 0] + S````
-* Load saved layout            = ````Progrm + [1 - 0] + L````
-* Delete saved layout          = ````Progrm + [1 - 0] + D````
+* Save current layout to backup slot   = ````Progrm + S + [1 - 0]````
+* Restore layout from backup slot      = ````Progrm + L + [1 - 0]````
+* Delete saved layout from backup slot = ````Progrm + D + [1 - 0]````
 
-You can save up to 10 layouts, each associated with a number key. Layouts are
-stored as their difference from the default layout: the more keys that are
-remapped, the larger a saved layout will be. In total, there is space for 256
-key remappings shared between all saved layouts.
+In addition to the current layout, you can create up to 10 independent backup layouts.
+Backup layouts allow you to rapidly switch between different keyboard mapping configurations.
+Each backup layout slot is associated with a number key from ````1```` to ````0````. Layouts are
+stored as their difference from the factory-default layout: the more keys that are
+remapped from their default positions, the more space that a backup layout will consume.
+In total, there is space for 256 key remappings shared between all backup layouts.
 
 ### Reset to default layout
 

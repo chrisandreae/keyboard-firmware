@@ -1,13 +1,13 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures -fno-warn-missing-exported-sigs #-}
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
 module Parser where
 import Text.Printf
 
-import Control.Applicative((<$>), (<*>), (<*), (*>))
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 
 import Text.Parsec
 import Text.Parsec.String
-import Text.Parsec.Expr
 import qualified Text.Parsec.Token as Token
 import qualified Text.Parsec.Language as Language
 
@@ -53,26 +53,27 @@ data BinaryOp = Add | Subtract | Multiply | Divide | Mod
 
 -- show instance
 showlistwithsep :: Show a => String -> [a] -> String
-showlistwithsep sep [] = ""
+showlistwithsep _   [] = ""
 showlistwithsep sep l = (foldl1 ((++).(++ sep))) . (map show) $ l
 
 instance Show Declaration where
-  show (MethodDeclaration typ nam args body) = printf "%s %s(%s){\n%s\n}\n" (show typ) nam (showargs args) (showlistwithsep "\n" body)
+  show (MethodDeclaration typ nam args body) =
+    printf "%s %s(%s){\n%s\n}\n" (show typ) nam (showargs args) (showlistwithsep "\n" body)
     where showargs = (showlistwithsep ", ").(map (\ (a,b)-> (show a) ++ " " ++ (show b)))
   show (GlobalVariableDeclaration typ nam)   = printf "%s %s;\n" (show typ) nam
 
 instance Show Statement where
-  show (Block body)                                = printf "{\n%s\n}" (showlistwithsep "\n" body)
-  show (IfStatement expr tbody fbody)              = printf "if(%s)%s%s" (show expr) (show tbody) (maybe "" (("else "++).show) fbody)
-  show (WhileStatement expr body)                  = printf "while(%s)%s"  (show expr) (show body)
-  show (ForStatement init cond iter body)          = printf "for(%s; %s; %s)%s" (show init) (show cond) (show iter) (show body)
-  show (VariableDeclarationStatement typ nam init) = printf "%s %s%s;" (show typ) nam (maybe "" ((" = "++).show) init)
-  show (ExpressionStatement expr)                  = printf "%s;" (show expr)
-  show (ReturnValueStatement expr)                 = printf "return %s;" (show expr)
-  show ReturnStatement                             = "return;"
-  show ExitStatement                               = "exit;"
-  show BreakStatement                              = "break;"
-  show ContinueStatement                           = "continue;"
+  show (Block body)                        = printf "{\n%s\n}" (showlistwithsep "\n" body)
+  show (IfStatement e tb fb)               = printf "if(%s)%s%s" (show e) (show tb) (maybe "" (("else "++).show) fb)
+  show (WhileStatement expr body)          = printf "while(%s)%s"  (show expr) (show body)
+  show (ForStatement i cond iter body)     = printf "for(%s; %s; %s)%s" (show i) (show cond) (show iter) (show body)
+  show (VariableDeclarationStatement t n i)= printf "%s %s%s;" (show t) n (maybe "" ((" = "++).show) i)
+  show (ExpressionStatement expr)          = printf "%s;" (show expr)
+  show (ReturnValueStatement expr)         = printf "return %s;" (show expr)
+  show ReturnStatement                     = "return;"
+  show ExitStatement                       = "exit;"
+  show BreakStatement                      = "break;"
+  show ContinueStatement                   = "continue;"
 
 pshow :: (Ord a, Show a) => a -> a -> String
 pshow me sub | me>=sub   = printf "(%s)" $ show sub
@@ -83,11 +84,11 @@ instance Show Expression where
   show me@(PrefixExpression op ex)    = (show op) ++ (pshow me ex)
   show me@(PostfixExpression ex op)   = (pshow me ex) ++ (show op)
   show me@(BinaryExpression l op r)   = printf "%s %s %s" (pshow me l) (show op) (pshow me r)
-  show me@(ShortLiteral v)            = (show v) ++ "S"
-  show me@(ByteLiteral b)             = show b
-  show me@(MethodInvocation nam args) = printf "%s(%s)" nam ((showlistwithsep ", ") args)
+  show    (ShortLiteral v)            = (show v) ++ "S"
+  show    (ByteLiteral b)             = show b
+  show    (MethodInvocation nam args) = printf "%s(%s)" nam ((showlistwithsep ", ") args)
   show me@(TypeCast typ expr)         = printf "(%s)%s" (show typ) (pshow me expr)
-  show me@(VariableAccess v)          = show v
+  show    (VariableAccess v)          = show v
 
 instance Show PrefixOp where
   show Not = "!"
@@ -177,6 +178,7 @@ parseProgram p = do
 
 -- Use Parsec.Token and Parsec.Language to generate low level parsers
 
+languageDef :: Token.LanguageDef st
 languageDef = Language.emptyDef { Token.commentStart = "/*"
                                 , Token.commentEnd = "*/"
                                 , Token.commentLine = "//"
@@ -185,35 +187,36 @@ languageDef = Language.emptyDef { Token.commentStart = "/*"
                                 , Token.identLetter = alphaNum <|> char '_'
                                 , Token.opStart = oneOf "+-*/%&|^><=!~"
                                 , Token.opLetter = oneOf "+-*/%&|^><=!~"
-                                , Token.reservedNames = ["byte", "short", "void", "for", "while", "if", "return", "break", "continue", "true", "false"]
+                                , Token.reservedNames = ["byte", "short", "void", "for", "while", "if",
+                                                         "return", "break", "continue", "true", "false"]
                                 , Token.reservedOpNames = ["++", "--", "!", "||", "&&",
                                                            "+", "-", "*", "/", "%",
                                                            "&", "|", "^", "~", "<<", ">>",
-                                                           ">", ">=", "<", "<=", "==", "!=",
-                                                           "="]
+                                                           ">", ">=", "<", "<=", "==", "!=", "="]
                                 , Token.caseSensitive = True
                                 }
 
+lexer :: Token.TokenParser st
 lexer = Token.makeTokenParser languageDef
 
-whitespace	= Token.whiteSpace lexer
-lexeme		= Token.lexeme lexer
-parens		= Token.parens lexer
-braces		= Token.braces lexer
-identifier	= Token.identifier lexer
-integer		= Token.integer lexer
+whitespace      = Token.whiteSpace lexer
+lexeme          = Token.lexeme lexer
+parens          = Token.parens lexer
+braces          = Token.braces lexer
+identifier      = Token.identifier lexer
+integer         = Token.integer lexer
 decimal         = Token.decimal lexer
 hexadecimal     = Token.hexadecimal lexer
 octal           = Token.octal lexer
 charLiteral     = Token.charLiteral lexer
-operator	= Token.operator lexer
-reserved	= Token.reserved lexer
+operator        = Token.operator lexer
+reserved        = Token.reserved lexer
 reservedOp      = Token.reservedOp lexer
-semi		= Token.semi lexer
-semiSep		= Token.semiSep lexer
-semiSep1	= Token.semiSep1 lexer
-commaSep	= Token.commaSep lexer
-commaSep1	= Token.commaSep1 lexer
+semi            = Token.semi lexer
+semiSep         = Token.semiSep lexer
+semiSep1        = Token.semiSep1 lexer
+commaSep        = Token.commaSep lexer
+commaSep1       = Token.commaSep1 lexer
 
 -- And build a parser with that
 
@@ -264,9 +267,12 @@ statement = (Block <$> (braces $ many statement)
                        return $ IfStatement expr body elsebody
                      }
     whileStatement = reserved "while" >> WhileStatement <$> parens expression <*> statement
-    forStatement = reserved "for" >> parens (ForStatement <$> expression <* semi <*> expression <* semi <*> expression) <*> statement
+    forStatement =
+      let forHdr = ForStatement <$> expression <* semi <*> expression <* semi <*> expression in
+      reserved "for" >> parens forHdr <*> statement
     returnStatement = reserved "return" *> (( ReturnValueStatement <$> expression) <|> return ReturnStatement)
-    varDeclStatement = VariableDeclarationStatement <$> typep <*> identifier <*> optionMaybe (reservedOp "=" *> expression)
+    varDeclStatement =
+      VariableDeclarationStatement <$> typep <*> identifier <*> optionMaybe (reservedOp "=" *> expression)
 
 opP :: Show t => (t -> b) -> t -> GenParser Char st b
 opP constr op = (const $ constr op) <$> reservedOp (show op)
@@ -304,7 +310,8 @@ expression = eAssig
     e6 = chainl1 e7 $ binOpChoice [Lshift, Rshift]
     e7 = chainl1 e8 $ binOpChoice [Add, Subtract]
     e8 = chainl1 e9 $ binOpChoice [Multiply, Divide, Mod]
-    e9 = prefix (prefixOpChoice [Complement, Minus, Not, Predecrement, Preincrement]) e9 e10  -- bug: this prevents us from parsing -128, as we get (Minus (ByteLiteral 128)), which is out of range.
+    -- bug: this prevents us from parsing -128, as we get (Minus (ByteLiteral 128)), which is out of range.
+    e9 = prefix (prefixOpChoice [Complement, Minus, Not, Predecrement, Preincrement]) e9 e10
     e10 = prefix (TypeCast <$> (try $ parens typep)) e10 e11
     e11 = e12 >>= bindStar (\ex -> postfixOpChoice [Postincrement, Postdecrement] <*> return ex)
     e12 = parens expression <|> primary
@@ -321,7 +328,9 @@ expression = eAssig
                            | otherwise           = (0,     2^8)
       let constr | isShort  = ShortLiteral . fromIntegral
                  | otherwise = ByteLiteral . fromIntegral
-      unless ((val >= lbound) && (val < ubound)) $ unexpected $ printf "out of bounds %s %s literal (%d)" (if isSigned then "signed" else "unsigned") (if isShort then "short" else "byte") val
+      unless ((val >= lbound) && (val < ubound)) $
+        unexpected $ printf "out of bounds %s %s literal (%d)"
+          (if isSigned then "signed" else "unsigned") (if isShort then "short" else "byte") val
       return $ constr val
     methorvar = do
       nam <- identifier

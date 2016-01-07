@@ -12,9 +12,8 @@ import Data.Int
 
 import Data.Maybe
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 
-import Control.Monad.State(State)
 import qualified Control.Monad.State as State
 
 import Data.Map(Map)
@@ -30,7 +29,8 @@ type MethodScope   = Map Ident MethodID
 emptyScope :: Map Ident a
 emptyScope = Map.empty
 
-data TProgram  = TProgram (Index TMethod) (Index TVariable) MethodScope VariableScope -- global method/variable index and scope
+-- global method/variable index and scope
+data TProgram  = TProgram (Index TMethod) (Index TVariable) MethodScope VariableScope
 
 data TVariable = TVariable VariableID Type
 
@@ -61,7 +61,8 @@ data TExpression = TGlobalStore Type VariableID TExpression
                  | TMethodCall Type MethodID [TExpression]
                  | TSyscall Type SyscallOp [TExpression]
                  | TTypeConversion Type TExpression  -- explicit and implicit type conversions turn into this
-                 | TBooleanConversion TExpression    -- convert argument to a boolean (byte) value -- not just truncating
+                 -- convert argument to a boolean (byte) value -- not just truncating
+                 | TBooleanConversion TExpression
                  deriving (Eq)
 
 data SyscallOp = PressKey | ReleaseKey | CheckKey | CheckPhysKey | WaitKey | WaitPhysKey
@@ -91,38 +92,39 @@ instance Show TProgram where
   show (TProgram meths vars _ _) = unlines $ map show (indexElems meths) ++ map show (indexElems vars)
 
 instance Show TVariable where
-  show (TVariable id typ) = printf "%s var%d;" (show typ) id
+  show (TVariable i typ) = printf "%s var%d;" (show typ) i
 
 instance Show TMethod where
-  show (TMethod id rTyp aTyps _ _ body) = printf "%s method%d(%s){\n%s\n}" (show rTyp) id (showlistwithsep ", " aTyps) (unlines $ map show body)
+  show (TMethod i rTyp aTyps _ _ body) =
+    printf "%s method%d(%s){\n%s\n}" (show rTyp) i (showlistwithsep ", " aTyps) (unlines $ map show body)
 
 instance Show TStatement where
   show (TBlock _ body) = printf "{\n%s\n}" $ unlines ((map show) body)
-  show (TIfStatement expr tbody fbody)              = printf "if(%s)%s%s" (show expr) (show tbody) (maybe "" (("else "++).show) fbody)
-  show (TWhileStatement expr body)                  = printf "while(%s)%s"  (show expr) (show body)
-  show (TForStatement init cond iter body)          = printf "for(%s; %s; %s)%s" (show init) (show cond) (show iter) (show body)
-  show (TExpressionStatement expr)                  = printf "%s;" (show expr)
-  show (TReturnValueStatement expr)                 = printf "return %s;" (show expr)
-  show TReturnStatement                             = "return;"
-  show TExitStatement                               = "exit;"
-  show TBreakStatement                              = "break;"
-  show TContinueStatement                           = "continue;"
-  show TEmpty                                       = ";"
+  show (TIfStatement expr tb fb)      = printf "if(%s)%s%s" (show expr) (show tb) (maybe "" (("else "++).show) fb)
+  show (TWhileStatement expr body)    = printf "while(%s)%s"  (show expr) (show body)
+  show (TForStatement i cnd adv body) = printf "for(%s; %s; %s)%s" (show i) (show cnd) (show adv) (show body)
+  show (TExpressionStatement expr)    = printf "%s;" (show expr)
+  show (TReturnValueStatement expr)   = printf "return %s;" (show expr)
+  show TReturnStatement               = "return;"
+  show TExitStatement                 = "exit;"
+  show TBreakStatement                = "break;"
+  show TContinueStatement             = "continue;"
+  show TEmpty                         = ";"
 
 instance Show TExpression where
-  show (TGlobalStore t id expr)      = printf "global%d:%s = %s" id (show t) (show expr)
-  show (TLocalStore t id expr)       = printf "local%d:%s = %s" id (show t) (show expr)
-  show (TGlobalLoad t id)            = printf "global%d:%s" id (show t)
-  show (TLocalLoad t id)             = printf "local%d:%s" id (show t)
-  show (TPrefixExpression t op ex)   = printf "%s(%s):%s" (show op) (show ex) (show t)
-  show (TPostfixExpression t ex op)  = printf "(%s)%s:%s" (show ex) (show op) (show t)
-  show (TBinaryExpression t l op r)  = printf "((%s) %s (%s)):%s" (show l) (show op) (show r) (show t)
-  show (TShortLiteral v)             = (show v) ++ ":short"
-  show (TByteLiteral b)              = show b ++ ":byte"
-  show (TMethodCall t id args)       = printf "method%d(%s):%s" id ((showlistwithsep ", ") args) (show t)
-  show (TSyscall t op args)          = printf "%s(%s):%s" (show op) ((showlistwithsep ", ") args) (show t)
-  show (TTypeConversion typ expr)    = printf "(%s)%s" (show typ) (show expr)
-  show (TBooleanConversion expr)     = printf "(bool)%s" (show expr)
+  show (TGlobalStore t i expr)      = printf "global%d:%s = %s" i (show t) (show expr)
+  show (TLocalStore t i expr)       = printf "local%d:%s = %s" i (show t) (show expr)
+  show (TGlobalLoad t i)            = printf "global%d:%s" i (show t)
+  show (TLocalLoad t i)             = printf "local%d:%s" i (show t)
+  show (TPrefixExpression t op ex)  = printf "%s(%s):%s" (show op) (show ex) (show t)
+  show (TPostfixExpression t ex op) = printf "(%s)%s:%s" (show ex) (show op) (show t)
+  show (TBinaryExpression t l op r) = printf "((%s) %s (%s)):%s" (show l) (show op) (show r) (show t)
+  show (TShortLiteral v)            = (show v) ++ ":short"
+  show (TByteLiteral b)             = show b ++ ":byte"
+  show (TMethodCall t i args)       = printf "method%d(%s):%s" i ((showlistwithsep ", ") args) (show t)
+  show (TSyscall t op args)         = printf "%s(%s):%s" (show op) ((showlistwithsep ", ") args) (show t)
+  show (TTypeConversion typ expr)   = printf "(%s)%s" (show typ) (show expr)
+  show (TBooleanConversion expr)    = printf "(bool)%s" (show expr)
 
 -- Traverse AST building a scope
 
@@ -150,8 +152,9 @@ scanDecs decs = foldM addToProgram emptyTProgram decs
       when (Map.member nam varScp) $ throwError (Redefine $ printf "Global variable '%s' already defined" nam)
       return $ TProgram meths vars' methScp varScp'
     addMethodArg :: ((Index TVariable), VariableScope) -> (Type, Ident) -> ((Index TVariable), VariableScope)
-    addMethodArg (vIdx, vScp) (typ, nam) = let newid = indexNextKey vIdx
-                                           in ((indexAppend (TVariable newid typ) vIdx), (Map.insert nam newid vScp))
+    addMethodArg (vIdx, vScp) (typ, nam) =
+      let newid = indexNextKey vIdx in
+      ((indexAppend (TVariable newid typ) vIdx), (Map.insert nam newid vScp))
 
 
 buildTProgram :: [Declaration] -> ThrowsError TProgram
@@ -181,8 +184,9 @@ data BindingState = BindingState { methodIndex    :: Index TMethod,
 type ThrowsBindingState = ThrowsState CompileError BindingState
 
 buildTMethod :: TProgram -> Declaration -> ThrowsError TProgram
-buildTMethod (TProgram gMIndex gVIndex gMScope gVScope) (MethodDeclaration _ nam args body) = do
-  unless (isNothing $ lookup nam syscalls) $ throwError (Redefine $ printf "Method \"%s\" conflicts with built-in" nam)
+buildTMethod (TProgram gMIndex gVIndex gMScope gVScope) (MethodDeclaration _ nam _ body) = do
+  unless (isNothing $ lookup nam syscalls) $
+    throwError (Redefine $ printf "Method \"%s\" conflicts with built-in" nam)
   -- find the method id by name in the global method scope
   methodId <- mapLookup "MethodScope" nam gMScope
   -- and look up its skeleton IRMethod in the index
@@ -235,15 +239,16 @@ typeOf (TSyscall t _ _) = t
 
 -- Type promotion - always allowed to become a 'bigger' type
 typePromoteCheck :: Type -> TExpression -> ThrowsBindingState TExpression
-typePromoteCheck toType tExpr | toType == (typeOf tExpr) = return tExpr
-                              | toType > (typeOf tExpr)  = return $ TTypeConversion toType tExpr -- if t1 < t2, t1 can become t2 without a cast
-                              | otherwise                = throwError $ TypeError toType (typeOf tExpr) (show tExpr)
+typePromoteCheck toType tExpr
+  | toType == (typeOf tExpr) = return tExpr
+  | toType > (typeOf tExpr)  = return $ TTypeConversion toType tExpr -- if t1 < t2, t1 can become t2 without a cast
+  | otherwise                = throwError $ TypeError toType (typeOf tExpr) (show tExpr)
 
 -- type cast - also allowed to become a smaller type, unless void
 typeCastCheck :: Type -> TExpression -> ThrowsBindingState TExpression
 typeCastCheck toType tExpr | toType == (typeOf tExpr) = return tExpr
 typeCastCheck toType tExpr | toType == Void           = return $ TTypeConversion toType tExpr
-typeCastCheck toType tExpr | ((typeOf tExpr) == Void) = throwError $ VoidCastError (show tExpr)
+typeCastCheck _      tExpr | ((typeOf tExpr) == Void) = throwError $ VoidCastError (show tExpr)
 typeCastCheck toType tExpr | otherwise                = return $ TTypeConversion toType tExpr
 
 valueTypeCheck :: TExpression -> ThrowsBindingState TExpression
@@ -259,7 +264,7 @@ booleanConvertCheck ex = do
            else TBooleanConversion ex'
 
 lvalueCheck :: Expression -> ThrowsBindingState ()
-lvalueCheck v@(VariableAccess _) = return ()
+lvalueCheck (VariableAccess _) = return ()
 lvalueCheck ex = throwError $ LValueError (show ex)
 
 lookupLocalVar :: Ident -> ThrowsBindingState TVariable
@@ -311,8 +316,8 @@ buildTStatement (WhileStatement cond body) = do
   leaveLoop oldLoopState
   return $ TWhileStatement tCond tBody
 
-buildTStatement (ForStatement init cond iter body) = do
-  tInit <- buildTExpression init
+buildTStatement (ForStatement initializer cond iter body) = do
+  tInit <- buildTExpression initializer
   tCond <- buildTExpression cond >>= booleanConvertCheck
   tIter <- buildTExpression iter
   oldLoopState <- enterLoop
@@ -328,22 +333,22 @@ buildTStatement ContinueStatement = do
   State.gets withinLoop >>= guardError (DefaultError "Cannot continue, not in a loop body")
   return TContinueStatement
 
-buildTStatement (VariableDeclarationStatement typ nam init) = do
+buildTStatement (VariableDeclarationStatement typ nam initializer) = do
   when (typ == Void) $ throwError $ (DefaultError "Cannot declare variable as void")
   varId <- addLocalVariable typ nam
-  case init of
+  case initializer of
     Nothing -> return TEmpty
     Just expr -> do
       tExpr <- buildTExpression expr >>= typePromoteCheck typ
       return $ TExpressionStatement (TLocalStore typ varId tExpr)
   where
     addLocalVariable :: Type -> Ident -> ThrowsBindingState VariableID
-    addLocalVariable typ nam = do
+    addLocalVariable lvTyp lvNam = do
       BindingState { varIndex = vidx, varScopes = (vscope:vsrest) } <- State.get
-      guardError (Redefine $ printf "Variable %s already exists in scope" nam) $ not (Map.member nam vscope)
+      guardError (Redefine $ printf "Variable %s already exists in scope" lvNam) $ not (Map.member lvNam vscope)
       let newid = indexNextKey vidx
-      State.modify $ \s -> s{ varIndex  = (indexAppend (TVariable newid typ) vidx),
-                              varScopes = ((Map.insert nam newid vscope):vsrest) }
+      State.modify $ \s -> s{ varIndex  = (indexAppend (TVariable newid lvTyp) vidx),
+                              varScopes = ((Map.insert lvNam newid vscope):vsrest) }
       return newid
 
 buildTStatement (ExpressionStatement expr) = do
@@ -359,22 +364,24 @@ buildTStatement ExitStatement = return TExitStatement
 buildTStatement r@(ReturnValueStatement expr) = do
   retTyp <- State.gets returnType
   tExpr <- buildTExpression expr >>= typePromoteCheck retTyp
-  guardError (ReturnTypeError retTyp (typeOf tExpr) (show r)) $ retTyp /= Void -- in addition to promotion check, we can't return a value to a void return type
+  guardError (ReturnTypeError retTyp (typeOf tExpr) (show r)) $
+    retTyp /= Void -- in addition to promotion check, we can't return a value to a void return type
   return $ TReturnValueStatement tExpr
 
 buildTExpression :: Expression -> ThrowsBindingState TExpression
 
 buildTExpression e@(Assignment (VariableAccess varName) e2) = do
   (tStor, typ) <- (lookupLocalVar varName >>= mkStor TLocalStore)
-                  `mplus` (lookupGlobalVar varName >>= mkStor TGlobalStore)
-                  `mplus` (throwError $ UndefinedVarError varName (show e))
+                  `orTry` (lookupGlobalVar varName >>= mkStor TGlobalStore)
+                  `orTry` (throwError $ UndefinedVarError varName (show e))
   tE2' <- buildTExpression e2 >>= typePromoteCheck typ
   return $ tStor tE2'
   where
-    mkStor :: (Type -> VariableID -> TExpression -> TExpression) -> TVariable -> ThrowsBindingState ((TExpression -> TExpression), Type)
+    mkStor :: (Type -> VariableID -> TExpression -> TExpression) ->
+              TVariable -> ThrowsBindingState ((TExpression -> TExpression), Type)
     mkStor constr (TVariable vid typ) = return (constr typ vid, typ)
 
-buildTExpression e@(Assignment e1 _) = throwError $ LValueError (show e1)
+buildTExpression (Assignment e1 _) = throwError $ LValueError (show e1)
 
 buildTExpression (PrefixExpression Not e1) = do
   tE1 <- buildTExpression e1 >>= booleanConvertCheck
@@ -435,8 +442,8 @@ buildTExpression (ByteLiteral val) = do
 
 buildTExpression (VariableAccess varName) = do
   (lookupLocalVar varName >>= mkLoad TLocalLoad)
-  `mplus` (lookupGlobalVar varName >>= mkLoad TGlobalLoad)
-  `mplus` (throwError $ UndefinedVarError varName "context not implemented")
+  `orTry` (lookupGlobalVar varName >>= mkLoad TGlobalLoad)
+  `orTry` (throwError $ UndefinedVarError varName "context not implemented")
   where
     mkLoad constr (TVariable vid typ) = return $ constr typ vid
 
@@ -448,12 +455,13 @@ buildTExpression m@(MethodInvocation methName args) = do
   return $ constr tArgs'
   where
     resolveInvocation :: Ident -> ThrowsBindingState (([TExpression] -> TExpression), [Type])
-    resolveInvocation mName = resolveMethod mName `mplus` resolveSyscall mName `mplus` (throwError $ UndefinedMethodError methName (show m))
+    resolveInvocation mName = resolveMethod mName `orTry` resolveSyscall mName
     resolveMethod mName = do
       (TMethod mId retType argTypes _ _ _) <- lookupMethod mName
       return ((TMethodCall retType mId), argTypes)
     resolveSyscall mName = do
-      (op, retTyp, argTypes) <- liftThrows $ maybeToError noMsg $ lookup mName syscalls
+      (op, retTyp, argTypes) <- liftThrows $
+        maybeToError (UndefinedMethodError methName (show m)) $ lookup mName syscalls
       return ((TSyscall retTyp op), argTypes)
 
 buildTExpression (TypeCast typ expr) = do
@@ -462,18 +470,18 @@ buildTExpression (TypeCast typ expr) = do
 
 -- map a function on expressions across a TPRogram
 exMap :: (TExpression -> TExpression) -> TProgram -> TProgram
-exMap f (TProgram meths vars ms vs) = TProgram (indexMap (exMap' f) meths) vars ms vs
+exMap fn (TProgram meths vars mScp vScp) = TProgram (indexMap (exMap' fn) meths) vars mScp vScp
   where
     exMap' :: (TExpression -> TExpression) -> TMethod -> TMethod
-    exMap' f (TMethod id rTyp aTyps varI varS stats) = TMethod id rTyp aTyps varI varS $ map (exMap'' f) stats
+    exMap' f (TMethod i rTyp aTyps varI varS stats) = TMethod i rTyp aTyps varI varS $ map (exMap'' f) stats
     exMap'' :: (TExpression -> TExpression) -> TStatement -> TStatement
     exMap'' f (TBlock vs stats) = TBlock vs (map (exMap'' f) stats)
-    exMap'' f (TIfStatement ex tBody eBody) = TIfStatement (f ex) (exMap'' f tBody) $ maybe Nothing (Just.(exMap'' f)) eBody
+    exMap'' f (TIfStatement ex tb fb) = TIfStatement (f ex) (exMap'' f tb) $ maybe Nothing (Just.(exMap'' f)) fb
     exMap'' f (TWhileStatement ex body) = TWhileStatement (f ex) (exMap'' f body)
     exMap'' f (TForStatement e1 e2 e3 body) = TForStatement (f e1) (f e2) (f e3) (exMap'' f body)
     exMap'' f (TExpressionStatement ex) = TExpressionStatement (f ex)
     exMap'' f (TReturnValueStatement ex) = TReturnValueStatement (f ex)
-    exMap'' f s = s
+    exMap'' _ s = s
 
 
 -- Pre-evaluate constant expressions
@@ -482,13 +490,13 @@ constantEvalProgram = exMap constantEval
 
 constantEval :: TExpression -> TExpression
 
-constantEval (TMethodCall t id args) = TMethodCall t id (map constantEval args)
+constantEval (TMethodCall t i args) = TMethodCall t i (map constantEval args)
 
-constantEval (TSyscall t op args)    = TSyscall t op (map constantEval args)
+constantEval (TSyscall t op args)   = TSyscall t op (map constantEval args)
 
-constantEval (TGlobalStore t id ex) = TGlobalStore t id (constantEval ex)
+constantEval (TGlobalStore t i ex)  = TGlobalStore t i (constantEval ex)
 
-constantEval (TLocalStore t id ex) = TLocalStore t id (constantEval ex)
+constantEval (TLocalStore t i ex)   = TLocalStore t i (constantEval ex)
 
 constantEval (TBooleanConversion ex) =
   let ex' = constantEval ex in
@@ -515,10 +523,10 @@ constantEval (TPrefixExpression t op ex) =
     evalPrefix Minus      (TByteLiteral l)  = Just $ TByteLiteral  $ -l
     evalPrefix _ _ = Nothing
 
-constantEval (TBinaryExpression t l op r) =
-  let l' = constantEval l
-      r' = constantEval r
-  in maybe (TBinaryExpression t l' op r') id $ evalBinary l' op r'
+constantEval (TBinaryExpression tp la op ra) =
+  let la' = constantEval la
+      ra' = constantEval ra
+  in maybe (TBinaryExpression tp la' op ra') id $ evalBinary la' op ra'
   where
     -- bytes
     evalBinary (TByteLiteral l) Add      (TByteLiteral r) = Just $ TByteLiteral (l + r)
