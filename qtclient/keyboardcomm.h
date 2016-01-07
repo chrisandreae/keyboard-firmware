@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <QList>
 #include <QByteArray>
+#include <QString>
 #include "libusb_wrappers.h"
 #include "keyboard.h"
 
