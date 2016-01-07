@@ -2,15 +2,12 @@ module Main where
 import Parser
 import TypedAST
 import BlockIR
-import Indexes
 import Output
 import Errors
 
 import System.IO
 import System.Environment
 import System.Console.GetOpt
-import Data.Maybe(fromMaybe)
-import Data.List
 import Control.Monad
 import qualified Data.ByteString.Lazy as B
 

@@ -1,13 +1,11 @@
 module Parser where
 import Text.Printf
 
-import Control.Applicative((<$>), (<*>), (<*), (*>))
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 
 import Text.Parsec
 import Text.Parsec.String
-import Text.Parsec.Expr
 import qualified Text.Parsec.Token as Token
 import qualified Text.Parsec.Language as Language
 
@@ -196,24 +194,24 @@ languageDef = Language.emptyDef { Token.commentStart = "/*"
 
 lexer = Token.makeTokenParser languageDef
 
-whitespace	= Token.whiteSpace lexer
-lexeme		= Token.lexeme lexer
-parens		= Token.parens lexer
-braces		= Token.braces lexer
-identifier	= Token.identifier lexer
-integer		= Token.integer lexer
+whitespace      = Token.whiteSpace lexer
+lexeme          = Token.lexeme lexer
+parens          = Token.parens lexer
+braces          = Token.braces lexer
+identifier      = Token.identifier lexer
+integer         = Token.integer lexer
 decimal         = Token.decimal lexer
 hexadecimal     = Token.hexadecimal lexer
 octal           = Token.octal lexer
 charLiteral     = Token.charLiteral lexer
-operator	= Token.operator lexer
-reserved	= Token.reserved lexer
+operator        = Token.operator lexer
+reserved        = Token.reserved lexer
 reservedOp      = Token.reservedOp lexer
-semi		= Token.semi lexer
-semiSep		= Token.semiSep lexer
-semiSep1	= Token.semiSep1 lexer
-commaSep	= Token.commaSep lexer
-commaSep1	= Token.commaSep1 lexer
+semi            = Token.semi lexer
+semiSep         = Token.semiSep lexer
+semiSep1        = Token.semiSep1 lexer
+commaSep        = Token.commaSep lexer
+commaSep1       = Token.commaSep1 lexer
 
 -- And build a parser with that
 

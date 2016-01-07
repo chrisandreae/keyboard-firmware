@@ -16,16 +16,12 @@ import Data.List
 import Data.Int
 
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 
-import Control.Monad.State(State)
 import qualified Control.Monad.State as State
 
-import Data.Map(Map)
-import qualified Data.Map as Map
 
 import Data.Graph.Inductive.Graph
-import Data.Graph.Inductive.Basic
 import Data.Graph.Inductive.PatriciaTree -- implementation: provides Gr
 
 -- Blocked IR
@@ -127,22 +123,29 @@ buildIR (TProgram tmethIdx gVarIdx _ _) = do
   let irMethIdx = foldl (\idx m@(IRMethod id _ _ _) -> indexInsert id m idx) newIndex irMeths
   return $ IRProgram irMethIdx gVarIdx
 
+emptyState :: BlockingState
+emptyState = BlockingState { blockGraph      = empty,
+                             continueBlockId = noBlock,
+                             breakBlockId    = noBlock }
+
+-- Remove (transitively) nodes with no in edges except for node 0
+cleanGraph :: IRGraph a -> IRGraph a
+cleanGraph g | deadCodeNodes g == [] = g
+             | otherwise             = cleanGraph $ delNodes (deadCodeNodes g) g
+
+deadCodeNodes :: IRGraph a -> [Node]
+deadCodeNodes graph = filter (\n -> n /= 0 && (null $ pre graph n)) (nodes graph)
+
+
 buildIRMethod :: TMethod -> ThrowsError (IRMethod IRInstruction)
 buildIRMethod (TMethod mId rType aTypes varIdx _ tStats) = do
-  let inputState = BlockingState { blockGraph      = empty,
-                                   continueBlockId = noBlock,
-                                   breakBlockId    = noBlock }
-  resultState <- execThrowsState inputState $ do { accum <- newBasicBlock; foldM (flip buildIRStatement) accum tStats >>= commitBasicBlock [] }
+  resultState <- execThrowsState emptyState $ do
+    accum <- newBasicBlock
+    foldM (flip buildIRStatement) accum tStats >>= commitBasicBlock []
   let blockGraph' = cleanGraph (blockGraph resultState)
   blockGraph'' <- checkReturns rType blockGraph'
   return $ IRMethod mId aTypes blockGraph'' varIdx
   where
-    -- Remove (transitively) nodes with no in edges except for node 1
-    cleanGraph :: IRGraph a -> IRGraph a
-    cleanGraph g | deadCodeNodes g == [] = g
-                 | otherwise             = cleanGraph $ delNodes (deadCodeNodes g) g
-    deadCodeNodes :: IRGraph a -> [Node]
-    deadCodeNodes graph = filter (\n -> n /= 1 && (null $ pre graph n)) (nodes graph)
     -- Checks that every block with no out edges has a valid return or
     -- exit and return the graph or error.  If the method has void
     -- return type, add return statements.

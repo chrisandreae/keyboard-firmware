@@ -7,3 +7,10 @@ executable keyc
   main-is: main.hs
   build-depends: base, containers, bytestring,
                  mtl, fgl, parsec
+
+test-suite spec
+  type: exitcode-stdio-1.0
+  ghc-options: -Wall
+  hs-source-dirs: . tests
+  main-is: Spec.hs
+  build-depends: base, containers, bytestring, mtl, fgl, parsec, hspec
