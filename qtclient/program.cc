@@ -176,7 +176,7 @@ static const QString nameInstruction(uint8_t opcode) {
 		return "INVALID_OPCODE";
 }
 
-QString Program::prettyPrintInstruction(const char **p, unsigned rp) {
+QString Program::prettyPrintInstruction(const char **p, const unsigned int pc) {
 	uint8_t opcode = *(*p)++;
 	QString result = nameInstruction(opcode);
 	switch (opcode) {
@@ -196,27 +196,25 @@ QString Program::prettyPrintInstruction(const char **p, unsigned rp) {
 			break;
 		}
 	case SCONST:
-		rp = 0;
+		{
+			uint16_t value;
+			memcpy(&value, *p, sizeof(value));
+			*p += sizeof(value);
+			result += " " + QString::number(value, 16);
+			break;
+		}
 	case IFEQ:
 	case IFNE:
 	case IFLT:
 	case IFGT:
 	case IFGE:
 	case IFLE:
-		{
-			uint16_t value;
-			memcpy(&value, *p, sizeof(value));
-			*p += sizeof(value);
-			result += " " + QString::number(rp+value, 16);
-			break;
-		}
-
 	case GOTO:
 		{
 			int16_t jumpOffset;
 			memcpy(&jumpOffset, *p, sizeof(jumpOffset));
 			*p += sizeof(jumpOffset);
-			result += " " + QString::number(rp+jumpOffset, 16);
+			result += " " + QString::number(pc + jumpOffset, 16);
 			break;
 		}
 
