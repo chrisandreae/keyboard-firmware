@@ -194,8 +194,8 @@ const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM = {
 	HID_KEYBOARD_SC_NON_US_BACKSLASH_AND_PIPE, 		   //	LOGICAL_KEY_KP_LROW3,
 	HID_KEYBOARD_SC_LEFT_ARROW,						   //	LOGICAL_KEY_KP_LROW4,
 	HID_KEYBOARD_SC_RIGHT_ARROW,					   //	LOGICAL_KEY_KP_LROW5,
-	NO_KEY,											   //	LOGICAL_KEY_KP_LCOL2_1, // inner column
-	NO_KEY,											   //	LOGICAL_KEY_KP_LCOL2_2,
+	SPECIAL_HID_KEY_KEYPAD_TOGGLE,					   //	LOGICAL_KEY_KP_LCOL2_1, // inner column
+	SPECIAL_HID_KEY_KEYPAD_SHIFT,					     //	LOGICAL_KEY_KP_LCOL2_2,
 	NO_KEY,											   //	LOGICAL_KEY_KP_LCOL2_3,
 	// Right hand extra keys
 	HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE,			   //	LOGICAL_KEY_KP_RCOL1_1, // outer column
@@ -207,8 +207,8 @@ const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM = {
 	HID_KEYBOARD_SC_KEYPAD_DOT_AND_DELETE, 			   //	LOGICAL_KEY_KP_RROW3, ***
 	HID_KEYBOARD_SC_DOWN_ARROW, 					   //	LOGICAL_KEY_KP_RROW4,
 	HID_KEYBOARD_SC_UP_ARROW, 						   //	LOGICAL_KEY_KP_RROW5,
-	NO_KEY, 										   //	LOGICAL_KEY_KP_RCOL2_1, // inner column
-	NO_KEY, 										   //	LOGICAL_KEY_KP_RCOL2_2,
+	SPECIAL_HID_KEY_PROGRAM, 						   //	LOGICAL_KEY_KP_RCOL2_1, // inner column
+	SPECIAL_HID_KEY_KEYPAD_SHIFT, 					   //	LOGICAL_KEY_KP_RCOL2_2,
 	NO_KEY, 										   //	LOGICAL_KEY_KP_RCOL2_3,
 	// Left hand thumbpad
 	HID_KEYBOARD_SC_LEFT_ALT, 						   //	LOGICAL_KEY_KP_L_ALT,
