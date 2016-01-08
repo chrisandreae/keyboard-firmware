@@ -26,8 +26,13 @@ public:
 	QList<Layout::Key> keys;
 
 	static Layout readLayout(int layoutID);
+
+	unsigned int layerCount() const {
+		return 2;
+	}
+
 	int mappingSize() const {
-		return keys.count() * 2;
+		return keys.count() * layerCount();
 	};
 
 	QString namePosition(const LogicalKeycode position) const;
