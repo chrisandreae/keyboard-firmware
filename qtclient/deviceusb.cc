@@ -57,11 +57,11 @@ void DeviceUSB::enumerateTo(KeyboardComm::DeviceList* target, libusb_context* co
 			if (!isValidID(desc.idVendor, desc.idProduct))
 				continue;
 
-			USBDeviceHandle d(dev);
 			const unsigned char requiredPrefix[] = "andreae.gen.nz:";
 			unsigned char buf[sizeof(requiredPrefix)] = {0};
 			int length = LIBUSBCheckResult(
-			    libusb_get_string_descriptor_ascii(d, desc.iSerialNumber, buf, sizeof(buf) - 1));
+			    libusb_get_string_descriptor_ascii(
+			        USBDeviceHandle(dev), desc.iSerialNumber, buf, sizeof(buf) - 1));
 
 			if (strncmp(reinterpret_cast<const char*>(requiredPrefix),
 			            reinterpret_cast<const char*>(buf),
