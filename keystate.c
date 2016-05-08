@@ -157,6 +157,7 @@ void keystate_update(void){
 		matrix_select_row(matrix_row);
 
 		for(uint8_t matrix_col = 0; matrix_col < MATRIX_COLS; ++matrix_col){
+			uint8_t reading = matrix_read_column(matrix_col);
 
 			// look up the logical key for the matrix code
 			// Note that only one matrix position should map to any given
@@ -173,8 +174,6 @@ void keystate_update(void){
 			if(keystate_is_keypad_mode() && !noremap_key){
 				l_key += KEYPAD_LAYER_SIZE;
 			}
-
-			uint8_t reading = matrix_read_column(matrix_col);
 
 			uint8_t free_slot = NO_KEY;
 
