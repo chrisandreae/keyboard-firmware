@@ -10,7 +10,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 QMAKE_CXXFLAGS += -std=c++11
 
-RESOURCES += qtclient.rsc
+RESOURCES += qtclient.qrc
 
 PRECOMPILED_HEADER = prefix.h
 
@@ -79,6 +79,7 @@ SOURCES += \
 	devicemock.cc \
 
 mac {
+	QT_CONFIG -= no-pkg-config
 	CONFIG += link_pkgconfig
 	PKGCONFIG += libusb-1.0
 }

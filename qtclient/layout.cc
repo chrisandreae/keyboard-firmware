@@ -44,7 +44,7 @@ Layout Layout::readLayout(int layoutID) {
 	Layout layout;
 
 	QString layoutXml =
-		QString(":layout/%1.xml").arg(layoutID);
+		QString(":/layout/%1.xml").arg(layoutID);
 	XMLLayoutHandler handler(&layout);
 	QXmlSimpleReader xmlReader;
 	QFile layoutXmlFile(layoutXml);
