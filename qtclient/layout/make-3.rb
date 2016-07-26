@@ -113,11 +113,11 @@ class UgBoardLayout < Layout
     end
 
     def left_thumb
-      square_matrix(2, 3, col_start: 6, row_start: 7, row_stride: -1,  order: :cols)
+      square_matrix(2, 3, col_start: 6, row_start: 6, row_stride: +1, col_stride: +1, order: :rows)
     end
 
     def right_thumb
-      square_matrix(2, 3, col_start: 12, row_start: 7, row_stride: -1, col_stride: -1, order: :cols)
+      square_matrix(2, 3, col_start: 12, row_start: 6, row_stride: +1, col_stride: -1, order: :rows)
     end
 
     def right_keywell

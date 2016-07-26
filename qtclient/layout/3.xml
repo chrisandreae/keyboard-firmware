@@ -1,10 +1,10 @@
 <keyboard layout="ugboard" layoutid="3" image="ugboard.png"><layout>
-<key name="k1" w="50" h="50" x="600" y="350"/>
-<key name="k2" w="50" h="50" x="600" y="300"/>
-<key name="k3" w="50" h="50" x="550" y="350"/>
-<key name="k4" w="50" h="50" x="550" y="300"/>
-<key name="k5" w="50" h="50" x="500" y="350"/>
-<key name="k6" w="50" h="50" x="500" y="300"/>
+<key name="k1" w="50" h="50" x="600" y="300"/>
+<key name="k2" w="50" h="50" x="550" y="300"/>
+<key name="k3" w="50" h="50" x="500" y="300"/>
+<key name="k4" w="50" h="50" x="600" y="350"/>
+<key name="k5" w="50" h="50" x="550" y="350"/>
+<key name="k6" w="50" h="50" x="500" y="350"/>
 <key name="k7" w="50" h="50" x="600" y="0"/>
 <key name="k8" w="50" h="50" x="600" y="50"/>
 <key name="k9" w="50" h="50" x="600" y="100"/>
@@ -47,12 +47,12 @@
 <key name="k46" w="50" h="50" x="900" y="150"/>
 <key name="k47" w="50" h="50" x="900" y="200"/>
 <key name="k48" w="50" h="50" x="900" y="250"/>
-<key name="k49" w="50" h="50" x="300" y="350"/>
-<key name="k50" w="50" h="50" x="300" y="300"/>
-<key name="k51" w="50" h="50" x="350" y="350"/>
-<key name="k52" w="50" h="50" x="350" y="300"/>
-<key name="k53" w="50" h="50" x="400" y="350"/>
-<key name="k54" w="50" h="50" x="400" y="300"/>
+<key name="k49" w="50" h="50" x="300" y="300"/>
+<key name="k50" w="50" h="50" x="350" y="300"/>
+<key name="k51" w="50" h="50" x="400" y="300"/>
+<key name="k52" w="50" h="50" x="300" y="350"/>
+<key name="k53" w="50" h="50" x="350" y="350"/>
+<key name="k54" w="50" h="50" x="400" y="350"/>
 <key name="k55" w="50" h="50" x="300" y="0"/>
 <key name="k56" w="50" h="50" x="300" y="50"/>
 <key name="k57" w="50" h="50" x="300" y="100"/>
