@@ -1,45 +1,9 @@
 require 'libusb'
+require 'keyboard_lib/macro_entry'
+require 'keyboard_lib/configuration_flags'
 
-class ConfigurationFlags
-  def initialize(args={})
-    @keyBeepEnabled = args.delete(:keyBeepEnabled) || false;
-  end
-
-  def self.fromByte(b)
-    ConfigurationFlags.new(:keyBeepEnabled => ((b & 0x01) > 0))
-  end
-
-  def toByte()
-    b = 0;
-    b |= 0x01 if @keyBeepEnabled;
-    b
-  end
-
-  def to_s()
-    s = "("
-    s << "keyBeepEnabled: " << @keyBeepEnabled.to_s
-    s << ")"
-    s
-  end
-end
-
-class MacroEntry
-  attr_accessor :key, :type, :data
-
-  def initialize(key, type, data)
-    @key = key
-    @type = type
-    @data = data
-  end
-
-  def self.macros_size(macros)
-    macros.inject(2) do |a, m|
-      a + ( m.type == :macro ? (2 + m.data.length) : 0 )
-    end
-  end
-end
-
-class KeyboardComm
+class KeyboardLib::Comm
+  attr_reader :device
 
   USBRQ_DIR_DEVICE_TO_HOST = (1 << 7)
   USBRQ_DIR_HOST_TO_DEVICE = 0
@@ -77,17 +41,20 @@ class KeyboardComm
 
   NO_KEY = 0xFF
 
-  def self.enumerate()
-    usb = LIBUSB::Context.new
-    devices = usb.devices(:idVendor => 0x16c0, :idProduct => 0x27db).delete_if do |dev|
-      !dev.serial_number.start_with? SERIAL_VENDOR_PREFIX
-    end
-    devices
-  end
-
-
   def initialize(device)
     @device = device
+  end
+
+  def product
+    @device.product
+  end
+
+  def manufacturer
+    @device.manufacturer
+  end
+
+  def serial_number
+    @device.serial_number
   end
 
   def control_transfer(ary)
@@ -197,11 +164,11 @@ class KeyboardComm
 
       macros <<
         if (val & 0x8000) > 0
-          MacroEntry.new(key, :program, val & 0x7fff)
+          KeyboardLib::MacroEntry.new(key, :program, val & 0x7fff)
         else
           length = macro_data[val, 2].unpack("S<")[0]
           data = macro_data[val+2, length].unpack("C*")
-          MacroEntry.new(key, :macro, data)
+          KeyboardLib::MacroEntry.new(key, :macro, data)
         end
     end
     macros
@@ -218,7 +185,7 @@ class KeyboardComm
       raise "Cannot write #{macros.length} macros, device only supports #{index_len}"
     end
 
-    if MacroEntry.macros_size(macros) > storage_sz
+    if KeyboardLib::MacroEntry.macros_size(macros) > storage_sz
       raise "Cannot write #{macro_data_sz} bytes of macro data, device only supports #{storage_sz}"
     end
 
@@ -233,7 +200,7 @@ class KeyboardComm
 
     # pad and sort macro keys
     macros.each do |m|
-      m.key.concat Array.new(key_len - m.key.length, 0xff)
+      m.key.concat(Array.new(key_len - m.key.length, 0xff))
       m.key.sort!
     end
 
@@ -388,7 +355,7 @@ class KeyboardComm
 
   def get_config_flags()
     b = vendor_read_request(VRQ_READ_CONFIG_FLAGS, 1)
-    ConfigurationFlags.fromByte(b.unpack("C")[0])
+    KeyboardLib::ConfigurationFlags.fromByte(b.unpack("C")[0])
   end
 
   def set_config_flags(flags)
