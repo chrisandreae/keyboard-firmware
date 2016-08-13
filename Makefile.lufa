@@ -477,6 +477,8 @@ MSG_CREATING_LIBRARY = Creating library:
 # Define all object files.
 OBJ = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(SRC) $(CPPSRC) $(ASRC))))
 
+DEPS = $(addprefix $(OBJDIR)/,$(addsuffix .d,$(basename $(SRC) $(CPPSRC) $(ASRC))))
+
 # Define all listing files.
 LST = $(addprefix $(OBJDIR)/,$(addsuffix .lst,$(basename $(SRC) $(CPPSRC) $(ASRC))))
 
@@ -743,7 +745,7 @@ $(OBJ): | $(addsuffix .made,$(sort $(dir $(OBJ))))
 	touch $@
 
 # Include the dependency files.
--include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
+-include $(DEPS)
 
 
 # Listing of phony targets.
