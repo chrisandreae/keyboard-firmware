@@ -50,6 +50,7 @@ To build for a USB-capable AVR using the LUFA library:
 Currently supported hardware variants for USB AVRs are:
 
 * ````ERGODOX```` (Ergodox, ATMega32u4 (Teensy))
+* ````KINESIS```` (Kinesis Advantage/Professional, ATMega32u4, wired according to https://cdn.hackaday.io/images/6612331423803438207.png)
 
 ## Usage
 

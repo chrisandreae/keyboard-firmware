@@ -344,6 +344,64 @@ extern const hid_keycode logical_to_hid_map_default[NUM_LOGICAL_KEYS] PROGMEM;
 #define EEPROM_SCL (1<<0)
 #define EEPROM_SDA (1<<1)
 
+#elif defined(__AVR_ATmega32U4__)
+// TMK / Warren Janssens Kinesis wiring
+
+// Continue using the same USB VID/PID pair that's assigned to the hardware
+#define USB_VENDOR_ID  0x1d50 // Openmoko, Inc
+#define USB_PRODUCT_ID 0x6028 // ErgoDox ergonomic keyboard
+
+#define USB_MANUFACTURER_STRING L"andreae.gen.nz"
+#define USB_PRODUCT_STRING L"Programmable USB Keyboard"
+#define USB_SERIAL_NUMBER_STRING L"andreae.gen.nz:ergodox"
+
+#define MATRIX_PORT PORTF
+#define MATRIX_DDR  DDRF
+#define MATRIX_SELECT_A (1<<4)
+#define MATRIX_SELECT_B (1<<5)
+#define MATRIX_SELECT_C (1<<6)
+#define MATRIX_SELECT_P138SEL (1<<7)
+#define MATRIX_MASK (MATRIX_SELECT_A | MATRIX_SELECT_B | MATRIX_SELECT_C | MATRIX_SELECT_P138SEL)
+
+// keypad key
+#define INPUT_PIN5_PIN  PINC
+#define INPUT_PIN5_PORT PORTC
+#define INPUT_PIN5_DDR  DDRC
+#define INPUT_PIN5 (1<<7)
+
+// program key
+#define INPUT_PIN6_PIN  PINC
+#define INPUT_PIN6_PORT PORTC
+#define INPUT_PIN6_DDR  DDRC
+#define INPUT_PIN6 (1<<6)
+
+// FS1 and FS2 are PF0 and PF1
+
+#define INPUT_REST_PIN  PINB
+#define INPUT_REST_PORT PORTB
+#define INPUT_REST_DDR  DDRB
+#define INPUT_REST (0xFF)
+
+#define LED_PORT PORTD
+#define LED_DDR  DDRD
+#define LED_CAPS (1<<7)
+#define LED_NUMLOCK (1<<4)
+#define LED_SCROLLLOCK (1<<5)
+#define LED_KEYPAD (1<<6)
+#define ALL_LEDS (LED_CAPS | LED_NUMLOCK | LED_SCROLLLOCK | LED_KEYPAD)
+
+#define USE_BUZZER 0
+
+#define BUZZER_PORT PORTE
+#define BUZZER_DDR DDRE
+#define BUZZER (1<<6)
+
+#define EEPROM_PORT PORTD
+#define EEPROM_DDR  DDRD
+#define EEPROM_PIN  PIND
+#define EEPROM_SCL (1<<0)
+#define EEPROM_SDA (1<<1)
+
 #else
 #error Ports not yet defined for this microcontroller
 #endif
