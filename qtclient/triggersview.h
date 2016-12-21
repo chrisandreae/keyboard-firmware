@@ -10,7 +10,7 @@
 class QTableView;
 class TriggersItemModel;
 class TriggersPresenter;
-class LayoutWidget;
+class LayeredLayoutWidget;
 class QItemSelectionModel;
 class QItemSelection;
 class QModelIndex;
@@ -21,7 +21,7 @@ class TriggersView : public QWidget {
 
 	QScopedPointer<TriggersItemModel> mItemModel;
 	QTableView *mTableView;
-	LayoutWidget *mTriggerSetWidget;
+	LayeredLayoutWidget *mTriggerSetWidget;
 	const Layout *mKeyboardLayout;
 	QItemSelectionModel *mSelection;
 	TriggersPresenter *mPresenter;
@@ -51,7 +51,9 @@ public slots:
 	void handleModelChange(const QModelIndex& topLeft,
 						   const QModelIndex& bottomRight);
 	void handleModelReset();
+
 	void handleLogicalKeyClicked(LogicalKeycode position);
+	void handleLayerChanged(unsigned currentLayer);
 
 	void appendTrigger();
 	void removeTrigger();

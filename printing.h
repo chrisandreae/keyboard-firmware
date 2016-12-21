@@ -48,15 +48,12 @@
 
 #include "Keyboard.h"
 #include "keystate.h"
+#include "storage.h"
 
-#define PGM_MSG(x) ({ static const char __pgm_msg[] PROGMEM = x; __pgm_msg; })
+#define CONST_MSG(x) ({ static const char __pgm_msg[] STORAGE(CONSTANT_STORAGE) = x; __pgm_msg; })
 
-typedef enum __attribute__((__packed__)) _buf_type {
-	BUF_MEM, BUF_PGM, BUF_EE, BUF_EEEXT
-} buf_type;
-
-void printing_set_buffer(const char* buf, buf_type typ);
-uint8_t printing_buffer_empty(void);
+void printing_set_buffer(const char* buf, storage_type typ);
+bool printing_buffer_empty(void);
 
 void printing_Fill_KeyboardReport(KeyboardReport_Data_t* ReportData);
 

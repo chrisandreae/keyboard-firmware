@@ -48,16 +48,13 @@
 
 #include <stdint.h>
 
-/**
- * Size in bytes of macro index
- */
-#define MACRO_INDEX_SIZE 300 // 50 x 6-byte entries
 
 #define MACRO_MAX_KEYS 4
 
-// Macro indices
+// Public interface
+
 typedef struct _macro_idx_key {
-	hid_keycode keys[MACRO_MAX_KEYS];
+	logical_keycode keys[MACRO_MAX_KEYS];
 } macro_idx_key;
 
 typedef enum _macro_idx_entry_type { MACRO, PROGRAM } macro_idx_entry_type;
@@ -67,13 +64,12 @@ typedef struct _macro_idx_entry_data {
 	uint16_t data;
 } macro_idx_entry_data;
 
-// Opaque macro entry struct
 struct _macro_idx_entry;
 typedef struct _macro_idx_entry macro_idx_entry;
 
 /**
- * Get a pointer to the underlying data in EEMEM. (To be read/written
- * as a whole by the client application)
+ * Get a pointer to the underlying data in storage. (To be read/written as a
+ * whole by the client application)
  */
 uint8_t* macro_idx_get_storage(void);
 
@@ -81,6 +77,12 @@ uint8_t* macro_idx_get_storage(void);
  * Erases the macro index - to be called from config_reset_fully
  */
 void macro_idx_reset_defaults(void);
+
+/**
+ * Given a macro_idx_key with the `keys` array populated with `key_count`
+ * keycodes, format it into a lookup key and return true if it's valid.
+ */
+bool macro_idx_format_key(macro_idx_key* key, uint8_t key_count);
 
 /**
  * Looks up a key combination in the macro index.  Returns opaque
@@ -112,7 +114,28 @@ macro_idx_entry* macro_idx_create(macro_idx_key* key);
 
 typedef void(*macro_idx_iterator)(macro_idx_entry*, void*);
 
+/**
+ * Evaluate an iterator function for each defined macro index entry.
+ */
 void macro_idx_iterate(macro_idx_iterator itr, void* c);
+
+/**
+ * Storage representation for macro index entries
+ */
+struct _macro_idx_entry {
+	// unused keycodes are NO_KEY (so an empty entry starts with NO_KEY)
+	hid_keycode keys[MACRO_MAX_KEYS];
+	uint16_t val; // high bit indicates whether the entry is a macro
+				  // or a program. If macro, remaining bits are the
+				  // offset to the macro_data in macros array
+				  // (obtained via macros_get_macro_offset). If
+				  // program, then they are the integer program id.
+};
+
+/**
+ * Size in bytes of macro index
+ */
+#define MACRO_INDEX_SIZE (MACRO_INDEX_COUNT * sizeof(macro_idx_entry))
 
 
 #endif // __MACRO_INDEX_H

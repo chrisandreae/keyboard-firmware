@@ -60,14 +60,35 @@
 // configuration program over USB to identify the layout.
 #define LAYOUT_ID 2
 
-#define KEYPAD_LAYER 1
+/* Storage layout */
+#define CONSTANT_STORAGE           avr_pgm
+#define MAPPING_STORAGE            avr_eeprom
 
-// if the keypad mode is selected, and a logical key greater than KEYPAD_LAYER_START
-// is read, add KEYPAD_LAYER_SIZE to look up the mapping.
-#define KEYPAD_LAYER_START 2
-#define KEYPAD_LAYER_SIZE  74
+#ifdef NO_EXTERNAL_STORAGE
+	#define SAVED_MAPPING_STORAGE      avr_eeprom
+	#define SAVED_MAPPING_COUNT        128          // 2-byte entries
+	#define MACRO_INDEX_STORAGE        avr_eeprom
+	#define MACRO_INDEX_COUNT          10           // 6-byte entries
+	#define MACROS_STORAGE             avr_eeprom
+	#define MACROS_SIZE                256
+	#define PROGRAM_STORAGE            avr_eeprom
+	#define PROGRAM_SIZE               256
+	#define PROGRAM_COUNT              2
+#else
+	#define SAVED_MAPPING_STORAGE      avr_eeprom
+	#define SAVED_MAPPING_COUNT        256          // 2-byte entries
+	#define MACRO_INDEX_STORAGE        avr_eeprom
+	#define MACRO_INDEX_COUNT          50           // 6-byte entries
+	#define MACROS_STORAGE             i2c_eeprom
+	#define MACROS_SIZE                1024
+	#define PROGRAM_STORAGE            i2c_eeprom
+	#define PROGRAM_SIZE               1024
+	#define PROGRAM_COUNT              6
+#endif
 
-#define NUM_LOGICAL_KEYS (2 + (KEYPAD_LAYER_SIZE * 2)) //76 physical keys, 74 of which (all but keypad/program) have a separate keypad layer mapping
+#define NUM_PHYSICAL_KEYS 76
+#define NUM_LOGICAL_KEYS  NUM_PHYSICAL_KEYS * 2
+#define KEYPAD_LAYER_SIZE NUM_PHYSICAL_KEYS
 
 // The Ergodox is made up of two 6x7 matrices, one for each hand. The diodes are
 // installed so that we drive what the Ergodox firmware calls the "columns" side
@@ -81,9 +102,6 @@
 
 // Logical keys we have: logical keys represent a key-position+keypad-layer combination.
 enum logical_keys {
-	LOGICAL_KEY_KEYPAD,
-	LOGICAL_KEY_PROGRAM,
-
 	// Main key blocks
 	LOGICAL_KEY_A,
 	LOGICAL_KEY_B,
@@ -138,6 +156,7 @@ enum logical_keys {
 	LOGICAL_KEY_LROW5,
 	LOGICAL_KEY_LCOL2_1, // inner column (top-most keys in this column are pgm/kpd)
 	LOGICAL_KEY_LCOL2_2,
+	LOGICAL_KEY_LCOL2_3,
 
 	// Right hand extra keys
 	LOGICAL_KEY_RCOL1_1, // outer column
@@ -151,6 +170,7 @@ enum logical_keys {
 	LOGICAL_KEY_RROW5,
 	LOGICAL_KEY_RCOL2_1, // inner column
 	LOGICAL_KEY_RCOL2_2,
+	LOGICAL_KEY_RCOL2_3,
 
 	// Left hand thumbpad
 	LOGICAL_KEY_L_ALT,
@@ -171,11 +191,11 @@ enum logical_keys {
 };
 
 // Which logical keys to use for special in-built combinations
-#define SPECIAL_LKEY_MACRO_RECORD  LOGICAL_KEY_M
-#define SPECIAL_LKEY_REMAP         LOGICAL_KEY_P
-#define SPECIAL_LKEY_REBOOT        LOGICAL_KEY_B
-#define SPECIAL_LKEY_RESET_CONFIG  LOGICAL_KEY_Z
-#define SPECIAL_LKEY_RESET_FULLY   LOGICAL_KEY_LCOL1_3
+#define SPECIAL_HKEY_MACRO_RECORD  HID_KEYBOARD_SC_M
+#define SPECIAL_HKEY_REMAP         HID_KEYBOARD_SC_P
+#define SPECIAL_HKEY_REBOOT        HID_KEYBOARD_SC_B
+#define SPECIAL_HKEY_RESET_CONFIG  HID_KEYBOARD_SC_Z
+#define SPECIAL_HKEY_RESET_FULLY   HID_KEYBOARD_SC_LEFT_SHIFT
 
 extern const logical_keycode matrix_to_logical_map[MATRIX_ROWS][MATRIX_COLS] PROGMEM;
 

@@ -43,8 +43,8 @@
   this software.
 */
 
-#ifndef __SERIAL_EEPROM_H
-#define __SERIAL_EEPROM_H
+#ifndef __I2C_EEPROM_H
+#define __I2C_EEPROM_H
 
 #include "hardware.h"
 
@@ -52,37 +52,36 @@
 
 #define EEEXT __attribute__((section(".eeexternal")))
 
+#define STORAGE_SECTION_i2c_eeprom EEEXT
+
 #define EEEXT_PAGE_SIZE 16
 
-typedef enum _serial_eeprom_err {
+typedef enum _i2c_eeprom_err {
 	SUCCESS = 0,
 	WSELECT_ERROR,
 	RSELECT_ERROR,
 	ADDRESS_ERROR,
 	DATA_ERROR
-} serial_eeprom_err;
-
-extern serial_eeprom_err serial_eeprom_errno;
-
-serial_eeprom_err serial_eeprom_start_write(uint8_t* addr);
-int8_t serial_eeprom_continue_write(const uint8_t* buf, uint8_t len);
-static inline void serial_eeprom_end_write(void){ twi_stop(NOWAIT); }
-
-/**
- * Write len bytes within an eeprom page. The caller is responsible
- * for ensuring 0 < len <= 16 and aligned within the 16 byte page.
- * returns bytes written: if < len, an error occurred.
- */
-int8_t serial_eeprom_write_page(uint8_t* addr, const uint8_t* buf, uint8_t len);
+} i2c_eeprom_err;
 
 /**
  * Writes count bytes to serial eeprom address dst, potentially using
  * multiple page writes. Returns number of bytes written if any bytes
  * were successfully written, otherwise -1. A return value of less
- * than count indicates that an error occurred and serial_eeprom_errno
+ * than count indicates that an error occurred and i2c_eeprom_errno
  * is set to indicate the error.
  */
-int16_t serial_eeprom_write(uint8_t* dst, const uint8_t* buf, uint16_t count);
+int16_t i2c_eeprom_write(void* dst, const void* data, size_t count);
+
+/**
+ * Writes the argument byte to serial eeprom address dst
+ */
+i2c_eeprom_err i2c_eeprom_write_byte(uint8_t* dst, uint8_t b);
+
+/**
+ * Writes the argument short to serial eeprom address dst
+ */
+i2c_eeprom_err i2c_eeprom_write_short(uint8_t* dst, uint16_t b);
 
 /**
  * Repeatedly called to incrementally write chunks of data to eeprom.
@@ -92,18 +91,24 @@ int16_t serial_eeprom_write(uint8_t* dst, const uint8_t* buf, uint16_t count);
  * a page boundary, and stops the page write after writing if addr+len
  * is a page boundary, or if 'last' is set.
  *
- * Returns serial_eeprom_err.
+ * Returns i2c_eeprom_err.
  */
-serial_eeprom_err serial_eeprom_write_step(uint8_t* addr, uint8_t* data, uint8_t len, uint8_t last);
+i2c_eeprom_err i2c_eeprom_write_step(void* dst, const void* data, uint8_t len, uint8_t last);
 
-int16_t serial_eeprom_read(const uint8_t* addr, uint8_t* buf, uint16_t len);
+size_t i2c_eeprom_read(const void* addr, void* buf, size_t len);
 
-serial_eeprom_err serial_eeprom_memmove(uint8_t* dst, uint8_t* src, size_t count);
+uint8_t i2c_eeprom_read_byte(const uint8_t* addr);
+
+uint16_t i2c_eeprom_read_short(const uint16_t* addr);
+
+i2c_eeprom_err i2c_eeprom_memmove(void* dst, const void* src, size_t count);
+
+i2c_eeprom_err i2c_eeprom_memset(void* dst, uint8_t c, size_t len);
 
 #ifdef DEBUG
 // test code (not normally linked)
-uint8_t serial_eeprom_test_read(void);
-uint8_t serial_eeprom_test_write(void);
+uint8_t i2c_eeprom_test_read(void);
+uint8_t i2c_eeprom_test_write(void);
 #endif
 
-#endif // __SERIAL_EEPROM_H
+#endif // __I2C_EEPROM_H

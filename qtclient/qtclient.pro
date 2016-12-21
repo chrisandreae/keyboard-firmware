@@ -8,6 +8,8 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x000000
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+QMAKE_CXXFLAGS += -std=c++11
+
 RESOURCES += qtclient.rsc
 
 PRECOMPILED_HEADER = prefix.h
@@ -18,6 +20,7 @@ HEADERS += \
 	keyboardmodel.h \
 	keyboardpresenter.h \
 	keyboardvalues.h \
+	valuespresenter.h \
 	keyboardview.h \
 	layout.h \
 	layoutpresenter.h \
@@ -32,6 +35,7 @@ HEADERS += \
 	programspresenter.h \
 	vm.h \
 	layoutwidget.h \
+	layeredlayoutwidget.h \
 	triggersview.h \
 	triggerspresenter.h \
 	triggersitemmodel.h \
@@ -39,12 +43,16 @@ HEADERS += \
 	hexdump.h \
 	triggersitemdelegate.h \
 	util.h \
+	device.h \
+	deviceusb.h \
+	devicemock.h \
 
 SOURCES += \
 	keyboardcomm.cc \
 	keyboardmodel.cc \
 	keyboardpresenter.cc \
 	keyboardvalues.cc \
+	valuespresenter.cc \
 	keyboardview.cc \
 	layoutpresenter.cc \
 	layoutview.cc \
@@ -57,6 +65,7 @@ SOURCES += \
 	programsitemmodel.cc \
 	programspresenter.cc \
 	layoutwidget.cc \
+	layeredlayoutwidget.cc \
 	triggersview.cc \
 	triggerspresenter.cc \
 	triggersitemmodel.cc \
@@ -65,6 +74,9 @@ SOURCES += \
 	hexdump.cc \
 	triggersitemdelegate.cc \
 	util.cc \
+	device.cc \
+	deviceusb.cc \
+	devicemock.cc \
 
 mac {
 	CONFIG += link_pkgconfig
@@ -85,3 +97,6 @@ win32 {
 	LIBS += -Lc:\\lib\\libusbx-1.0.14-win\\MS32\\static -llibusb-1.0
 }
 
+contains(USE_MOCK, 1) {
+	DEFINES += USE_MOCK
+}

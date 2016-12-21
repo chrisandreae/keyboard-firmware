@@ -46,29 +46,32 @@
 #include "printing.h"
 #include "Keyboard.h"
 #include "keystate.h"
+#include "storage.h"
 
-static buf_type print_buffer_type;
+static storage_type print_buffer_type;
 static const char* print_buffer;
 
-void printing_set_buffer(const char* buf, buf_type typ){
+void printing_set_buffer(const char* buf, storage_type typ){
 	print_buffer = buf;
 	print_buffer_type = typ;
 }
 
-uint8_t print_buffer_get(void){
+char print_buffer_get(void){
 	switch(print_buffer_type){
-	case BUF_MEM:
-		return *print_buffer;
-	case BUF_PGM:
-		return pgm_read_byte_near(print_buffer);
-	case BUF_EE:
-	case BUF_EEEXT:
+	case sram:
+		return (char)sram_read_byte((uint8_t*)print_buffer);
+	case avr_pgm:
+		return (char)avr_pgm_read_byte((uint8_t*)print_buffer);
+	case avr_eeprom:
+		return (char)avr_pgm_read_byte((uint8_t*)print_buffer);
+	case i2c_eeprom:
+		return (char)avr_pgm_read_byte((uint8_t*)print_buffer);
 	default:
 		return 0; // unsupported;
 	}
 }
 
-uint8_t printing_buffer_empty(void){
+bool printing_buffer_empty(void){
 	return print_buffer_get() == '\0';
 }
 

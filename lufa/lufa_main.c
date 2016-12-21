@@ -34,10 +34,15 @@
 
 #include "Keyboard.h"
 
+#include <avr/io.h>
+#include <avr/wdt.h>
+#include <avr/power.h>
+#include <avr/interrupt.h>
+
 #include <LUFA/Version.h>
 #include <LUFA/Drivers/USB/USB.h>
 
-#include "eeext_endpoint_stream.h"
+#include "storage_stream.h"
 
 #include "usb_vendor_interface.h"
 #include "config.h"
@@ -95,6 +100,7 @@ int main(void) {
 
 	USB_Init();
 
+	sei();
 
 	// and enter the keyboard loop
 	Keyboard_Main();
@@ -161,7 +167,7 @@ void EVENT_USB_Device_ControlRequest(void)
 		// Read requests
 		switch(USB_ControlRequest.bRequest){
 		case READ_NUM_PROGRAMS:
-			Endpoint_Write_8(NUM_PROGRAMS);
+			Endpoint_Write_8(PROGRAM_COUNT);
 			goto end_write;
 		case READ_LAYOUT_ID:
 			Endpoint_Write_8(LAYOUT_ID);
@@ -178,7 +184,7 @@ void EVENT_USB_Device_ControlRequest(void)
 			Endpoint_Write_8(MACRO_MAX_KEYS);
 			goto end_write;
 		case READ_PROGRAMS_SIZE:
-			Endpoint_Write_16_LE(PROGRAMS_SIZE);
+			Endpoint_Write_16_LE(PROGRAM_SIZE);
 			goto end_write;
 		case READ_MACRO_INDEX_SIZE:
 			Endpoint_Write_16_LE(MACRO_INDEX_SIZE);
@@ -190,19 +196,19 @@ void EVENT_USB_Device_ControlRequest(void)
 			Endpoint_ClearStatusStage(); // and wait for and clear the status ack
 			break;
 		case READ_PROGRAMS:
-			Endpoint_Write_Control_SEStream_LE(config_get_programs(), USB_ControlRequest.wLength);
+			Endpoint_Write_Control_StorageStream_LE(PROGRAM_STORAGE, config_get_programs(), USB_ControlRequest.wLength);
 			goto ack_write_status;
 		case READ_MACRO_INDEX:
-			Endpoint_Write_Control_EStream_LE(macro_idx_get_storage(), USB_ControlRequest.wLength);
+			Endpoint_Write_Control_StorageStream_LE(MACRO_INDEX_STORAGE, macro_idx_get_storage(), USB_ControlRequest.wLength);
 			goto ack_write_status;
 		case READ_MACRO_STORAGE:
-			Endpoint_Write_Control_SEStream_LE(macros_get_storage(), USB_ControlRequest.wLength);
+			Endpoint_Write_Control_StorageStream_LE(MACROS_STORAGE, macros_get_storage(), USB_ControlRequest.wLength);
 			goto ack_write_status;
 		case READ_DEFAULT_MAPPING:
-			Endpoint_Write_Control_PStream_LE((uint8_t*)logical_to_hid_map_default, USB_ControlRequest.wLength);
+			Endpoint_Write_Control_StorageStream_LE(CONSTANT_STORAGE, (uint8_t*)logical_to_hid_map_default, USB_ControlRequest.wLength);
 			goto ack_write_status;
 		case READ_MAPPING:
-			Endpoint_Write_Control_EStream_LE(config_get_mapping(), USB_ControlRequest.wLength);
+			Endpoint_Write_Control_StorageStream_LE(MAPPING_STORAGE, config_get_mapping(), USB_ControlRequest.wLength);
 		ack_write_status:
 			// Stream write functions already wait for the host's status ack, so we
 			// just have to clear it.
@@ -221,16 +227,16 @@ void EVENT_USB_Device_ControlRequest(void)
 		switch(USB_ControlRequest.bRequest){
 			// write requests
 		case WRITE_PROGRAMS:
-			Endpoint_Read_Control_SEStream_LE(config_get_programs(), USB_ControlRequest.wLength);
+			Endpoint_Read_Control_StorageStream_LE(PROGRAM_STORAGE, config_get_programs(), USB_ControlRequest.wLength);
 			goto ack_read_status;
 		case WRITE_MACRO_INDEX:
-			Endpoint_Read_Control_EStream_LE(macro_idx_get_storage(), USB_ControlRequest.wLength);
+			Endpoint_Read_Control_StorageStream_LE(MACRO_INDEX_STORAGE, macro_idx_get_storage(), USB_ControlRequest.wLength);
 			goto ack_read_status;
 		case WRITE_MACRO_STORAGE:
-			Endpoint_Read_Control_SEStream_LE(macros_get_storage(), USB_ControlRequest.wLength);
+			Endpoint_Read_Control_StorageStream_LE(MACROS_STORAGE, macros_get_storage(), USB_ControlRequest.wLength);
 			goto ack_read_status;
 		case WRITE_MAPPING:
-			Endpoint_Read_Control_EStream_LE(config_get_mapping(), USB_ControlRequest.wLength);
+			Endpoint_Read_Control_StorageStream_LE(MAPPING_STORAGE, config_get_mapping(), USB_ControlRequest.wLength);
 		ack_read_status:
 			// stream read functions already waited for the host to be ready:
 			// just send the status ack

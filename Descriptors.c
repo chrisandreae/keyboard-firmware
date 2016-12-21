@@ -115,7 +115,6 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM KeyboardReport[] =
 		HID_RI_END_COLLECTION(0),
 	};
 
-#ifdef BUILD_FOR_LUFA
 /** Device descriptor structure. This descriptor, located in FLASH memory, describes the overall
  *  device characteristics, including the supported USB version, control endpoint size and the
  *  number of device configurations. The descriptor is read out by the USB host when the enumeration
@@ -130,7 +129,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 	.SubClass               = USB_CSCP_NoDeviceSubclass,
 	.Protocol               = USB_CSCP_NoDeviceProtocol,
 
-	.Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
+	.Endpoint0Size          = 8, // Matches LUFA FIXED_CONTROL_ENDPOINT_SIZE
 
 	.VendorID               = USB_VENDOR_ID,  // Defined in hardware.h
 	.ProductID              = USB_PRODUCT_ID,
@@ -140,10 +139,8 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 	.ProductStrIndex        = 0x02,
 	.SerialNumStrIndex      = 0x03,
 
-	.NumberOfConfigurations = FIXED_NUM_CONFIGURATIONS
+	.NumberOfConfigurations = 1, // Matches LUFA FIXED_NUM_CONFIGURATIONS
 };
-
-#endif
 
 const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 {
@@ -157,7 +154,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		.ConfigurationNumber    = 1,
 		.ConfigurationStrIndex  = NO_DESCRIPTOR,
 
-		.ConfigAttributes       = (USB_CONFIG_ATTR_BUSPOWERED | USB_CONFIG_ATTR_SELFPOWERED),
+		.ConfigAttributes       = (USB_CONFIG_ATTR_BUSPOWERED | USB_CONFIG_ATTR_REMOTEWAKEUP),
 
 		.MaxPowerConsumption    = USB_CONFIG_POWER_MA(30)
 	},
@@ -238,7 +235,6 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 
 };
 
-#ifdef BUILD_FOR_LUFA
 #define USB_STRING_LEN_OF(x) (sizeof(USB_Descriptor_Header_t) + sizeof(x) - 2)
 
 /** Language descriptor structure. This descriptor, located in FLASH memory, is returned when the host requests
@@ -281,7 +277,6 @@ const USB_Descriptor_String_t PROGMEM SerialNumberString =
 	.UnicodeString          = USB_SERIAL_NUMBER_STRING
 };
 
-#endif
 
 #ifdef BUILD_FOR_LUFA
 /** This function is called by the library when in device mode, and must be overridden (see library "USB Descriptors"
@@ -372,26 +367,21 @@ usbMsgLen_t usbFunctionDescriptor(usbRequest_t* rq)
 {
 
 	const uint8_t  DescriptorType   = (rq->wValue.word >> 8);
-#if 0
 	const uint8_t  DescriptorNumber = (rq->wValue.word & 0xFF);
-#endif
 
 	const void* Address = 0;
 	uint16_t    Size    = 0;
 
 	switch (DescriptorType)
 		{
-#if DEFINE_DEVICE
 		case DTYPE_Device:
 			Address = &DeviceDescriptor;
 			Size    = sizeof(USB_Descriptor_Device_t);
 			break;
-#endif
 		case DTYPE_Configuration:
 			Address = &ConfigurationDescriptor;
 			Size    = sizeof(USB_Descriptor_Configuration_t);
 			break;
-#if 0
 		case DTYPE_String:
 			switch (DescriptorNumber)
 				{
@@ -412,7 +402,6 @@ usbMsgLen_t usbFunctionDescriptor(usbRequest_t* rq)
 					Size    = pgm_read_byte(&SerialNumberString.Header.Size);
 					break;
 				}
-#endif
 
 			break;
 		case HID_DTYPE_HID:

@@ -7,20 +7,23 @@
 #include <QScopedPointer>
 #include <QSharedPointer>
 
+#include "keyboardcomm.h"
 #include "keyboardview.h"
 #include "layoutpresenter.h"
 #include "programspresenter.h"
 #include "triggerspresenter.h"
+#include "valuespresenter.h"
 
 class KeyboardModel;
+
 class KeyboardComm;
 
 class KeyboardPresenter : public QObject {
 	Q_OBJECT
 	Q_DISABLE_COPY(KeyboardPresenter)
 
-	QList<USBDevice> mDevices;
-	QScopedPointer<USBDevice> mUSBDevice;
+	KeyboardComm::DeviceList mDevices;
+	QSharedPointer<Device> mCurrentDevice;
 	QScopedPointer<KeyboardView> mView;
 
 	QSharedPointer<KeyboardModel> mKeyboardModel;
@@ -28,6 +31,7 @@ class KeyboardPresenter : public QObject {
 	LayoutPresenter mLayoutPresenter;
 	ProgramsPresenter mProgramsPresenter;
 	TriggersPresenter mTriggersPresenter;
+	ValuesPresenter mValuesPresenter;
 
 	QList<QPair<QString, QWidget*> > createSubviewList();
 
@@ -37,6 +41,7 @@ public:
 
 signals:
 	void modelChanged(const QSharedPointer<KeyboardModel>&);
+	void deviceChanged(const QSharedPointer<Device>&);
 
 public slots:
 	void showAction();

@@ -52,15 +52,6 @@
 
 #include "macro_index.h"
 
-#ifndef NO_EXTERNAL_STORAGE
-	/**
-	 * Size in bytes of macro storage (including end offset)
-	 */
-	#define MACROS_SIZE 1024
-#else
-	#define MACROS_SIZE 0
-#endif
-
 typedef struct _macro_data {
 	uint16_t length;
 	hid_keycode events[1]; // When encountering a key event, if not pressed, press, else release.

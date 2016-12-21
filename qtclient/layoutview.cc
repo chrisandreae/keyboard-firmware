@@ -7,14 +7,14 @@
 #include "layoutpresenter.h"
 #include "layout.h"
 #include "layoutwidget.h"
+#include "layeredlayoutwidget.h"
 #include "keyselectionview.h"
 #include "hidtables.h"
 
 LayoutView::LayoutView(LayoutPresenter *presenter)
 	: mPresenter(presenter)
-	, mLayoutWidget(new LayoutWidget)
+	, mLayoutWidget(new LayeredLayoutWidget)
 	, mKeySelectionView(NULL)
-	, mShowingMainLayer(true)
 {
 	QPushButton *loadDefaultsButton = new QPushButton(tr("Load Defaults"));
 

@@ -142,7 +142,10 @@ SRC = $(TARGET).c                                                 \
 	  printing.c												  \
 	  keystate.c												  \
 	  config.c													  \
-	  serial_eeprom.o											  \
+	  storage.o													  \
+	  storage/i2c_eeprom.o										  \
+	  storage/avr_eeprom.o										  \
+	  storage/avr_pgm.o											  \
 	  buzzer.c													  \
 	  leds.c													  \
 	  hardware.c												  \
@@ -251,6 +254,7 @@ CFLAGS += -Wall
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wno-unused-but-set-variable
 CFLAGS += -Werror=implicit-function-declaration
+CFLAGS += -fwrapv
 #CFLAGS += -mshort-calls
 #CFLAGS += -fno-unit-at-a-time
 #CFLAGS += -Wundef

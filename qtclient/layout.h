@@ -24,15 +24,15 @@ public:
 	QString layout;
 	QString imageName;
 	QList<Layout::Key> keys;
-	struct {
-		PhysicalKeycode keyIndex;
-		PhysicalKeycode layerStart;
-		uint8_t layerSize;
-	} keypad;
 
 	static Layout readLayout(int layoutID);
+
+	unsigned int layerCount() const {
+		return 2;
+	}
+
 	int mappingSize() const {
-		return keys.count() + keypad.layerSize;
+		return keys.count() * layerCount();
 	};
 
 	QString namePosition(const LogicalKeycode position) const;
@@ -41,12 +41,16 @@ public:
 		return lKey > keys.count();
 	}
 
-	LogicalKeycode physicalKeycodeToLogical(PhysicalKeycode pKey, bool keypadLayer) const {
-		if(keypadLayer && pKey > keypad.layerStart){
-			pKey += keypad.layerSize;
-		}
-		return pKey;
+	LogicalKeycode physicalKeycodeToLogical(PhysicalKeycode pKey, unsigned layer) const {
+		return layer * keys.count() + pKey;
 	}
+	PhysicalKeycode logicalKeycodeToPhysical(LogicalKeycode lKey) const {
+		return lKey % keys.count();
+	}
+	unsigned layerForLogicalKey(LogicalKeycode lKey) const {
+		return lKey / keys.count();
+	}
+
 };
 
 #endif

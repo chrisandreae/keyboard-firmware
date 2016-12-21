@@ -12,7 +12,7 @@
 #include "triggerspresenter.h"
 #include "triggersitemmodel.h"
 #include "triggersitemdelegate.h"
-#include "layoutwidget.h"
+#include "layeredlayoutwidget.h"
 #include "util.h"
 
 TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent) 
@@ -43,7 +43,7 @@ TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent)
 	layout->addWidget(mRemoveTriggerButton, 1, 1);
 	connect(mRemoveTriggerButton, SIGNAL(clicked()), this, SLOT(removeTrigger()));
 
-	mTriggerSetWidget = new LayoutWidget;
+	mTriggerSetWidget = new LayeredLayoutWidget;
 	mTriggerSetWidget->setScale(0.4f);
 	layout->addWidget(mTriggerSetWidget, 2, 0);
 
@@ -61,7 +61,10 @@ TriggersView::TriggersView(TriggersPresenter *presenter, QWidget *parent)
 	        this, SLOT(handleSelectionChange(const QItemSelection&, const QItemSelection&)));
 
 	connect(mTriggerSetWidget, SIGNAL(logicalKeyClicked(LogicalKeycode)),
-			this, SLOT(handleLogicalKeyClicked(LogicalKeycode)));
+	        this, SLOT(handleLogicalKeyClicked(LogicalKeycode)));
+
+	connect(mTriggerSetWidget, SIGNAL(layerSelectionChanged(unsigned)),
+	        this, SLOT(handleLayerChanged(unsigned)));
 
 	setLayout(layout);
 }
@@ -125,10 +128,16 @@ void TriggersView::afterRemoveTrigger() {
 void TriggersView::updateTriggerSetWidget(const QModelIndex& index){
 	if(index.isValid()){
 		const Trigger *currentTrigger = mPresenter->getTrigger(index.row());
-		mTriggerSetWidget->setSelection(QSet<LogicalKeycode>::fromList(currentTrigger->triggerKeys()));
+		mTriggerSetWidget->setSelection(
+		    QSet<LogicalKeycode>::fromList(currentTrigger->triggerKeys()));
+		if (!currentTrigger->triggerKeys().isEmpty()) {
+			mTriggerSetWidget->setLayer(
+			    mPresenter->layerForTrigger(index.row()));
+		}
 	}
 	else{
 		mTriggerSetWidget->setSelection(QSet<LogicalKeycode>());
+		mTriggerSetWidget->setLayer(0);
 	}
 }
 
@@ -166,5 +175,12 @@ void TriggersView::handleLogicalKeyClicked(LogicalKeycode logicalKeycode) {
 	if(mSelection->hasSelection()) {
 		int triggerIndex = currentSelectionOf(*mSelection).row();
 		mPresenter->toggleKeyInTrigger(triggerIndex, logicalKeycode);
+	}
+}
+
+void TriggersView::handleLayerChanged(unsigned currentLayer) {
+	if (mSelection->hasSelection()) {
+		int triggerIndex = currentSelectionOf(*mSelection).row();
+		mPresenter->setTriggerLayer(triggerIndex, currentLayer);
 	}
 }

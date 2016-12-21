@@ -12,7 +12,8 @@ void LayoutWidget::paintEvent(QPaintEvent *ev) {
 	if (!mLayout) return;
 
 	QPainter painter(this);
-	
+	painter.setRenderHint(QPainter::Antialiasing);
+
 	QFont defaultFont = painter.font();
 	QTextOption buttonTextOption;
 	buttonTextOption.setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
@@ -23,35 +24,39 @@ void LayoutWidget::paintEvent(QPaintEvent *ev) {
 	{
 		QRect keyRect = scaleRect(it->rect);
 
-		if(mKeypadLayerSelected){
-			painter.fillRect(keyRect, mKeypadLayerColor);
-		}
+		painter.fillRect(keyRect, mOverlayColor);
 
 		unsigned int physicalKeycode = it - mLayout->keys.constBegin();
-		unsigned int logicalKeycode =
-			mLayout->physicalKeycodeToLogical(physicalKeycode, mKeypadLayerSelected);
 
-		if (mSelection.contains(logicalKeycode)) {
+		if (mSelection.contains(physicalKeycode)) {
 			painter.fillRect(keyRect, mSelectedColor);
 		}
 
 		if (mMapping.length() != 0) {
 			QString keyLabel =
-				QString(HIDTables::nameUsage(mMapping[logicalKeycode])).replace('_', '\n');
-			QRectF keyBounds(keyRect);
-			while (!keyBounds.contains(painter.boundingRect(keyRect,
-															keyLabel,
-															buttonTextOption)))
-			{
-				QFont f = painter.font();
-				f.setPointSize(f.pointSize() - 1);
-				painter.setFont(f);
-			}
-
-			painter.drawText(keyRect, keyLabel, buttonTextOption);
-			painter.setFont(defaultFont);
+				QString(HIDTables::nameUsage(mMapping[physicalKeycode])).replace('_', '\n');
+			paintScaledLabel(painter, keyLabel, keyRect);
 		}
 	}
+}
+
+void LayoutWidget::paintScaledLabel(QPainter& painter, const QString label, const QRect rect) {
+	if (label.count() == 0)
+		return;
+
+	QFont defaultFont = painter.font();
+	QTextOption buttonTextOption;
+	buttonTextOption.setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+
+	QRectF bounds(rect);
+	while (!bounds.contains(painter.boundingRect(rect, label, buttonTextOption))) {
+		QFont f = painter.font();
+		f.setPointSize(f.pointSize() - 1);
+		painter.setFont(f);
+	}
+
+	painter.drawText(rect, label, buttonTextOption);
+	painter.setFont(defaultFont);
 }
 
 void LayoutWidget::setKeyboardLayout(const Layout& layout) {
@@ -71,23 +76,14 @@ void LayoutWidget::mousePressEvent(QMouseEvent *ev) {
 	QLabel::mousePressEvent(ev);
 	if (!mLayout) return;
 
+	// FIXME: linear scan hit testing
 	for (QList<Layout::Key>::const_iterator it = mLayout->keys.constBegin();
 	     it != mLayout->keys.constEnd();
 	     ++it)
 	{
 		if (scaleRect(it->rect).contains(ev->pos())) {
 			unsigned int physicalIndex = it - mLayout->keys.constBegin();
-			if(physicalIndex == mLayout->keypad.keyIndex){
-				// keypad button pressed, switch to keypad mode
-				mKeypadLayerSelected = !mKeypadLayerSelected;
-				update();
-			}
-			else{
-				unsigned int logicalIndex = 
-					mLayout->physicalKeycodeToLogical(physicalIndex, mKeypadLayerSelected);
-				emit logicalKeyClicked(logicalIndex);
-				emit physicalKeyClicked(physicalIndex);
-			}
+			emit physicalKeyClicked(physicalIndex);
 		}
 	}
 }

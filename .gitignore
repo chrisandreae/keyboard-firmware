@@ -15,3 +15,4 @@ TAGS
 *.s#?
 .DS_Store
 compiler/dist
+*.k

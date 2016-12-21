@@ -2,6 +2,7 @@
 #include <QLabel>
 #include <QLineEdit>
 
+#include "valuespresenter.h"
 #include "keyboardvalues.h"
 
 static QLineEdit *newDisplay() {
@@ -10,8 +11,9 @@ static QLineEdit *newDisplay() {
 	return lineEdit;
 }
 
-KeyboardValues::KeyboardValues(QWidget *parent)
+KeyboardValues::KeyboardValues(ValuesPresenter *presenter, QWidget *parent)
 	: QWidget(parent)
+	, mPresenter(presenter)
 {
 	QFormLayout *layout = new QFormLayout;
 
@@ -36,5 +38,29 @@ KeyboardValues::KeyboardValues(QWidget *parent)
 	layout->addRow(new QLabel("Macro Storage Size"),
 	               macroStorageSize = newDisplay());
 
+	layout->addRow(new QLabel("Full Reset"),
+	               mResetFully = new QPushButton("Reset Fully"));
+
+	connect(mResetFully, SIGNAL(clicked()),
+	        mPresenter, SLOT(resetFully()));
+
 	setLayout(layout);
+}
+
+
+void KeyboardValues::showValues(uint8_t layoutID,
+                                uint8_t mappingSize,
+                                uint8_t numPrograms,
+                                uint16_t programSpaceRaw,
+                                uint16_t programSpace,
+                                uint16_t macroIndexSize,
+                                uint16_t macroStorageSize)
+{
+	this->layoutID->setText(QString::number(layoutID));
+	this->mappingSize->setText(QString::number(mappingSize));
+	this->numPrograms->setText(QString::number(numPrograms));
+	this->programSpaceRaw->setText(QString::number(programSpaceRaw));
+	this->programSpace->setText(QString::number(programSpace));
+	this->macroIndexSize->setText(QString::number(macroIndexSize));
+	this->macroStorageSize->setText(QString::number(macroStorageSize));
 }

@@ -46,33 +46,50 @@
 
 #include "keystate.h"
 
+// Use Obdev's free usb id for keyboards discriminated by serial number
+#define USB_VENDOR_ID  0x16c0
+#define USB_PRODUCT_ID 0x27db
+
+// But define different descriptive strings
+#define USB_MANUFACTURER_STRING L"andreae.gen.nz"
+#define USB_PRODUCT_STRING L"Programmable USB Keyboard"
+#define USB_SERIAL_NUMBER_STRING L"andreae.gen.nz:kinesis"
+
 // Unique identifier representing this keyboard's layout and
 // definition of logical_keycode values.  Is reported to the
 // configuration program over USB to identify the layout.
 #define LAYOUT_ID 1
+
+/* Storage layout */
+#define CONSTANT_STORAGE           avr_pgm
+#define MAPPING_STORAGE            avr_eeprom
+#define SAVED_MAPPING_STORAGE      avr_eeprom
+#define SAVED_MAPPING_COUNT        256          // 2-byte entries
+#define MACRO_INDEX_STORAGE        avr_eeprom
+#define MACRO_INDEX_COUNT          50           // 6-byte entries
+#define MACROS_STORAGE             i2c_eeprom
+#define MACROS_SIZE                1024
+#define PROGRAM_STORAGE            i2c_eeprom
+#define PROGRAM_SIZE               1024
+#define PROGRAM_COUNT              6
 
 /* Kinesis Matrix */
 
 // The Kinesis has few physical keys, so has a "keypad layer" toggle
 // which has a separate binding for each key. This provides access not
 // only to the numpad, but to the windows and menu keys.
-#define KEYPAD_LAYER 1
 
-// if the keypad mode is selected, and a logical key greater than KEYPAD_LAYER_START
-// is read, add KEYPAD_LAYER_SIZE to look up the mapping
-#define KEYPAD_LAYER_START 2
-#define KEYPAD_LAYER_SIZE  84
-
-#define NUM_LOGICAL_KEYS (2 + (KEYPAD_LAYER_SIZE * 2)) //86 physical keys, 84 of which (all but keypad/program) have a separate keypad layer mapping
+#define NUM_PHYSICAL_KEYS 86
+#define NUM_LOGICAL_KEYS  NUM_PHYSICAL_KEYS * 2
+#define KEYPAD_LAYER_SIZE NUM_PHYSICAL_KEYS
 
 #define MATRIX_COLS 10 // 8 demultiplexer selected matrix columns, and two direct button inputs (pins 5 and 6)
 #define MATRIX_ROWS 16 // 2 74LS138 1-of-8 demultiplexers
 
 // Logical keys we have
 enum logical_keys {
-	LOGICAL_KEY_KEYPAD, // KY
 	LOGICAL_KEY_PROGRAM, // PG
-	// non-keypad layer
+	LOGICAL_KEY_KEYPAD, // KY
 	LOGICAL_KEY_A,
 	LOGICAL_KEY_B,
 	LOGICAL_KEY_C,
@@ -157,16 +174,16 @@ enum logical_keys {
 	LOGICAL_KEY_PERIOD,
 	LOGICAL_KEY_SLASH,
 	LOGICAL_KEY_RSHIFT,
-	// The keypad layer duplicates the previous 84 keys
+	// The keypad layer duplicates the previous 86 keys
 };
 
-// Which logical keys to use for special in-built combinations
-#define SPECIAL_LKEY_MACRO_RECORD  LOGICAL_KEY_F11
-#define SPECIAL_LKEY_REMAP         LOGICAL_KEY_F12
-#define SPECIAL_LKEY_REBOOT        LOGICAL_KEY_PRINTSCREEN
-#define SPECIAL_LKEY_TOGGLE_BUZZER LOGICAL_KEY_BACKSLASH
-#define SPECIAL_LKEY_RESET_CONFIG  LOGICAL_KEY_F7
-#define SPECIAL_LKEY_RESET_FULLY   LOGICAL_KEY_LSHIFT
+// Which keys to use for special in-built combinations
+#define SPECIAL_HKEY_MACRO_RECORD  HID_KEYBOARD_SC_F11
+#define SPECIAL_HKEY_REMAP         HID_KEYBOARD_SC_F12
+#define SPECIAL_HKEY_REBOOT        HID_KEYBOARD_SC_PRINT_SCREEN
+#define SPECIAL_HKEY_TOGGLE_BUZZER HID_KEYBOARD_SC_BACKSLASH_AND_PIPE
+#define SPECIAL_HKEY_RESET_CONFIG  HID_KEYBOARD_SC_F7
+#define SPECIAL_HKEY_RESET_FULLY   HID_KEYBOARD_SC_LEFT_SHIFT
 
 extern const logical_keycode matrix_to_logical_map[MATRIX_ROWS][MATRIX_COLS] PROGMEM;
 

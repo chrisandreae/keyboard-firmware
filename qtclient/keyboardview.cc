@@ -60,9 +60,6 @@ KeyboardView::KeyboardView(KeyboardPresenter *p,
 		}
 	}
 
-	subviewList->addItem(tr("Advanced"));
-	subviewStack->addWidget(mKeyboardValues = new KeyboardValues);
-
 	subviewList->addItem(tr("About"));
 	subviewStack->addWidget(new QLabel(tr("About")));
 
@@ -114,21 +111,4 @@ void KeyboardView::showNoKeyboard() {
 void KeyboardView::showKeyboard() {
 	if (mSelectionStack->currentIndex() != 1)
 		mSelectionStack->setCurrentIndex(1);
-}
-
-void KeyboardView::showValues(uint8_t layoutID,
-                              uint8_t mappingSize,
-                              uint8_t numPrograms,
-                              uint16_t programSpaceRaw,
-                              uint16_t programSpace,
-                              uint16_t macroIndexSize,
-                              uint16_t macroStorageSize)
-{
-	mKeyboardValues->layoutID->setText(QString::number(layoutID));
-	mKeyboardValues->mappingSize->setText(QString::number(mappingSize));
-	mKeyboardValues->numPrograms->setText(QString::number(numPrograms));
-	mKeyboardValues->programSpaceRaw->setText(QString::number(programSpaceRaw));
-	mKeyboardValues->programSpace->setText(QString::number(programSpace));
-	mKeyboardValues->macroIndexSize->setText(QString::number(macroIndexSize));
-	mKeyboardValues->macroStorageSize->setText(QString::number(macroStorageSize));
 }

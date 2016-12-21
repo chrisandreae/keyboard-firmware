@@ -52,31 +52,20 @@
 
 #include "usb.h"
 #include "printing.h"
-#include "serial_eeprom.h"
+#include "storage.h"
 #include "buzzer.h"
+#include "config.h"
+#include "sort.h"
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <avr/eeprom.h>
 #include <util/delay.h>
 
-// Storage format
-typedef struct _macro_idx_entry {
-	// unused keycodes are NO_KEY (so an empty entry starts with NO_KEY)
-	hid_keycode keys[MACRO_MAX_KEYS];
-	uint16_t val; // high bit indicates whether the entry is a macro
-				  // or a program. If macro, remaining bits are the
-				  // offset to the macro_data in macros array
-				  // (obtained via macros_get_macro_offset). If
-				  // program, then they are the integer program id.
-} macro_idx_entry;
-
 // The macro lookup index is in internal eeprom
-#define MACRO_INDEX_COUNT (MACRO_INDEX_SIZE / sizeof(macro_idx_entry))
-static macro_idx_entry macro_index[MACRO_INDEX_COUNT] EEMEM;
+static macro_idx_entry macro_index[MACRO_INDEX_COUNT] STORAGE(MACRO_INDEX_STORAGE);
 
 /**
- * Get a pointer to the underlying data in EEMEM. (To be read/written
+ * Get a pointer to the underlying data in storage. (To be read/written
  * as a whole by the client application)
  */
 uint8_t* macro_idx_get_storage(){
@@ -92,23 +81,40 @@ void macro_idx_reset_defaults(){
 	tmp.val = 0x0;
 
 	for(uint8_t i = 0; i < MACRO_INDEX_COUNT; ++i){
-		eeprom_update_block(&tmp, &macro_index[i], sizeof(macro_idx_entry));
+		storage_write(MACRO_INDEX_STORAGE, &macro_index[i], &tmp, sizeof(macro_idx_entry));
 		USB_KeepAlive(true);
 	}
 }
 
+bool macro_idx_format_key(macro_idx_key* key, uint8_t key_count){
+	// Keypad shift can't be included in a macro trigger if we want macros in
+	// the keypad layer to work with both shift and toggle.
+	for(uint8_t i = 0; i < key_count; ++i){
+		if(config_get_definition(key->keys[i]) == SPECIAL_HID_KEY_KEYPAD_SHIFT){
+			key->keys[i] = NO_KEY;
+		}
+	}
+	insertionsort_uint8(key->keys, key_count);
+
+	for(uint8_t i = key_count; i < MACRO_MAX_KEYS; ++i){
+		key->keys[i] = NO_KEY;
+	}
+
+	return key->keys[0] != NO_KEY;
+}
+
 // Internal management functions:
 
-// comparator for a macro key (in ram) and macro_idx_entry (in eeprom)
+// comparator for a macro key (in ram) and macro_idx_entry (in storage)
 static int macro_idx_cmp(const macro_idx_key* k, const macro_idx_entry* v){
 	for(uint8_t j = 0; j < MACRO_MAX_KEYS; ++j){
-		int d = k->keys[j] - eeprom_read_byte(&v->keys[j]);
+		int d = k->keys[j] - storage_read_byte(MACRO_INDEX_STORAGE, &v->keys[j]);
 		if(d) return d;
 	}
 	return 0;
 }
 
-/** returns pointer to EEMEM */
+/** returns pointer to storage */
 macro_idx_entry* macro_idx_lookup(macro_idx_key* key){
 	macro_idx_entry* r =
 		(macro_idx_entry*) bsearch(key,
@@ -121,7 +127,7 @@ macro_idx_entry* macro_idx_lookup(macro_idx_key* key){
 
 macro_idx_entry_data macro_idx_get_data(macro_idx_entry* mh){
 	macro_idx_entry_data r;
-	uint16_t val = eeprom_read_word(&mh->val);
+	uint16_t val = storage_read_short(MACRO_INDEX_STORAGE, &mh->val);
 	r.type = (val & 0x8000) ? PROGRAM : MACRO;
 	r.data = val & 0x7fff;
 	return r;
@@ -132,7 +138,7 @@ void macro_idx_set_data(macro_idx_entry* mh, macro_idx_entry_data d){
 	if(d.type == PROGRAM){
 		store |= 0x8000;
 	}
-	eeprom_update_word(&mh->val, store);
+	storage_write_short(MACRO_INDEX_STORAGE, &mh->val, store);
 	USB_KeepAlive(true);
 }
 
@@ -150,10 +156,10 @@ void macro_idx_remove(macro_idx_entry* mi){
 			tmp.val = 0x0;
 		}
 		else{
-			eeprom_read_block(&tmp, &macro_index[i + 1], sizeof(macro_idx_entry));
+			storage_read(MACRO_INDEX_STORAGE, &macro_index[i + 1], &tmp, sizeof(macro_idx_entry));
 		}
 		// and write into i
-		eeprom_update_block(&tmp, &macro_index[i], sizeof(macro_idx_entry));
+		storage_write(MACRO_INDEX_STORAGE, &macro_index[i], &tmp, sizeof(macro_idx_entry));
 
 		// We're done if we've just filled with an empty entry
 		if(tmp.keys[0] == NO_KEY) break; // done
@@ -169,7 +175,7 @@ macro_idx_entry* macro_idx_create(macro_idx_key* key){
 	macro_idx_entry* r;
 	// macro index does not exist: move the index up from the end until we reach
 	// a key lower than us, then insert
-	if(eeprom_read_byte(&macro_index[MACRO_INDEX_COUNT - 1].keys[0]) != NO_KEY){
+	if(storage_read_byte(MACRO_INDEX_STORAGE, &macro_index[MACRO_INDEX_COUNT - 1].keys[0]) != NO_KEY){
 		// then we're full, error
 		return NULL;
 	}
@@ -182,27 +188,27 @@ macro_idx_entry* macro_idx_create(macro_idx_key* key){
 			r = &macro_index[i];
 			break;
 		}
-		else if(eeprom_read_byte(&macro_index[i-1].keys[0]) == NO_KEY){
+		else if(storage_read_byte(MACRO_INDEX_STORAGE, &macro_index[i-1].keys[0]) == NO_KEY){
 			continue; // Don't bother to copy empty cells.
 		}
 		else{
 			// copy up (i-1) to (i), leaving the hole at (i-1)
 			macro_idx_entry tmp;
-			eeprom_read_block  (&tmp, &macro_index[i-1], sizeof(macro_idx_entry));
-			eeprom_update_block(&tmp, &macro_index[i],   sizeof(macro_idx_entry));
+			storage_read (MACRO_INDEX_STORAGE, &macro_index[i-1], &tmp, sizeof(macro_idx_entry));
+			storage_write(MACRO_INDEX_STORAGE, &macro_index[i],   &tmp, sizeof(macro_idx_entry));
 			USB_KeepAlive(true);
 		}
 	}
 
-	// we now have a correclty positioned index cell at r: write in the key
-	eeprom_update_block(key, r, sizeof(macro_idx_key)); // macro_idx_key is prefix to macro_idx
+	// we now have a correctly positioned index cell at r: write in the key
+	storage_write(MACRO_INDEX_STORAGE, r, key, sizeof(macro_idx_key)); // macro_idx_key is prefix to macro_idx
 	USB_KeepAlive(true);
 	return r;
 }
 
 void macro_idx_iterate(macro_idx_iterator itr, void* c){
 	for(uint8_t i = 0; i < MACRO_INDEX_COUNT; ++i){
-		if(eeprom_read_byte(&macro_index[i].keys[0]) == NO_KEY) break;
+		if(storage_read_byte(MACRO_INDEX_STORAGE, &macro_index[i].keys[0]) == NO_KEY) break;
 		itr(&macro_index[i], c);
 	}
 }

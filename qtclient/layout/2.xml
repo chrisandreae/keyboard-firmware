@@ -1,11 +1,5 @@
 <keyboard layout="ergodox" layoutid="2" image="ergodox.png">
-<!-- We have a keypad layer. the @layersize keys after index    -->
-<!-- @layerstart are duplicated as a keypad layer with separate -->
-<!-- definitions  -->
-  <keypad keyindex="0" layerstart="2" layersize="74"/>
   <layout>
-	<key name="KEYPAD"	  w="48" h="48"  x="352" y="15"	/>
-	<key name="PROGRAM"	  w="47" h="48"  x="623" y="15"	/>
 	<key name="A"		  w="48" h="48"  x="95"  y="123"/>
 	<key name="B"		  w="48" h="48"  x="301" y="169"/>
 	<key name="C"		  w="48" h="48"  x="198" y="161"/>
@@ -55,8 +49,9 @@
 	<key name="LROW3"	  w="47" h="48"  x="147" y="217"/>
 	<key name="LROW4"	  w="48" h="48"  x="198" y="213"/>
 	<key name="LROW5"	  w="47" h="48"  x="250" y="217"/>
-	<key name="LCOL2_1"	  w="48" h="72"  x="352" y="67"	/>
-	<key name="LCOL2_2"	  w="48" h="72"  x="352" y="144"/>
+	<key name="LCOL2_1"	  w="48" h="48"  x="352" y="15"	/>
+	<key name="LCOL2_2"	  w="48" h="72"  x="352" y="67"	/>
+	<key name="LCOL2_3"	  w="48" h="72"  x="352" y="144"/>
 	<key name="RCOL1_1"	  w="72" h="48"  x="932" y="20"	/>
 	<key name="RCOL1_2"	  w="72" h="48"  x="932" y="71"	/>
 	<key name="RCOL1_3"	  w="72" h="48"  x="932" y="123"/>
@@ -66,8 +61,9 @@
 	<key name="RROW3"	  w="47" h="48"  x="829" y="217"/>
 	<key name="RROW4"	  w="48" h="48"  x="777" y="213"/>
 	<key name="RROW5"	  w="47" h="48"  x="726" y="217"/>
-	<key name="RCOL2_1"	  w="47" h="72"  x="623" y="67"	/>
-	<key name="RCOL2_2"	  w="47" h="72"  x="623" y="144"/>
+	<key name="RCOL2_1"	  w="47" h="48"  x="623" y="15"	/>
+	<key name="RCOL2_2"	  w="47" h="72"  x="623" y="67"	/>
+	<key name="RCOL2_3"	  w="47" h="72"  x="623" y="144"/>
 	<key name="L_ALT"	  w="45" h="45"  x="458" y="227"/>
 	<key name="L_CTRL"	  w="45" h="45"  x="407" y="204"/>
 	<key name="HOME"	  w="45" h="41"  x="435" y="276"/>

@@ -53,9 +53,9 @@
 // Keycodes go through three transformations.
 // A raw keyboard matrix code maps to a index in the (keyboard specific) logical key positions table.
 // We then look up a HID keycode for this position using the key_defaults/key_config tables.
-typedef uint8_t matrix_keycode;
-typedef uint8_t logical_keycode;
-typedef uint8_t hid_keycode;
+typedef uint8_t keycode;
+typedef keycode logical_keycode;
+typedef keycode hid_keycode;
 
 typedef struct _key_state {
 	logical_keycode l_key;
@@ -74,18 +74,12 @@ typedef struct _key_state {
 /* Logical keys are mapped to HID codes. We want to be able to assign some extra actions
    that don't correspond to valid HID codes, so we assign some extra codes for our use
    at the end of the HID range, after E7, the last HID key. As these aren't valid keycodes,
-   they'll never be sent via USB
+   they'll never be sent via USB.
 */
 #define SPECIAL_HID_KEYS_START 0xE8
-// some special keys are so special we want to forbid ever remapping them.
-// We put these after PROGRAM
-#define SPECIAL_HID_KEYS_NOREMAP_START SPECIAL_HID_KEY_PROGRAM
 
-#define SPECIAL_HID_KEYS_MOUSE_START SPECIAL_HID_KEY_MOUSE_BTN1
-#define SPECIAL_HID_KEYS_MOUSE_END SPECIAL_HID_KEY_MOUSE_RIGHT
-
-enum SPECIAL_HID_KEYS{
-	SPECIAL_HID_KEY_MOUSE_BTN1 = 0xE8,
+enum SPECIAL_HID_KEYS {
+	SPECIAL_HID_KEY_MOUSE_BTN1   = SPECIAL_HID_KEYS_START,
 	SPECIAL_HID_KEY_MOUSE_BTN2,
 	SPECIAL_HID_KEY_MOUSE_BTN3,
 	SPECIAL_HID_KEY_MOUSE_BTN4,
@@ -94,38 +88,50 @@ enum SPECIAL_HID_KEYS{
 	SPECIAL_HID_KEY_MOUSE_BACK,
 	SPECIAL_HID_KEY_MOUSE_LEFT,
 	SPECIAL_HID_KEY_MOUSE_RIGHT,
-	// And the extra-special non-remappable program and keypad keys
-	SPECIAL_HID_KEY_PROGRAM = 0xFD,
-	SPECIAL_HID_KEY_KEYPAD,
+	// And the special non-remappable program and keypad keys
+	SPECIAL_HID_KEY_KEYPAD_SHIFT = 0xFC,
+	SPECIAL_HID_KEY_KEYPAD_TOGGLE,
+	SPECIAL_HID_KEY_PROGRAM      = 0xFE // Must be last: we rely on sort order
 };
 
+#define SPECIAL_HID_KEYS_MOUSE_START SPECIAL_HID_KEY_MOUSE_BTN1
+#define SPECIAL_HID_KEYS_MOUSE_END SPECIAL_HID_KEY_MOUSE_RIGHT
+
+// Program and keypad keys are special: they don't participate in the keypad
+// layer and can't be remapped using onboard remapping.
+// We put these at the end after PROGRAM.
+#define SPECIAL_HID_KEY_NOREMAP(hkey) (hkey >= SPECIAL_HID_KEY_KEYPAD_SHIFT && hkey != NO_KEY)
 
 // fields
 
 extern uint8_t key_press_count;
 
-// Only defined when KEYPAD_LAYER is enabled
-extern uint8_t keypad_mode;
-
 void keystate_init(void);
 
 void keystate_update(void);
 
-// Only defined when KEYPAD_LAYER is enabled
-void keystate_toggle_keypad(void);
+bool keystate_is_keypad_mode(void);
 
-/** PHYSICAL keys are not affected by keypad layer, while LOGICAL are. */
-typedef enum _lkey_type { PHYSICAL, LOGICAL } lkey_type;
+/**
+ * Types of keycode:
+ * LOGICAL:  `logical_keycode` corresponding to a given key
+ * PHYSICAL: `logical_keycode` in the base keypad layer at the position matching a given key.
+ * HID:      `hid_keycode` in the current mapping for a given key
+ */
+typedef enum _keycode_type { PHYSICAL, LOGICAL, HID } keycode_type;
 
 /** Checks if the argument key is down. */
-bool keystate_check_key(logical_keycode l_key, lkey_type ktype);
+bool keystate_check_key(keycode l_key, keycode_type ktype);
 
 /** returns true if all argument keys are down */
-bool keystate_check_keys(uint8_t count, lkey_type ktype, ...);
+bool keystate_check_keys(uint8_t count, keycode_type ktype, ...);
+
+/** returns true if any argument keys are down */
+bool keystate_check_any_key(uint8_t count, keycode_type ktype, ...);
 
 /** writes up to key_press_count currently pressed key indexes to the
  * output buffer keys. */
-void keystate_get_keys(logical_keycode* l_keys, lkey_type ktype);
+void keystate_get_keys(keycode* keys, keycode_type ktype);
 
 void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport);
 

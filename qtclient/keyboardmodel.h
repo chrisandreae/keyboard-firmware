@@ -1,14 +1,13 @@
 // -*- c++ -*-
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef KEYBOARDMODEL_H
+#define KEYBOARDMODEL_H
 
 #include <QObject>
 #include "program.h"
 #include "trigger.h"
 #include "layout.h"
 
-class USBDevice;
-class KeyboardComm;
+class DeviceSession;
 
 class KeyboardModel {
 	uint8_t mLayoutID;
@@ -30,7 +29,7 @@ class KeyboardModel {
 	QByteArray mMapping;
 
 public:
-	KeyboardModel(KeyboardComm *dev);
+	KeyboardModel(DeviceSession *dev);
 
 	uint8_t          getLayoutID()         { return mLayoutID;         }
 	uint8_t          getMappingSize()      { return mMappingSize;      }
