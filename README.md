@@ -1,8 +1,7 @@
 # Programmable keyboard firmware
 **(c) 2012-2014 Chris Andreae**
 
-An extensively programmable USB keyboard firmware for AVR microcontrollers,
-easily adaptable to new keyboard hardware.
+An extensively programmable USB keyboard firmware for AVR microcontrollers, easily adaptable to new keyboard hardware.
 
 ## Hardware currently supported
 
