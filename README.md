@@ -3,17 +3,6 @@
 
 An extensively programmable USB keyboard firmware for AVR microcontrollers, easily adaptable to new keyboard hardware.
 
-## Currently supported Keyboards
-
- * Kinesis Contoured (Advantage, Professional, Model 110) with drop-in
-   microcontroller replacement (see schematic/ directory)
- * Ergodox (on native Teensy hardware)
-
-Can support most ATMega series AVR microcontrollers, using LUFA if native USB is
-available and VUSB otherwise. The macro and program-interpreter features require
-an external AT24C164 or compatible I2C EEPROM. (This EEPROM is already built in
-to Kinesis Advantage/Professional hardware.)
-
 ## Features
 
  * Dynamically reprogrammable two-layer layout (one for the main keyboard, and one for the keypad), with layer switching via a 'keypad' key
@@ -27,6 +16,20 @@ to Kinesis Advantage/Professional hardware.)
  * Built-in virtual machine interpreter for running up to six concurrent independent tasks <sup>[*](#myfootnote1)</sup>
 
 <a name="myfootnote1">*</a>: This feature requires an external AT24C164 or compatible EEPROM (already built into Kinesis Advantage and Kinesis Advantage Pro keyboards).
+
+## Currently Supported Keyboards
+
+For now, the firmware supports various keyboard models:
+ * Out of the box:
+   * Ergodox
+ * With drop-in microcontroller replacement (see schematic/ dir):
+   * various Kinesis contoured ergonomic keyboards
+     * Kinesis Contoured (tested on model 110; should also support models 100, 120 and 130)
+     * Kinesis Advantage & Kinesis Advantage Pro (models 500 and 510)
+ PR are welcome to extend support to other keyboards!
+
++### Drop-in microcontroller replacement
+The drop-in microcontroller replacement can be built using most ATMega series AVR microcontrollers. The firmware accesses it via either LUFA (if native USB is available) or VUSB.
 
 ## Compiling
 
