@@ -3,7 +3,7 @@
 
 An extensively programmable USB keyboard firmware for AVR microcontrollers, easily adaptable to new keyboard hardware.
 
-## Hardware currently supported
+## Currently supported Keyboards
 
  * Kinesis Contoured (Advantage, Professional, Model 110) with drop-in
    microcontroller replacement (see schematic/ directory)
