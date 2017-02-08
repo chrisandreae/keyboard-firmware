@@ -32,9 +32,9 @@ to Kinesis Advantage/Professional hardware.)
  * USB API for configuring, remapping and uploading programs to the
    keyboard. (C++ GUI client and Ruby library included.)
 
-## Building
+## Compiling
 
-To build for a non-USB-capable AVR using the V-USB library:
+To compile the project for a non-USB-capable AVR using the V-USB library:
 
 ````make -f Makefile.vusb HARDWARE_VARIANT=<variant>````
 
@@ -43,7 +43,7 @@ Currently supported hardware variants for non-USB AVRs are:
 * ````KINESIS```` (Kinesis Advantage/Professional, ATMega32, board design in schematic/Kinesis{Advantage/Professional})
 * ````KINESIS110```` (Kinesis Model 110, ATMega32, board design in schematic/KinesisModel110)
 
-To build for a USB-capable AVR using the LUFA library:
+To compile the project for a USB-capable AVR using the LUFA library:
 
 ````make -f Makefile.lufa HARDWARE_VARIANT=<variant> HAS_EXTERNAL_STORAGE={1,0}````
 
