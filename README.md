@@ -17,20 +17,17 @@ to Kinesis Advantage/Professional hardware.)
 
 ## Features
 
- * Dynamically reprogrammable keyboard layout, including 'keypad layer'
-   support (two independent key layouts toggled by a 'keypad' key).
+ * Dynamically reprogrammable two-layer layout (one for the main keyboard, and one for the keypad), with layer switching via a 'keypad' key
+ * Also appears as USB mouse (whose functions can be bound to keys)
  * Onboard layout profiles to save/restore up to ten separate programmed
    keyboard layouts.
- * Enhanced text macros that fully support modifier keys and can be triggered by
-   any combination of up to four keys.
- * Programming, macro recording and layout backup save/load can be performed entirely
-   on-keyboard with no additional software.
- * Also appears as USB mouse, mouse functions can be be bound to keys.
- * Built-in virtual machine interpreter for running up to six concurrent
-   independent tasks.
  * Buzzer audio support (included in Kinesis hardware)
- * USB API for configuring, remapping and uploading programs to the
-   keyboard. (C++ GUI client and Ruby library included.)
+ * USB API for configuring, remapping and uploading programs to the keyboard. (C++ Qt4-based GUI client and Ruby library included.)
+ * Enhanced text macros that fully support modifier keys and can be triggered by any combination of up to four keys <sup>[*](#myfootnote1)</sup>
+ * Programming, macro recording and layout backup save/load can be performed entirely on-keyboard with no additional software <sup>[*](#myfootnote1)</sup>
+ * Built-in virtual machine interpreter for running up to six concurrent independent tasks <sup>[*](#myfootnote1)</sup>
+
+<a name="myfootnote1">*</a>: This feature requires an external AT24C164 or compatible EEPROM (already built into Kinesis Advantage and Kinesis Advantage Pro keyboards).
 
 ## Compiling
 
