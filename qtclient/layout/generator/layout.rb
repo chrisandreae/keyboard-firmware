@@ -60,11 +60,24 @@ class Layout
     context.set_source_color(:black)
 
     keys.each do |key|
-      context.rectangle(key.rect.x, key.rect.y, key.rect.w, key.rect.h)
+      rounded_rect(context, key.rect.x, key.rect.y, key.rect.w, key.rect.h)
       context.stroke
     end
 
     surface
+  end
+
+  # From Cairo cookbook
+  def rounded_rect(context, x, y, w, h, r = w/4)
+    context.move_to(x+r,y)                      # Move to A
+    context.line_to(x+w-r,y)                    # Straight line to B
+    context.curve_to(x+w,y,x+w,y,x+w,y+r)       # Curve to C, Control points are both at Q
+    context.line_to(x+w,y+h-r)                  # Move to D
+    context.curve_to(x+w,y+h,x+w,y+h,x+w-r,y+h) # Curve to E
+    context.line_to(x+r,y+h)                    # Line to F
+    context.curve_to(x,y+h,x,y+h,x,y+h-r)       # Curve to G
+    context.line_to(x,y+r)                      # Line to H
+    context.curve_to(x,y,x,y,x+r,y)             # Curve to A
   end
 
   class MatrixBuilder
