@@ -4,7 +4,7 @@ cabal-version: >= 1.2
 build-type:    Simple
 
 executable keyc
-  main-is: main.hs
+  main-is: Main.hs
   build-depends: base, containers, bytestring,
                  mtl, fgl, parsec
 
