@@ -59,11 +59,11 @@
 #----------------------------------------------------------------------------
 
 # Select hardware variant
-HARDWARE_VARIANT = ERGODOX
+HARDWARE_VARIANT ?= ERGODOX
 
 # By default, the Ergodox doesn't have any external eeprom. Unless one is added,
 # disable external storage.
-HAS_EXTERNAL_STORAGE = 0
+HAS_EXTERNAL_STORAGE ?= 0
 
 # MCU name
 MCU = atmega32u4
