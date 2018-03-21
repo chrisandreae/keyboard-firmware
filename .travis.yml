@@ -1,0 +1,67 @@
+language: c
+
+os: linux
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - gcc-avr
+      - avr-libc
+
+matrix:
+  include:
+    # Firmware
+    - env: HARDWARE_LIB=vusb HARDWARE_VARIANT=KINESIS    BUILD_NAME=kinesis
+      stage: firmware
+    - env: HARDWARE_LIB=vusb HARDWARE_VARIANT=KINESIS110 BUILD_NAME=kinesis110
+      stage: firmware
+    - env: HARDWARE_LIB=lufa HARDWARE_VARIANT=ERGODOX    HAS_EXTERNAL_STORAGE=1 BUILD_NAME=ergodox-storage
+      stage: firmware
+    - env: HARDWARE_LIB=lufa HARDWARE_VARIANT=ERGODOX    HAS_EXTERNAL_STORAGE=0 BUILD_NAME=ergodox-nostorage
+      stage: firmware
+
+    # GUI client
+    - script:
+        - brew install qt5 ghc cabal-install
+        - cabal update
+        - export QT5=/usr/local/opt/qt5
+
+        # Haskell compiler
+        - cd $BUILD_ROOT/compiler
+        - cabal install --only-dependencies
+        - cabal configure
+        - cabal build
+
+        # Qt client
+        - cd $BUILD_ROOT/qtclient
+        - ./integrate-compiler.sh > compiler.pri
+        - $QT5/bin/qmake USE_COMPILER=1
+        - make
+        - $QT5/bin/macdeployqt KeyboardClient.app -dmg
+        - mv KeyboardClient.dmg $out/
+      stage: client
+      os: osx
+
+before_script:
+  - export BUILD_ROOT=$PWD
+  - export out=$BUILD_ROOT/out
+  - mkdir -p $out
+
+script:
+  - make -f Makefile.${HARDWARE_LIB}
+  - for result in *.{elf,hex}; do cp $result $out/${BUILD_NAME}.${result##*.}; done
+
+before_deploy:
+  - cd $BUILD_ROOT
+
+deploy:
+  provider: releases
+  api_key:
+    secure: jRigiz5bHjjXZWvJe+LEJ63uNYt2FMy+LzPn6VXxLD4EU80MjYswteR1yVEiY2sBPcHWOaa4Sl+xrRw8pfTIksstzr2bhWiv1BKd+oqOJpYP+aOQ6bPgnCyX6ejNqO13PcBllJ2u0HS3fnghpiDzgmgAA6vBbVQ2DdwLCpL0HOCaSGTxnlGfRiN2h5CdQu+gRe84pELq3ixNelm/0WaoApLNPuH5jcujoOLpVB8ZsQwxZ92/G+oeV8E5URktwuizmtMFL3tHhOwP7UwqG2lDywfSrtd2ZR/GdNB1d5Rx804F9U6t3AT1zT7fXuVrTjQ8DUwR6D6yxlIjX2r1B2ugfYl5sVXD3GHfv9l2FNBW7m+9Uhb94DKoA2ZXcHV2OYmFzcE41dX59Utnx6XmK8Vfxw1wXc3Z6SANBLUO9RZ75bvMEkS/ezMHz6zv2ow9nD5bhLTc4yHJt8CSbQqNNQuCKqTNvYxiJi2dF5RzV6gNpgIl3HQJX+eJMpQkjtb0H6IKsUNKksaLu7LHQ2lbTeWRIIQAY1bSr35pyeTDxDO1uVgPePIFxilh8gYXkxGFhSVU6hzwTGYqRWqMSIAyH8G02XNAKHGpGKvPMTGbGXiXnvGA463bHyA3ovuxhQh6LDuATUd7RrAWLf9HtfAmhoZSmxyhIJZwcn9KNzN11VMfOaI=
+  skip_cleanup: true
+  file_glob: true
+  file: out/*
+  on:
+    tags: true
+    repo: chrisandreae/keyboard-firmware
