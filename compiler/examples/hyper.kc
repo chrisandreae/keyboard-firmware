@@ -1,0 +1,13 @@
+void main() {
+    // On activation, press all modifiers
+    pressKey(0xe0);
+    pressKey(0xe1);
+    pressKey(0xe2);
+    pressKey(0xe3);
+
+    // Keep running until the trigger key is released
+    while (checkPhysKey(0)) {
+    }
+
+    // Return, ending program, and releasing all keys
+}
