@@ -42,7 +42,7 @@
 */
 
 #include <util/delay.h>     /* for _delay_ms() */
-#include "keypad.h"
+#include "splitboard.h"
 
 
 #define NO_LHS_KEY NO_KEY

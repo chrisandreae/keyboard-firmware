@@ -17,7 +17,7 @@ static const struct {
 } valid_ids[] = {
 	{0x16c0, 0x27db}, // VUSB IDs used by Kinesis modification
 	{0x1d50, 0x6028}, // IDs used by Ergodox
-	{0x16c0, 0x27dc}, // VUSB IDs used by ugboard
+	{0x16c0, 0x27dc}, // VUSB IDs used by splitboard
 };
 
 bool DeviceUSB::isValidID(const uint16_t vid, const uint16_t pid) {

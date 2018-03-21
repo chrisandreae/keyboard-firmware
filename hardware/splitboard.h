@@ -52,8 +52,8 @@
 
 // But define different descriptive strings
 #define USB_MANUFACTURER_STRING L"andreae.gen.nz"
-#define USB_PRODUCT_STRING L"Programmable USB Keypad"
-#define USB_SERIAL_NUMBER_STRING L"andreae.gen.nz:keypad"
+#define USB_PRODUCT_STRING L"Programmable USB Splitboard"
+#define USB_SERIAL_NUMBER_STRING L"andreae.gen.nz:splitboard"
 
 // Unique identifier representing this keyboard's layout and
 // definition of logical_keycode values.  Is reported to the
@@ -78,7 +78,8 @@
 #define NUM_LOGICAL_KEYS  NUM_PHYSICAL_KEYS * 2
 #define KEYPAD_LAYER_SIZE NUM_PHYSICAL_KEYS
 
-// The The keyboard is two 8x8 matrixes driven simultaneously via a pair of 164/165 shift registers.
+// Describes an ergodox-esque keyboard made up of two 8x8 matrixes driven
+// simultaneously via a pair of 164/165 shift registers.
 
 #define MATRIX_ROWS 8  // Drive side. On this keyboard, actually columns.
 #define MATRIX_COLS 16 // Read side.  On this keyboard, actually rows.

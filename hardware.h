@@ -49,7 +49,7 @@
 #define KINESIS    1
 #define KINESIS110 2
 #define ERGODOX    3
-#define KEYPAD     4
+#define SPLITBOARD 4
 
 // Select the specific keyboard hardware
 #if HARDWARE_VARIANT == KINESIS
@@ -58,8 +58,8 @@
 	#include "hardware/kinesis110.h"
 #elif HARDWARE_VARIANT == ERGODOX
 	#include "hardware/ergodox.h"
-#elif HARDWARE_VARIANT == KEYPAD
-	#include "hardware/keypad.h"
+#elif HARDWARE_VARIANT == SPLITBOARD
+	#include "hardware/splitboard.h"
 #else
 	#error "Unknown hardware variant selected"
 #endif

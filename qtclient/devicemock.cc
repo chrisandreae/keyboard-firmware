@@ -53,7 +53,7 @@ static const unsigned char ergodox_default_mapping[152] = {
 	0xe8, 0xe9, 0xe6, 0xe4, 0x4b, 0x4e, 0x28, 0x2c
 };
 
-static const unsigned char ugboard_default_mapping[192] = {
+static const unsigned char splitboard_default_mapping[192] = {
 	0x2c, 0xe4, 0x28, 0xe7, 0xe5, 0xe6, 0xff, 0x23,
 	0x1c, 0x0b, 0x11, 0xff, 0x3e, 0x24, 0x18, 0x0d,
 	0x10, 0x52, 0x3f, 0x25, 0x0c, 0x0e, 0x36, 0x51,
@@ -113,13 +113,13 @@ void DeviceMock::enumerateTo(KeyboardComm::DeviceList *target) {
 	append_mock(target,
 	            QSharedPointer<Device>{
 	                new DeviceMock(
-	                    "Mock UgBoard",
+	                    "Mock Splitboard",
 	                    3,                               // layout
-	                    sizeof(ugboard_default_mapping), // mapping size
+	                    sizeof(splitboard_default_mapping), // mapping size
 	                    2, 256,                          // programs
 	                    60, 256, 4,                      // macros
-	                    QByteArray(reinterpret_cast<const char*>(&ugboard_default_mapping[0]),
-	                               sizeof(ugboard_default_mapping)))});
+	                    QByteArray(reinterpret_cast<const char*>(&splitboard_default_mapping[0]),
+	                               sizeof(splitboard_default_mapping)))});
 }
 
 uint8_t DeviceSessionMock::getLayoutID() {

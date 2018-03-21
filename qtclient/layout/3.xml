@@ -1,4 +1,4 @@
-<keyboard layout="ugboard" layoutid="3" image="ugboard.png"><layout>
+<keyboard layout="splitboard" layoutid="3" image="splitboard.png"><layout>
 <key name="0" w="50" h="50" x="652" y="328"/>
 <key name="1" w="50" h="50" x="598" y="328"/>
 <key name="2" w="50" h="50" x="544" y="328"/>

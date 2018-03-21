@@ -1,6 +1,6 @@
 require_relative 'layout'
 
-UGBOARD_LAYOUT = Layout.new(3, "ugboard") do
+SPLITBOARD_LAYOUT = Layout.new(3, "splitboard") do
   # Right thumb
   square_matrix(2, 3, col_start: 12, row_start: 6, row_stride: +1, col_stride: -1, order: :rows)
   # Right keywell
@@ -11,4 +11,4 @@ UGBOARD_LAYOUT = Layout.new(3, "ugboard") do
   square_matrix(6, 7, col_start: 6, col_stride: -1, order: :cols)
 end
 
-UGBOARD_LAYOUT.dump
+SPLITBOARD_LAYOUT.dump

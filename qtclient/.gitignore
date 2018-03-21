@@ -1,6 +1,8 @@
 Makefile
 moc_*.cpp
 qrc_*.cpp
+*.dmg
+*.app
 compiler.pri
 appdir
 KeyboardClient
