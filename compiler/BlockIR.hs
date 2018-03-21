@@ -90,9 +90,6 @@ instance Show a => Show (IRMethod a) where
 instance Show a => Show (IRBlock a) where
   show (IRBlock insns) = unlines $ map show insns
 
-instance Show a => Show (IRGraph a) where
-  show gr = showIRGraph gr
-
 showIRGraph :: Show a => IRGraph a -> String
 showIRGraph gr = unlines $ map (printNode gr) (nodes gr)
   where

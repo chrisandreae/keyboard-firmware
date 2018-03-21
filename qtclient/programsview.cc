@@ -119,7 +119,7 @@ void ProgramsView::loadProgram() {
 	if (!mProgramSelectDialog) {
 		mProgramSelectDialog = new QFileDialog(this);
 	}
-	mProgramSelectDialog->setNameFilter("*.k");
+	mProgramSelectDialog->setNameFilter("*.k *.kc");
 	mProgramSelectDialog->open(this, SLOT(fileSelected(const QString&)));
 }
 
@@ -133,14 +133,20 @@ void ProgramsView::clearProgram() {
 }
 
 void ProgramsView::fileSelected(const QString& filename) {
-	QFile file(filename);
-	if (file.open(QFile::ReadOnly)) {
-		QByteArray contents = file.readAll();
+	if (filename.endsWith(".kc")) {
 		mPresenter->setProgram(mProgramsSelection->currentIndex().row(),
-		                       contents);
+		                       filename);
 	}
 	else {
-		qDebug() << "Failed to read program";
+		QFile file(filename);
+		if (file.open(QFile::ReadOnly)) {
+			QByteArray contents = file.readAll();
+			mPresenter->setProgram(mProgramsSelection->currentIndex().row(),
+			                       contents);
+		}
+		else {
+			qDebug() << "Failed to read program";
+		}
 	}
 }
 

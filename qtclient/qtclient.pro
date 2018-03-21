@@ -101,3 +101,8 @@ win32 {
 contains(USE_MOCK, 1) {
 	DEFINES += USE_MOCK
 }
+
+contains(USE_COMPILER, 1) {
+	DEFINES += USE_COMPILER
+	include(compiler.pri)
+}

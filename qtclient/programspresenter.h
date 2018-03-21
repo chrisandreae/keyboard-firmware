@@ -22,6 +22,7 @@ public:
 
 	QWidget *getWidget() { return mView; }
 	void setProgram(int program, QByteArray newContents);
+	void setProgram(int program, QString filePath);
 
 public slots:
 	void setModel(const QSharedPointer<KeyboardModel>& model);
