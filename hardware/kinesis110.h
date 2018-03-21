@@ -60,6 +60,19 @@
 // configuration program over USB to identify the layout.
 #define LAYOUT_ID 1
 
+/* Storage layout */
+#define CONSTANT_STORAGE           avr_pgm
+#define MAPPING_STORAGE            avr_eeprom
+#define SAVED_MAPPING_STORAGE      avr_eeprom
+#define SAVED_MAPPING_COUNT        256          // 2-byte entries
+#define MACRO_INDEX_STORAGE        avr_eeprom
+#define MACRO_INDEX_COUNT          50           // 6-byte entries
+#define MACROS_STORAGE             i2c_eeprom
+#define MACROS_SIZE                1024
+#define PROGRAM_STORAGE            i2c_eeprom
+#define PROGRAM_SIZE               1024
+#define PROGRAM_COUNT              6
+
 /* Kinesis Matrix */
 
 #define NUM_PHYSICAL_KEYS 86
