@@ -1,5 +1,5 @@
 { stdenv, lib, qmake, qtbase, libusb, pkgconfig,
- withCompiler ? false, compiler ? null,
+ withCompiler ? !stdenv.isAarch64, compiler ? null,
 }:
 
 assert withCompiler -> compiler != null;

@@ -8,7 +8,6 @@ in
 
 rec {
   qtclient = libsForQt5.callPackage ./nix/qtclient.nix {
-    withCompiler = true;
     inherit compiler;
   };
 
