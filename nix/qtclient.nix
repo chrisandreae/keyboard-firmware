@@ -10,6 +10,12 @@ stdenv.mkDerivation {
   nativeBuildInputs = [ qmake pkgconfig ];
   buildInputs = [ libusb qtbase ];
 
+  postPatch = ''
+    substituteInPlace qtclient.pro \
+      --replace "/usr/bin/"  "/bin" \
+      --replace "/usr/share" "/share"
+  '';
+
   preConfigure = lib.optionalString withCompiler ''
     env GHC=${compiler.ghc} COMPILER=${compiler} ./integrate-compiler.sh > compiler.pri
   '';
@@ -20,8 +26,7 @@ stdenv.mkDerivation {
     mkdir -p $out/Applications
     mv KeyboardClient.app $out/Applications
   '' else ''
-    mkdir -p $out/bin
-    cp KeyboardClient $out/bin
+    make install INSTALL_ROOT=$out
   '';
 
   # See NixOS/patchelf#98; NixOS/nixpkgs#26209
