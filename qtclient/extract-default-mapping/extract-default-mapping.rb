@@ -19,6 +19,6 @@ def encode_for_c!(name, bytes)
 end
 
 sym = Elf::File.new('obj/hardware.o')[".symtab"]["logical_to_hid_map_default"]
-puts "Symbol found in section: #{sym.section.name}, which starts at #{sym.section.offset}"
+STDERR.puts "Symbol found in section: #{sym.section.name}, which starts at #{sym.section.offset}"
 data = File.read('obj/hardware.o', sym.size, sym.section.offset + sym.value)
 encode_for_c!(ARGV[0], data.bytes)

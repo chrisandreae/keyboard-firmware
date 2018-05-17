@@ -1,0 +1,13 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    ruby-elf (1.0.8)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  ruby-elf
+
+BUNDLED WITH
+   1.16.1
