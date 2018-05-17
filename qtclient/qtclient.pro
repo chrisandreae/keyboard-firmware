@@ -82,6 +82,7 @@ mac {
 	QT_CONFIG -= no-pkg-config
 	CONFIG += link_pkgconfig
 	PKGCONFIG += libusb-1.0
+	ICON = icon/KeyboardClient.icns
 }
 
 linux-* {
