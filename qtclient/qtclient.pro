@@ -88,6 +88,17 @@ mac {
 linux-* {
 	CONFIG += link_pkgconfig
 	PKGCONFIG += libusb-1.0
+
+	target.path = /usr/bin/
+	INSTALLS += target
+
+	desktop.path = /usr/share/applications
+	desktop.files = KeyboardClient.desktop
+	INSTALLS += desktop
+
+	icons.path = /usr/share/icons/hicolor/scalable/apps
+	icons.files = icon/scalable/KeyboardClient.svg
+	INSTALLS += icons
 }
 
 freebsd-* {

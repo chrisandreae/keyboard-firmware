@@ -22,7 +22,9 @@ matrix:
       stage: firmware
 
     # GUI client
-    - script:
+    - stage: client
+      os: osx
+      script:
         - brew install qt5 ghc cabal-install
         - cabal update
         - export QT5=/usr/local/opt/qt5
@@ -40,8 +42,49 @@ matrix:
         - make
         - $QT5/bin/macdeployqt KeyboardClient.app -dmg
         - mv KeyboardClient.dmg $out/
-      stage: client
-      os: osx
+
+    - stage: client
+      os: linux
+      dist: trusty
+      language: cpp
+      compiler: gcc
+      sudo: require
+
+      before_install:
+        - sudo add-apt-repository ppa:beineri/opt-qt593-trusty -y
+        - sudo add-apt-repository ppa:hvr/ghc -y
+        # sudo add-apt-repository ppa:jonathonf/ghc-8.0.2
+        - sudo apt-get update -qq
+
+      install:
+        - sudo apt-get -y install qt59base libusb-1.0-0-dev ghc-8.0.2 cabal-install-1.24 # ghc cabal-install
+        - source /opt/qt*/bin/qt*-env.sh
+        - export PATH="$PATH:/opt/cabal/bin:/opt/ghc/bin"
+        - cabal update
+
+      script:
+        # Haskell compiler
+        - cd $BUILD_ROOT/compiler
+        - cabal install --only-dependencies
+        - cabal configure
+        - cabal build
+
+        # Qt client
+        - cd $BUILD_ROOT/qtclient
+        - GHC=/opt/ghc/8.0.2 ./integrate-compiler.sh > compiler.pri
+
+        - qmake USE_COMPILER=1 CONFIG+=release PREFIX=/usr
+        - make -j$(nproc)
+        - make INSTALL_ROOT=appdir -j$(nproc) install
+
+        - wget -c -nv "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+        - chmod a+x linuxdeployqt-continuous-x86_64.AppImage
+        - unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
+        - export VERSION=$(git rev-parse --short HEAD) # linuxdeployqt uses this for naming the file
+        - ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -bundle-non-qt-libs -no-translations -appimage
+
+        - mv KeyboardClient*.AppImage $out/
+
 
 before_script:
   - export BUILD_ROOT=$PWD
