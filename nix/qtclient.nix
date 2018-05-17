@@ -6,7 +6,7 @@ assert withCompiler -> compiler != null;
 
 stdenv.mkDerivation {
   name = "qtclient";
-  src = ../qtclient;
+  src = lib.cleanSource ../qtclient;
   nativeBuildInputs = [ qmake pkgconfig ];
   buildInputs = [ libusb qtbase ];
 
