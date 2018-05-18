@@ -1,3 +1,7 @@
 Makefile
 moc_*.cpp
 qrc_*.cpp
+compiler.pri
+appdir
+KeyboardClient
+KeyboardClient*.AppImage

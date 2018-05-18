@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=KeyboardClient
+Comment=Keyboard Settings Client
+Exec=KeyboardClient
+Icon=KeyboardClient
+Categories=Utility;
