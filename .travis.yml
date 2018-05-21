@@ -93,7 +93,7 @@ before_script:
 
 script:
   - make -f Makefile.${HARDWARE_LIB}
-  - for result in *.{elf,hex}; do cp $result $out/${BUILD_NAME}.${result##*.}; done
+  - for result in *.hex; do cp $result $out/${BUILD_NAME}.${result##*.}; done
 
 before_deploy:
   - cd $BUILD_ROOT
