@@ -2,7 +2,6 @@
 
 TEMPLATE = app
 TARGET = KeyboardClient
-CONFIG += debug
 QT += xml
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x000000
 

@@ -14,7 +14,7 @@ stdenv.mkDerivation {
     env GHC=${compiler.ghc} COMPILER=${compiler} ./integrate-compiler.sh > compiler.pri
   '';
 
-  qmakeFlags = lib.optionalString withCompiler "USE_COMPILER=1";
+  qmakeFlags = ["CONFIG+=release"] ++ lib.optional withCompiler "USE_COMPILER=1";
 
   installPhase = if stdenv.isDarwin then ''
     mkdir -p $out/Applications
