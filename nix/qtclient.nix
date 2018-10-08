@@ -17,6 +17,7 @@ stdenv.mkDerivation {
   '';
 
   preConfigure = lib.optionalString withCompiler ''
+    patchShebangs ./integrate-compiler.sh
     env GHC=${compiler.ghc} COMPILER=${compiler} ./integrate-compiler.sh > compiler.pri
   '';
 
