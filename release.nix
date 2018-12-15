@@ -11,7 +11,7 @@ rec {
     inherit compiler;
   };
 
-  compiler = haskell.packages.ghc802.callPackage ./nix/compiler.nix {};
+  compiler = haskellPackages.callPackage ./nix/compiler.nix {};
 
   kinesis = mkFirmware {
     name = "kinesis";
