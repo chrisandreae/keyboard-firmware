@@ -38,7 +38,7 @@ matrix:
         # Qt client
         - cd $BUILD_ROOT/qtclient
         - ./integrate-compiler.sh > compiler.pri
-        - $QT5/bin/qmake USE_COMPILER=1
+        - $QT5/bin/qmake USE_COMPILER=1 CONFIG+=release
         - make
         - $QT5/bin/macdeployqt KeyboardClient.app -dmg
         - mv KeyboardClient.dmg $out/
@@ -93,7 +93,7 @@ before_script:
 
 script:
   - make -f Makefile.${HARDWARE_LIB}
-  - for result in *.{elf,hex}; do cp $result $out/${BUILD_NAME}.${result##*.}; done
+  - for result in *.hex; do cp $result $out/${BUILD_NAME}.${result##*.}; done
 
 before_deploy:
   - cd $BUILD_ROOT

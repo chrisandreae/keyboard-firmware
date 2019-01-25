@@ -1,10 +1,10 @@
-{ mkDerivation, base, bytestring, containers, fgl, hspec, mtl
+{ lib, mkDerivation, base, bytestring, containers, fgl, hspec, mtl
 , parsec, stdenv, ghc
 }:
 mkDerivation {
   pname = "Compiler";
   version = "0.0";
-  src = ../compiler;
+  src = lib.cleanSource ../compiler;
   isLibrary = false;
   isExecutable = true;
   executableHaskellDepends = [
