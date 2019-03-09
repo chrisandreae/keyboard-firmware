@@ -2,10 +2,17 @@
 module ErrorState where
 import Control.Monad.Except
 import Control.Monad.State
+import Control.Monad.Fail
+
+class FailError a where
+  failError :: String -> a
 
 newtype ThrowsState et st a =
   ThrowsState { unThrowsState :: ExceptT et (State st) a }
   deriving (Functor, Applicative, Monad, MonadState st, MonadError et)
+
+instance FailError et => MonadFail (ThrowsState et st) where
+  fail = throwError . failError
 
 runThrowsState :: st -> ThrowsState et st a -> ((Either et a), st)
 runThrowsState st x = runState (runExceptT $ unThrowsState x) st
