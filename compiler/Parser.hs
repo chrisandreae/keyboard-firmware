@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-missing-signatures -fno-warn-missing-exported-sigs #-}
+{-# OPTIONS_GHC -Wno-missing-signatures -Wno-missing-exported-signatures #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 module Parser where
 import Text.Printf
