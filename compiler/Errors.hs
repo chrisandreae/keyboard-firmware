@@ -1,5 +1,6 @@
 module Errors where
 import BasicTypes
+import ErrorState (FailError, failError)
 
 -- Error handling
 
@@ -22,6 +23,9 @@ data CompileError = Redefine String
                   | VoidCastError String
                   | NoReturnError ErrorContext
                   | NoMainError
+
+instance FailError CompileError where
+  failError = InternalError
 
 showHdr :: Int -> String -> ShowS -> ShowS
 showHdr d s sr = showParen (d>10) $ showString s . showChar '\n' . sr
