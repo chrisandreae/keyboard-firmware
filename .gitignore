@@ -16,3 +16,4 @@ TAGS
 .DS_Store
 compiler/dist
 *.k
+ruby-client/gem/Gemfile.lock

@@ -1,5 +1,5 @@
 PATH
-  remote: .
+  remote: gem
   specs:
     keyboard_lib (0.1.1)
       libusb
@@ -7,18 +7,17 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    ffi (1.9.10)
-    libusb (0.5.1)
-      ffi (>= 1.0)
-    rake (10.3.2)
+    ffi (1.10.0)
+    libusb (0.6.4)
+      ffi (~> 1.0)
+      mini_portile2 (~> 2.1)
+    mini_portile2 (2.4.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler (~> 1.10)
   keyboard_lib!
-  rake (~> 10.0)
 
 BUNDLED WITH
-   1.10.6
+   1.17.2
