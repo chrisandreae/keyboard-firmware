@@ -25,7 +25,7 @@ nestedMapLookup s k (m:ms) = (mapLookup s k m)
 data Index a = Index Int (IntMap a)
 
 instance Show a => Show (Index a) where
-  show (Index _ m) = unlines $ IntMap.foldWithKey (\k v acc -> (printf "%d: %s" k (show v)) : acc) [] m
+  show (Index _ m) = unlines $ IntMap.foldrWithKey (\k v acc -> (printf "%d: %s" k (show v)) : acc) [] m
 
 instance Functor Index where
   fmap f (Index a m) = (Index a (fmap f m))
@@ -49,7 +49,7 @@ indexElems :: Index a -> [a]
 indexElems (Index _ i) = IntMap.elems i
 
 indexFold :: (a -> b -> b) -> b -> Index a -> b
-indexFold f i (Index _ idx) = IntMap.fold f i idx
+indexFold f i (Index _ idx) = IntMap.foldr f i idx
 
 indexMap :: (a -> b) -> Index a -> Index b
 indexMap f (Index n idx) = Index n (IntMap.map f idx)
