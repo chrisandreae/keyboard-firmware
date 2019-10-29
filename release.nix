@@ -3,7 +3,11 @@
 with pkgs;
 
 let
-  mkFirmware = callPackage ./nix/firmware.nix {};
+  mkFirmware = callPackage ./nix/firmware.nix {
+    avrgcc = pkgsCross.avr.buildPackages.gcc;
+    avrbinutils = pkgsCross.avr.buildPackages.binutils;
+    avrlibc = pkgsCross.avr.libcCross;
+  };
 in
 
 rec {
