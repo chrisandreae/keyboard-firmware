@@ -65,7 +65,7 @@ let
     buildInputs = attrs.buildInputs ++ [ extractDefaultMappingEnv.wrappedRuby ];
     buildPhase = ''
       make -f Makefile.$HARDWARE_LIBRARY obj/hardware.o
-      ./qtclient/extract-default-mapping/extract-default-mapping.rb ${name}_default_mapping > extracted_mapping.c
+      ruby ./qtclient/extract-default-mapping/extract-default-mapping.rb ${name}_default_mapping > extracted_mapping.c
     '';
     installPhase = ''
       cp extracted_mapping.c $out
