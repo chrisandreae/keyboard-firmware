@@ -300,6 +300,11 @@ void matrix_select_row(uint8_t matrix_row){
 	}
 
 	MATRIX_PORT = (MATRIX_PORT & ~MATRIX_MASK) | output_port_val;
+
+	// Give some time to settle. Without this the y key produces "y6"
+	// and the 5 key produces "5t". Empirically >= 2us is sufficient,
+	// so let's add a slightly larger tolerance.
+	_delay_us(5);
 }
 
 uint8_t matrix_read_column(uint8_t matrix_column){
