@@ -311,10 +311,6 @@ void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
 	// check key state
 	for(int i = 0; i < KEYSTATE_COUNT; ++i){
 		if(key_states[i].state){
-			if(UsedKeyCodes == KEYBOARDREPORT_KEY_COUNT){
-				rollover = true;
-				break;
-			}
 			logical_keycode l_key = key_states[i].l_key;
 			hid_keycode h_key = config_get_definition(l_key);
 
@@ -330,6 +326,10 @@ void keystate_Fill_KeyboardReport(KeyboardReport_Data_t* KeyboardReport){
 				KeyboardReport->Modifier |= (1 << shift);
 			}
 			else{
+				if(UsedKeyCodes == KEYBOARDREPORT_KEY_COUNT){
+					rollover = true;
+					break;
+				}
 				KeyboardReport->KeyCode[UsedKeyCodes++] = h_key;
 			}
 		}
