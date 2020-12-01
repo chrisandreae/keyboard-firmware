@@ -4,5 +4,7 @@
   <file>layout/kinesis.png</file>
   <file>layout/2.xml</file>
   <file>layout/ergodox.png</file>
+  <file>layout/3.xml</file>
+  <file>layout/splitboard.png</file>
 </qresource>
 </RCC>

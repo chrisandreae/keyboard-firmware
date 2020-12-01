@@ -1,17 +1,10 @@
 #!/usr/bin/env ruby
+
 require 'keyboard_lib'
-
-def to_hex(ary)
-  k = 0;
-  ary.collect {|x| "%.2x" % x}.inject { | acc, i | acc << ((k+=1) % 16 == 0 ? "\n" : " ") << i  }
-end
-
-def from_hex(str)
-  str.split(/\s+/).map {|x| Integer(x, 16) }
-end
+require 'json'
+require_relative './serialization.rb'
 
 KeyboardLib.connected_keyboards.each do |kbd|
-
   puts "# Product: #{kbd.product}"
   puts "# Manufacturer: #{kbd.manufacturer}"
   puts "# Serial: #{kbd.serial_number}"
@@ -25,6 +18,14 @@ KeyboardLib.connected_keyboards.each do |kbd|
   puts "# macro_max_keys: #{kbd.get_macro_max_keys}"
   puts "# flags: #{kbd.get_config_flags}"
 
+  # data = {
+  #   mapping: to_hex(kbd.get_mapping),
+  #   programs: kbd.get_programs.map { |p| encode_bytes(p) if p },
+  #   macros:  kbd.get_macros.map(&:to_h),
+  # }
+  # puts JSON.dump(data)
+  config = Configuration.new(kbd.get_layout_id, kbd.get_mapping, kbd.get_programs, kbd.get_macros)
+  view = ConfigurationView.new(config)
 
-  puts to_hex(kbd.get_mapping)
+  puts JSON.dump(view.to_hash)
 end

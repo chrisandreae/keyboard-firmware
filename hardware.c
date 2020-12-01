@@ -52,6 +52,8 @@
 	#include "hardware/kinesis110.c"
 #elif HARDWARE_VARIANT == ERGODOX
 	#include "hardware/ergodox.c"
+#elif HARDWARE_VARIANT == SPLITBOARD
+	#include "hardware/splitboard.c"
 #else
 	#error "Unknown hardware variant selected"
 #endif

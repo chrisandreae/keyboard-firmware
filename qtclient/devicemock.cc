@@ -53,35 +53,73 @@ static const unsigned char ergodox_default_mapping[152] = {
 	0xe8, 0xe9, 0xe6, 0xe4, 0x4b, 0x4e, 0x28, 0x2c
 };
 
+static const unsigned char splitboard_default_mapping[192] = {
+	0x2c, 0xe4, 0x28, 0xe7, 0xe5, 0xe6, 0xff, 0x23,
+	0x1c, 0x0b, 0x11, 0xff, 0x3e, 0x24, 0x18, 0x0d,
+	0x10, 0x52, 0x3f, 0x25, 0x0c, 0x0e, 0x36, 0x51,
+	0x40, 0x26, 0x12, 0x0f, 0x37, 0x2f, 0x41, 0x27,
+	0x13, 0x33, 0x38, 0x30, 0xfe, 0x2d, 0x31, 0x34,
+	0x4b, 0x4e, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0x2a, 0xe0, 0x4c, 0xe3, 0xe1, 0xe2, 0xff, 0x22,
+	0x17, 0x0a, 0x05, 0xff, 0x3d, 0x21, 0x15, 0x09,
+	0x19, 0x4f, 0x3c, 0x20, 0x08, 0x07, 0x06, 0x50,
+	0x3b, 0x1f, 0x1a, 0x16, 0x1b, 0x39, 0x3a, 0x1e,
+	0x14, 0x04, 0x1d, 0x35, 0x29, 0x2e, 0x2b, 0xfc,
+	0x4a, 0x4d, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xe4, 0xe6, 0xe5, 0xe7, 0x2c, 0x28, 0xff, 0x23,
+	0x1c, 0x0b, 0x11, 0xff, 0x3f, 0x24, 0x18, 0x0d,
+	0x10, 0x52, 0x40, 0x25, 0x0c, 0x0e, 0x36, 0x51,
+	0x41, 0x26, 0x12, 0x0f, 0x37, 0x2f, 0x42, 0x27,
+	0x13, 0x33, 0x38, 0x30, 0x43, 0x2d, 0x31, 0x34,
+	0xfc, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xe4, 0xe6, 0xe5, 0xe7, 0x2c, 0x28, 0xff, 0x23,
+	0x1c, 0x0b, 0x11, 0xff, 0x3f, 0x24, 0x18, 0x0d,
+	0x10, 0x52, 0x40, 0x25, 0x0c, 0x0e, 0x36, 0x51,
+	0x41, 0x26, 0x12, 0x0f, 0x37, 0x2f, 0x42, 0x27,
+	0x13, 0x33, 0x38, 0x30, 0x43, 0x2d, 0x31, 0x34,
+	0xfc, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+};
+
+
+static void append_mock(KeyboardComm::DeviceList *target, QSharedPointer<Device> mockKeyboard) {
+	mockKeyboard->newSession()->resetFully();
+	target->push_back(mockKeyboard);
+}
+
 void DeviceMock::enumerateTo(KeyboardComm::DeviceList *target) {
-	QSharedPointer<Device> mockKinesis = QSharedPointer<Device>(
-	    new DeviceMock("Mock Kinesis",
-	                   1,            // layout
-	                   172,              // mapping size
-	                   6, 1024,          // programs
-	                   300, 1024, 4, // macros
-	                   QByteArray(reinterpret_cast<const char*>(&kinesis_default_mapping[0]),
-	                              sizeof(kinesis_default_mapping))));
-	{
-		QSharedPointer<DeviceSession> session = mockKinesis->newSession();
-		session->resetFully();
-	}
+	append_mock(target,
+	            QSharedPointer<Device>{
+	                new DeviceMock(
+	                    "Mock Kinesis",
+	                    1,                               // layout
+	                    sizeof(kinesis_default_mapping), // mapping size
+	                    6, 1024,                         // programs
+	                    300, 1024, 4,                    // macros
+	                    QByteArray(reinterpret_cast<const char*>(&kinesis_default_mapping[0]),
+	                               sizeof(kinesis_default_mapping)))});
 
-	QSharedPointer<Device> mockErgodox = QSharedPointer<Device>(
-	    new DeviceMock("Mock Ergodox",
-	                   2,            // layout
-	                   152,              // mapping size
-	                   6, 1024,          // programs
-	                   300, 1024, 4, // macros
-	                   QByteArray(reinterpret_cast<const char*>(&ergodox_default_mapping[0]),
-	                              sizeof(ergodox_default_mapping))));
-	{
-		QSharedPointer<DeviceSession> session = mockErgodox->newSession();
-		session->resetFully();
-	}
+	append_mock(target,
+	            QSharedPointer<Device>{
+	                new DeviceMock(
+	                    "Mock Ergodox",
+	                    2,                               // layout
+	                    sizeof(ergodox_default_mapping), // mapping size
+	                    6, 1024,                         // programs
+	                    300, 1024, 4,                    // macros
+	                    QByteArray(reinterpret_cast<const char*>(&ergodox_default_mapping[0]),
+	                               sizeof(ergodox_default_mapping)))});
 
-	target->push_back(mockKinesis);
-	target->push_back(mockErgodox);
+
+	append_mock(target,
+	            QSharedPointer<Device>{
+	                new DeviceMock(
+	                    "Mock Splitboard",
+	                    3,                               // layout
+	                    sizeof(splitboard_default_mapping), // mapping size
+	                    2, 256,                          // programs
+	                    60, 256, 4,                      // macros
+	                    QByteArray(reinterpret_cast<const char*>(&splitboard_default_mapping[0]),
+	                               sizeof(splitboard_default_mapping)))});
 }
 
 uint8_t DeviceSessionMock::getLayoutID() {
