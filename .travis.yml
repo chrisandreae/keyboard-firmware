@@ -25,6 +25,7 @@ matrix:
     - stage: client
       os: osx
       script:
+        - brew update
         - brew install qt5 ghc cabal-install
         - cabal update
         - export QT5=/usr/local/opt/qt5
