@@ -80,6 +80,12 @@ static const unsigned char splitboard_default_mapping[192] = {
 	0xfc, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
+static const unsigned char fourbyfour_default_mapping[32] = {
+	0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x40, 0x41,
+	0x42, 0xfd, 0x43, 0xcc, 0x44, 0x45, 0x68, 0x69,
+	0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 0x60,
+	0x61, 0xfd, 0x62, 0x58, 0x54, 0x55, 0x56, 0x57
+};
 
 static void append_mock(KeyboardComm::DeviceList *target, QSharedPointer<Device> mockKeyboard) {
 	mockKeyboard->newSession()->resetFully();
@@ -120,6 +126,17 @@ void DeviceMock::enumerateTo(KeyboardComm::DeviceList *target) {
 	                    60, 256, 4,                      // macros
 	                    QByteArray(reinterpret_cast<const char*>(&splitboard_default_mapping[0]),
 	                               sizeof(splitboard_default_mapping)))});
+
+        append_mock(target,
+                    QSharedPointer<Device>{
+                        new DeviceMock(
+                            "Mock FourByFour",
+                            4,                               // layout
+                            sizeof(fourbyfour_default_mapping), // mapping size
+                            2, 256,                          // programs
+                            60, 256, 4,                      // macros
+                            QByteArray(reinterpret_cast<const char*>(&fourbyfour_default_mapping[0]),
+                                       sizeof(fourbyfour_default_mapping)))});
 }
 
 uint8_t DeviceSessionMock::getLayoutID() {

@@ -6,5 +6,7 @@
   <file>layout/ergodox.png</file>
   <file>layout/3.xml</file>
   <file>layout/splitboard.png</file>
+  <file>layout/4.xml</file>
+  <file>layout/fourbyfour.png</file>
 </qresource>
 </RCC>
