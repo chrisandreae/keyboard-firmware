@@ -50,6 +50,7 @@
 #define KINESIS110 2
 #define ERGODOX    3
 #define SPLITBOARD 4
+#define FOURBYFOUR 5
 
 // Select the specific keyboard hardware
 #if HARDWARE_VARIANT == KINESIS
@@ -60,6 +61,8 @@
 	#include "hardware/ergodox.h"
 #elif HARDWARE_VARIANT == SPLITBOARD
 	#include "hardware/splitboard.h"
+#elif HARDWARE_VARIANT == FOURBYFOUR
+	#include "hardware/4x4.h"
 #else
 	#error "Unknown hardware variant selected"
 #endif

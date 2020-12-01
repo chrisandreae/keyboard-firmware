@@ -54,6 +54,8 @@
 	#include "hardware/ergodox.c"
 #elif HARDWARE_VARIANT == SPLITBOARD
 	#include "hardware/splitboard.c"
+#elif HARDWARE_VARIANT == FOURBYFOUR
+	#include "hardware/4x4.c"
 #else
 	#error "Unknown hardware variant selected"
 #endif
