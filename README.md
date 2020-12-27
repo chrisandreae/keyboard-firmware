@@ -1,40 +1,39 @@
 # Programmable keyboard firmware
 **(c) 2012-2014 Chris Andreae**
 
-An extensively programmable USB keyboard firmware for AVR microcontrollers,
-easily adaptable to new keyboard hardware.
-
-## Hardware currently supported
-
- * Kinesis Contoured (Advantage, Professional, Model 110) with drop-in
-   microcontroller replacement (see schematic/ directory)
- * Ergodox (on native Teensy hardware)
-
-Can support most ATMega series AVR microcontrollers, using LUFA if native USB is
-available and VUSB otherwise. The macro and program-interpreter features require
-an external AT24C164 or compatible I2C EEPROM. (This EEPROM is already built in
-to Kinesis Advantage/Professional hardware.)
+An extensively programmable USB keyboard firmware for AVR microcontrollers, easily adaptable to new keyboard hardware.
 
 ## Features
 
- * Dynamically reprogrammable keyboard layout, including 'keypad layer'
-   support (two independent key layouts toggled by a 'keypad' key).
+ * Dynamically reprogrammable two-layer layout (one for the main keyboard, and one for the keypad), with layer switching via a 'keypad' key
+ * Also appears as USB mouse (whose functions can be bound to keys)
  * Onboard layout profiles to save/restore up to ten separate programmed
    keyboard layouts.
- * Enhanced text macros that fully support modifier keys and can be triggered by
-   any combination of up to four keys.
- * Programming, macro recording and layout backup save/load can be performed entirely
-   on-keyboard with no additional software.
- * Also appears as USB mouse, mouse functions can be be bound to keys.
- * Built-in virtual machine interpreter for running up to six concurrent
-   independent tasks.
  * Buzzer audio support (included in Kinesis hardware)
- * USB API for configuring, remapping and uploading programs to the
-   keyboard. (C++ GUI client and Ruby library included.)
+ * USB API for configuring, remapping and uploading programs to the keyboard. (C++ Qt4-based GUI client and Ruby library included.)
+ * Enhanced text macros that fully support modifier keys and can be triggered by any combination of up to four keys <sup>[*](#myfootnote1)</sup>
+ * Programming, macro recording and layout backup save/load can be performed entirely on-keyboard with no additional software <sup>[*](#myfootnote1)</sup>
+ * Built-in virtual machine interpreter for running up to six concurrent independent tasks <sup>[*](#myfootnote1)</sup>
 
-## Building
+<a name="myfootnote1">*</a>: This feature requires an external AT24C164 or compatible EEPROM (already built into Kinesis Advantage and Kinesis Advantage Pro keyboards).
 
-To build for a non-USB-capable AVR using the V-USB library:
+## Currently Supported Keyboards
+
+For now, the firmware supports various keyboard models:
+ * Out of the box:
+   * Ergodox
+ * With drop-in microcontroller replacement (see schematic/ dir):
+   * various Kinesis contoured ergonomic keyboards
+     * Kinesis Contoured (tested on model 110; should also support models 100, 120 and 130)
+     * Kinesis Advantage & Kinesis Advantage Pro (models 500 and 510)
+ PR are welcome to extend support to other keyboards!
+
++### Drop-in microcontroller replacement
+The drop-in microcontroller replacement can be built using most ATMega series AVR microcontrollers. The firmware accesses it via either LUFA (if native USB is available) or VUSB.
+
+## Compiling
+
+To compile the project for a non-USB-capable AVR using the V-USB library:
 
 ````make -f Makefile.vusb HARDWARE_VARIANT=<variant>````
 
@@ -43,7 +42,7 @@ Currently supported hardware variants for non-USB AVRs are:
 * ````KINESIS```` (Kinesis Advantage/Professional, ATMega32, board design in schematic/Kinesis{Advantage/Professional})
 * ````KINESIS110```` (Kinesis Model 110, ATMega32, board design in schematic/KinesisModel110)
 
-To build for a USB-capable AVR using the LUFA library:
+To compile the project for a USB-capable AVR using the LUFA library:
 
 ````make -f Makefile.lufa HARDWARE_VARIANT=<variant> HAS_EXTERNAL_STORAGE={1,0}````
 
